@@ -12,9 +12,9 @@ class HeaderLeftClipPath extends CustomClipper<Path> {
       ..lineTo(0, 20)
       ..quadraticBezierTo(0, 0, 20, 0)
       ..lineTo(itemWidth - radius * 2, 0)
-      ..quadraticBezierTo(itemWidth - radius, 0, itemWidth - radius, radius)
-      ..lineTo(itemWidth - radius, size.height - radius - bottomHeight)
-      ..quadraticBezierTo(itemWidth - radius, size.height - bottomHeight, itemWidth, size.height - bottomHeight)
+      ..cubicTo(itemWidth, 0, itemWidth - 20, size.height, itemWidth, size.height)
+      // ..lineTo(itemWidth - radius, size.height - radius - bottomHeight)
+      // ..quadraticBezierTo(itemWidth - radius, size.height - bottomHeight, itemWidth, size.height - bottomHeight)
       ..lineTo(size.width, size.height - bottomHeight)
       ..lineTo(size.width, size.height)
       ..close();
@@ -102,7 +102,7 @@ class _ClipSegmentWidget extends State<ClipSegmentWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(height: 300, width: 300, child: _buildHeader());
+    return SizedBox(height: 60, width: 300, child: _buildHeader());
   }
 
   _buildHeader() {
@@ -139,8 +139,7 @@ class _ClipSegmentWidget extends State<ClipSegmentWidget> {
           child: Container(
             width: 168,
             height: 44,
-            padding: EdgeInsets.only(right: 20),
-            decoration: BoxDecoration(color: isLeft ? Colors.white : Color(0xFFF5FFCE)),
+            decoration: BoxDecoration(color: isLeft ? Colors.red : Color(0xFFF5FFCE)),
             child: Center(
               child: Text(
                 title,
