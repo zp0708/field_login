@@ -1,3 +1,4 @@
+import 'package:field_login/widgets/shape_tab_widget/shape_tab_widget.dart';
 import 'package:flutter/material.dart';
 import 'widgets/login_tab_widget.dart';
 import 'widgets/background_widget.dart';
@@ -5,45 +6,6 @@ import 'widgets/phone_input_widget.dart';
 
 void main() {
   runApp(const MyApp());
-}
-
-class LoginTabShape extends StatelessWidget {
-  const LoginTabShape({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 400,
-      height: 80,
-      child: CustomPaint(
-        painter: TabPainter(),
-      ),
-    );
-  }
-}
-
-class TabPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paintLeft = Paint()..color = Colors.red;
-
-    final pathLeft = Path();
-    final width = size.width;
-    final w = 100;
-    pathLeft.moveTo(0, size.height);
-    pathLeft.lineTo(0, 20);
-    pathLeft.quadraticBezierTo(0, 0, 20, 0); // 左上圆角
-    pathLeft.lineTo(width - w, 0);
-    final x1 = width - w + 50;
-    pathLeft.cubicTo(x1, 0, width - 50, size.height, width, size.height); // 中间连接弧
-    pathLeft.lineTo(size.width * 0.5, size.height);
-    pathLeft.close();
-
-    canvas.drawPath(pathLeft, paintLeft);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class MyApp extends StatelessWidget {
@@ -59,7 +21,18 @@ class MyApp extends StatelessWidget {
       ),
       home: Scaffold(
         appBar: AppBar(title: Text('Custom Painter Example')),
-        body: Center(child: LoginTabShape()),
+        body: Container(
+          padding: EdgeInsets.all(20),
+          alignment: Alignment.center,
+          color: Colors.green,
+          child: SizedBox(
+            height: 44,
+            child: ShapeTabWidget(
+              titles: ['验证码登录', '密码登录', '快捷登录'],
+              onSelectItem: (p0, p1) => print(p0),
+            ),
+          ),
+        ),
       ),
     );
   }
