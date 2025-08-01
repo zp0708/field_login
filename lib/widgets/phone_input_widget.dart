@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../style/adapt.dart';
 
 class PhoneInputWidget extends StatefulWidget {
   final String? initialValue;
@@ -95,13 +96,13 @@ class _PhoneInputWidgetState extends State<PhoneInputWidget> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: EdgeInsets.symmetric(horizontal: 16.dp, vertical: 12.dp),
           decoration: BoxDecoration(
             color: Colors.grey[50],
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(12.dp),
             border: Border.all(
               color: _getBorderColor(),
-              width: 1.5,
+              width: 1.5.dp,
             ),
           ),
           child: Row(
@@ -109,9 +110,9 @@ class _PhoneInputWidgetState extends State<PhoneInputWidget> {
               Icon(
                 Icons.phone,
                 color: _getBorderColor(),
-                size: 20,
+                size: 20.dp,
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12.dp),
               Expanded(
                 child: TextField(
                   controller: _controller,
@@ -122,15 +123,15 @@ class _PhoneInputWidgetState extends State<PhoneInputWidget> {
                     FilteringTextInputFormatter.digitsOnly,
                     LengthLimitingTextInputFormatter(11),
                   ],
-                  style: const TextStyle(
-                    fontSize: 16,
+                  style: TextStyle(
+                    fontSize: 16.dp,
                     color: Colors.black87,
                   ),
                   decoration: InputDecoration(
                     hintText: widget.hintText,
                     hintStyle: TextStyle(
                       color: Colors.grey[400],
-                      fontSize: 16,
+                      fontSize: 16.dp,
                     ),
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.zero,
@@ -161,7 +162,7 @@ class _PhoneInputWidgetState extends State<PhoneInputWidget> {
                   child: Icon(
                     Icons.cancel,
                     color: Colors.grey[400],
-                    size: 20,
+                    size: 20.dp,
                   ),
                 ),
             ],

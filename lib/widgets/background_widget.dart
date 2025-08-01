@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../style/adapt.dart';
 
 /// 不规则背景组件
 ///
@@ -28,11 +29,11 @@ class BackgroundWidget extends StatelessWidget {
         children: [
           // 不规则背景形状
           Positioned(
-            top: -50,
-            right: -50,
+            top: -50.dp,
+            right: -50.dp,
             child: Container(
-              width: 200,
-              height: 200,
+              width: 200.dp,
+              height: 200.dp,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
@@ -45,11 +46,11 @@ class BackgroundWidget extends StatelessWidget {
             ),
           ),
           Positioned(
-            bottom: -30,
-            left: -30,
+            bottom: -30.dp,
+            left: -30.dp,
             child: Container(
-              width: 150,
-              height: 150,
+              width: 150.dp,
+              height: 150.dp,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
@@ -63,15 +64,15 @@ class BackgroundWidget extends StatelessWidget {
           ),
           // 右上角不规则形状
           Positioned(
-            top: 100,
+            top: 100.dp,
             right: 0,
             child: Container(
-              width: 120,
-              height: 80,
+              width: 120.dp,
+              height: 80.dp,
               decoration: BoxDecoration(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(40),
-                  bottomLeft: Radius.circular(40),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(40.dp),
+                  bottomLeft: Radius.circular(40.dp),
                 ),
                 gradient: LinearGradient(
                   colors: [
@@ -84,15 +85,15 @@ class BackgroundWidget extends StatelessWidget {
           ),
           // 左下角不规则形状
           Positioned(
-            bottom: 50,
+            bottom: 50.dp,
             left: 0,
             child: Container(
-              width: 100,
-              height: 60,
+              width: 100.dp,
+              height: 60.dp,
               decoration: BoxDecoration(
-                borderRadius: const BorderRadius.only(
-                  topRight: Radius.circular(30),
-                  bottomRight: Radius.circular(30),
+                borderRadius: BorderRadius.only(
+                  topRight: Radius.circular(30.dp),
+                  bottomRight: Radius.circular(30.dp),
                 ),
                 gradient: LinearGradient(
                   colors: [
