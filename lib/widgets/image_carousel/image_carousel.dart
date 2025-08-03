@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'image_carousel_controller.dart';
 import 'carousel_indicator.dart';
+import 'image_viewer_dialog.dart';
 
 /// 图片轮播器组件
 class ImageCarousel extends StatefulWidget {
@@ -22,6 +23,7 @@ class ImageCarousel extends StatefulWidget {
   final VoidCallback? onImageTap;
   final Widget? Function(String image, int index)? imageBuilder;
   final bool infiniteScroll;
+  final Function(int index)? onImageViewer;
 
   const ImageCarousel({
     super.key,
@@ -42,6 +44,7 @@ class ImageCarousel extends StatefulWidget {
     this.onImageTap,
     this.imageBuilder,
     this.infiniteScroll = true,
+    this.onImageViewer,
   });
 
   @override
@@ -213,7 +216,9 @@ class _ImageCarouselState extends State<ImageCarousel> {
       final customWidget = widget.imageBuilder!(image, index);
       if (customWidget != null) {
         return GestureDetector(
-          onTap: widget.onImageTap,
+          onTap: widget.onImageViewer != null
+              ? () => widget.onImageViewer!(index)
+              : widget.onImageTap,
           child: customWidget,
         );
       }
@@ -221,7 +226,9 @@ class _ImageCarouselState extends State<ImageCarousel> {
     
     // 默认图片构建器
     return GestureDetector(
-      onTap: widget.onImageTap,
+      onTap: widget.onImageViewer != null
+          ? () => widget.onImageViewer!(index)
+          : widget.onImageTap,
       child: Image.network(
         image,
         fit: widget.fit,
@@ -253,6 +260,8 @@ class _ImageCarouselState extends State<ImageCarousel> {
     );
   }
 
+
+
   @override
   Widget build(BuildContext context) {
     if (widget.images.isEmpty) {
@@ -263,7 +272,7 @@ class _ImageCarouselState extends State<ImageCarousel> {
       children: [
         // 轮播图片区域
         Container(
-          height: widget.height,
+          height: widget.height ?? 200, // 提供默认高度
           width: widget.width,
           decoration: BoxDecoration(
             borderRadius: widget.borderRadius,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/image_carousel/image_carousel.dart';
 import '../widgets/image_carousel/image_carousel_controller.dart';
 import '../widgets/image_carousel/carousel_indicator.dart';
+import '../widgets/image_carousel/image_viewer_dialog.dart';
 
 class CarouselDemo extends StatefulWidget {
   const CarouselDemo({super.key});
@@ -50,6 +51,14 @@ class _CarouselDemoState extends State<CarouselDemo> {
               autoPlayInterval: const Duration(seconds: 2),
               borderRadius: BorderRadius.circular(12),
               infiniteScroll: true,
+              onImageViewer: (index) {
+                ImageViewerDialog.showFromCarousel(
+                  context,
+                  images: _images,
+                  initialIndex: index,
+                  carouselController: _sharedController,
+                );
+              },
             ),
             const SizedBox(height: 24),
 
@@ -61,6 +70,14 @@ class _CarouselDemoState extends State<CarouselDemo> {
               autoPlayInterval: const Duration(seconds: 3),
               borderRadius: BorderRadius.circular(12),
               infiniteScroll: false,
+              onImageViewer: (index) {
+                ImageViewerDialog.showFromCarousel(
+                  context,
+                  images: _images,
+                  initialIndex: index,
+                  carouselController: _sharedController,
+                );
+              },
             ),
             const SizedBox(height: 24),
 

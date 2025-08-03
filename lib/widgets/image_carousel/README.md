@@ -10,6 +10,7 @@
 4. **控制器支持** - 使用控制器控制轮播进度和自动播放逻辑，多个轮播器可共享控制器
 5. **多种指示器** - 支持圆点、数字、线条三种指示器样式
 6. **自定义样式** - 支持自定义图片构建器、圆角、尺寸等
+7. **图片查看功能** - 通过回调方法开启图片查看弹窗，支持缩放和左右切换
 
 ## 使用方法
 
@@ -32,6 +33,10 @@ ImageCarousel(
   autoPlay: true,
   autoPlayInterval: Duration(seconds: 3),
   infiniteScroll: true, // 默认启用无限滚动
+  onImageViewer: (index) {
+    // 在这里处理图片查看逻辑
+    ImageViewerDialog.show(context, images: images, initialIndex: index);
+  },
 )
 
 // 普通模式（非无限滚动）
@@ -40,6 +45,10 @@ ImageCarousel(
   height: 200,
   autoPlay: true,
   infiniteScroll: false,
+  onImageViewer: (index) {
+    // 在这里处理图片查看逻辑
+    ImageViewerDialog.show(context, images: images, initialIndex: index);
+  },
 )
 ```
 ```
@@ -131,6 +140,7 @@ ImageCarousel(
 | onImageTap | VoidCallback? | null | 图片点击回调 |
 | imageBuilder | Widget? Function(String, int)? | null | 自定义图片构建器 |
 | infiniteScroll | bool | true | 是否启用无限滚动 |
+| onImageViewer | Function(int index)? | null | 图片查看回调 |
 
 ### CarouselIndicatorType
 
