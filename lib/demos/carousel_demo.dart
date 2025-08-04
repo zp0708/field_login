@@ -67,8 +67,8 @@ class _CarouselDemoState extends State<CarouselDemo> {
                 ImageViewerDialog.showFromCarousel(
                   context,
                   images: _images,
+                  height: 300,
                   initialIndex: index,
-                  carouselController: _sharedController,
                 );
               },
             ),
@@ -86,7 +86,6 @@ class _CarouselDemoState extends State<CarouselDemo> {
                   context,
                   images: _images,
                   initialIndex: index,
-                  carouselController: _sharedController,
                 );
               },
             ),
@@ -97,7 +96,7 @@ class _CarouselDemoState extends State<CarouselDemo> {
             ImageCarousel(
               images: _images,
               height: 200,
-              autoPlay: true,
+              autoPlay: false,
               autoPlayInterval: const Duration(seconds: 3),
               indicatorType: _indicatorType,
               indicatorActiveColor: Colors.blue,
@@ -123,6 +122,15 @@ class _CarouselDemoState extends State<CarouselDemo> {
                         autoPlay: _autoPlay1,
                         autoPlayInterval: const Duration(seconds: 2),
                         borderRadius: BorderRadius.circular(8),
+                        onImageViewer: (index) {
+                          ImageViewerDialog.showFromCarousel(
+                            context,
+                            images: _images,
+                            height: 300,
+                            initialIndex: index,
+                            carouselController: _sharedController,
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -211,7 +219,7 @@ class _CarouselDemoState extends State<CarouselDemo> {
             ImageCarousel(
               images: _images,
               height: 200,
-              autoPlay: true,
+              autoPlay: false,
               autoPlayInterval: const Duration(seconds: 2),
               enablePreload: _enablePreload,
               preloadCount: 2,
@@ -237,7 +245,7 @@ class _CarouselDemoState extends State<CarouselDemo> {
             ImageCarousel(
               images: _images,
               height: 200,
-              autoPlay: true,
+              autoPlay: false,
               autoPlayInterval: const Duration(seconds: 3),
               borderRadius: BorderRadius.circular(12),
               indicatorType: CarouselIndicatorType.progress,
@@ -542,7 +550,7 @@ class _CarouselDemoState extends State<CarouselDemo> {
         ImageCarousel(
           images: _images,
           height: 150,
-          autoPlay: true,
+          autoPlay: false,
           autoPlayInterval: const Duration(seconds: 2),
           enablePreload: true,
           preloadCount: 2,
@@ -556,7 +564,7 @@ class _CarouselDemoState extends State<CarouselDemo> {
         ImageCarousel(
           images: _images,
           height: 150,
-          autoPlay: true,
+          autoPlay: false,
           autoPlayInterval: const Duration(seconds: 3),
           borderRadius: BorderRadius.circular(8),
           indicatorType: CarouselIndicatorType.progress,

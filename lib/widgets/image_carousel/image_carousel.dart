@@ -184,7 +184,7 @@ class _ImageCarouselState extends State<ImageCarousel> {
             _pageController
                 .animateToPage(
               targetPage,
-              duration: const Duration(milliseconds: 500),
+              duration: const Duration(milliseconds: 10),
               curve: Curves.easeInOut,
             )
                 .then((_) {
@@ -222,6 +222,7 @@ class _ImageCarouselState extends State<ImageCarousel> {
         onPageChanged: (index) {
           // 计算实际的图片索引
           final actualIndex = index % widget.images.length;
+
           if (!_isUpdatingFromController) {
             _controller.updateCurrentIndex(actualIndex);
           }

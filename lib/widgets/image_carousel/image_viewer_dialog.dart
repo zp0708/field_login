@@ -6,12 +6,14 @@ class ImageViewerDialog extends StatefulWidget {
   final List<String> images;
   final int initialIndex;
   final ImageCarouselController? carouselController;
+  final double? height;
 
   const ImageViewerDialog({
     super.key,
     required this.images,
     required this.initialIndex,
     this.carouselController,
+    this.height,
   });
 
   /// 显示图片查看弹窗
@@ -20,12 +22,14 @@ class ImageViewerDialog extends StatefulWidget {
     required List<String> images,
     required int initialIndex,
     ImageCarouselController? carouselController,
+    double? height,
   }) {
     showDialog(
       context: context,
       barrierDismissible: true,
       builder: (context) => ImageViewerDialog(
         images: images,
+        height: height,
         initialIndex: initialIndex,
         carouselController: carouselController,
       ),
@@ -37,15 +41,18 @@ class ImageViewerDialog extends StatefulWidget {
     BuildContext context, {
     required List<String> images,
     required int initialIndex,
-    required ImageCarouselController carouselController,
+    ImageCarouselController? carouselController,
+    double? height,
   }) {
     showDialog(
       context: context,
       barrierDismissible: true,
+      useSafeArea: false,
       builder: (context) => ImageViewerDialog(
         images: images,
         initialIndex: initialIndex,
         carouselController: carouselController,
+        height: height,
       ),
     );
   }
@@ -60,42 +67,21 @@ class _ImageViewerDialogState extends State<ImageViewerDialog> {
   @override
   void initState() {
     super.initState();
-    _viewerController = ImageCarouselController();
-    _viewerController.setTotalCount(widget.images.length);
-    _viewerController.setCurrentIndex(widget.initialIndex);
-
-    // 监听轮播器控制器变化
-    if (widget.carouselController != null) {
-      widget.carouselController!.addListener(_onCarouselControllerChanged);
+    if (widget.carouselController == null) {
+      _viewerController = ImageCarouselController();
+      _viewerController.setTotalCount(widget.images.length);
+      _viewerController.setCurrentIndex(widget.initialIndex);
+    } else {
+      _viewerController = widget.carouselController!;
     }
-
-    // 监听查看器控制器变化
-    _viewerController.addListener(_onViewerControllerChanged);
   }
 
   @override
   void dispose() {
-    _viewerController.removeListener(_onViewerControllerChanged);
-    if (widget.carouselController != null) {
-      widget.carouselController!.removeListener(_onCarouselControllerChanged);
+    if (widget.carouselController == null) {
+      _viewerController.dispose();
     }
-    _viewerController.dispose();
     super.dispose();
-  }
-
-  void _onCarouselControllerChanged() {
-    // 轮播器控制器变化时，同步到查看器
-    if (_viewerController.currentIndex != widget.carouselController!.currentIndex) {
-      _viewerController.setCurrentIndex(widget.carouselController!.currentIndex);
-    }
-  }
-
-  void _onViewerControllerChanged() {
-    // 查看器控制器变化时，同步到轮播器
-    if (widget.carouselController != null &&
-        _viewerController.currentIndex != widget.carouselController!.currentIndex) {
-      widget.carouselController!.setCurrentIndex(_viewerController.currentIndex);
-    }
   }
 
   @override
@@ -106,36 +92,40 @@ class _ImageViewerDialogState extends State<ImageViewerDialog> {
       child: Container(
         padding: EdgeInsets.all(20),
         color: Colors.black.withOpacity(0.5), // 改为半透明
-        child: Column(children: [
-          // 图片轮播
-          Flexible(
-            child: ImageCarousel(
-              images: widget.images,
-              controller: _viewerController,
-              autoPlay: false,
-              enableZoom: true,
-              borderRadius: BorderRadius.circular(9.0),
-              showIndicator: true, // 隐藏默认指示器
-            ),
-          ),
-          SizedBox(height: 20),
-          GestureDetector(
-            onTap: () => Navigator.of(context).pop(),
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.5),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.close,
-                color: Colors.white,
-                size: 24,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // 图片轮播
+            Flexible(
+              child: ImageCarousel(
+                images: widget.images,
+                controller: _viewerController,
+                autoPlay: false,
+                enableZoom: true,
+                height: widget.height,
+                borderRadius: BorderRadius.circular(9.0),
+                showIndicator: true, // 隐藏默认指示器
               ),
             ),
-          )
-        ]),
+            SizedBox(height: 20),
+            GestureDetector(
+              onTap: () => Navigator.of(context).pop(),
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.5),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.close,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+            )
+          ],
+        ),
       ),
     );
   }
