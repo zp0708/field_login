@@ -95,6 +95,16 @@ class _ImageCarouselState extends State<ImageCarousel> {
     // 监听控制器状态变化
     _controller.addListener(_onControllerChanged);
 
+    // 确保初始状态同步
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.infiniteScroll) {
+        final initialIndex = 5000 % widget.images.length;
+        _controller.updateCurrentIndex(initialIndex);
+      } else {
+        _controller.updateCurrentIndex(0);
+      }
+    });
+
     if (widget.autoPlay) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _controller.startAutoPlay(interval: widget.autoPlayInterval);
@@ -154,60 +164,58 @@ class _ImageCarouselState extends State<ImageCarousel> {
     // 取消之前的同步定时器
     _syncTimer?.cancel();
 
-    // 延迟同步，避免频繁更新
-    _syncTimer = Timer(const Duration(milliseconds: 100), () {
-      if (_pageController.hasClients && !_isUpdatingFromController) {
-        if (widget.infiniteScroll) {
-          final currentPage = _pageController.page?.round() ?? 0;
-          final actualIndex = currentPage % widget.images.length;
+    // 立即同步，避免延迟导致的状态不一致
+    if (_pageController.hasClients && !_isUpdatingFromController) {
+      if (widget.infiniteScroll) {
+        final currentPage = _pageController.page?.round() ?? 0;
+        final actualIndex = currentPage % widget.images.length;
 
-          if (actualIndex != _controller.currentIndex) {
-            _isUpdatingFromController = true;
+        if (actualIndex != _controller.currentIndex) {
+          _isUpdatingFromController = true;
 
-            // 计算最短路径的目标页面索引
-            final currentActualIndex = actualIndex;
-            final targetActualIndex = _controller.currentIndex;
+          // 计算最短路径的目标页面索引
+          final currentActualIndex = actualIndex;
+          final targetActualIndex = _controller.currentIndex;
 
-            // 计算最短的跳跃距离
-            int shortestDistance = targetActualIndex - currentActualIndex;
-            if (shortestDistance.abs() > widget.images.length / 2) {
-              if (shortestDistance > 0) {
-                shortestDistance -= widget.images.length;
-              } else {
-                shortestDistance += widget.images.length;
-              }
+          // 计算最短的跳跃距离
+          int shortestDistance = targetActualIndex - currentActualIndex;
+          if (shortestDistance.abs() > widget.images.length / 2) {
+            if (shortestDistance > 0) {
+              shortestDistance -= widget.images.length;
+            } else {
+              shortestDistance += widget.images.length;
             }
-
-            final targetPage = currentPage + shortestDistance;
-
-            // 使用更平滑的动画
-            _pageController
-                .animateToPage(
-              targetPage,
-              duration: const Duration(milliseconds: 10),
-              curve: Curves.easeInOut,
-            )
-                .then((_) {
-              _isUpdatingFromController = false;
-            });
           }
-        } else {
-          // 普通模式
-          if (_pageController.page?.round() != _controller.currentIndex) {
-            _isUpdatingFromController = true;
-            _pageController
-                .animateToPage(
-              _controller.currentIndex,
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-            )
-                .then((_) {
-              _isUpdatingFromController = false;
-            });
-          }
+
+          final targetPage = currentPage + shortestDistance;
+
+          // 使用更快的动画，减少延迟
+          _pageController
+              .animateToPage(
+            targetPage,
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+          )
+              .then((_) {
+            _isUpdatingFromController = false;
+          });
+        }
+      } else {
+        // 普通模式
+        if (_pageController.page?.round() != _controller.currentIndex) {
+          _isUpdatingFromController = true;
+          _pageController
+              .animateToPage(
+            _controller.currentIndex,
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+          )
+              .then((_) {
+            _isUpdatingFromController = false;
+          });
         }
       }
-    });
+    }
   }
 
   Widget _buildInfinitePageView() {
@@ -224,6 +232,7 @@ class _ImageCarouselState extends State<ImageCarousel> {
           final actualIndex = index % widget.images.length;
 
           if (!_isUpdatingFromController) {
+            // 立即更新控制器状态，不使用延迟
             _controller.updateCurrentIndex(actualIndex);
           }
 
@@ -244,7 +253,10 @@ class _ImageCarouselState extends State<ImageCarousel> {
       return PageView.builder(
         controller: _pageController,
         onPageChanged: (index) {
-          _controller.updateCurrentIndex(index);
+          if (!_isUpdatingFromController) {
+            // 立即更新控制器状态，不使用延迟
+            _controller.updateCurrentIndex(index);
+          }
 
           // 预加载逻辑
           if (widget.enablePreload) {

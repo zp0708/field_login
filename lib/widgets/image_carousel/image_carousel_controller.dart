@@ -23,9 +23,8 @@ class ImageCarouselController extends ChangeNotifier {
   void setTotalCount(int count) {
     if (_totalCount != count) {
       _totalCount = count;
-      Future.microtask(() {
-        notifyListeners();
-      });
+      // 立即通知，不使用 microtask 延迟
+      notifyListeners();
     }
   }
 
@@ -34,9 +33,8 @@ class ImageCarouselController extends ChangeNotifier {
     if (_currentIndex != index) {
       _currentIndex = index;
       _recordUserInteraction();
-      Future.microtask(() {
-        notifyListeners();
-      });
+      // 立即通知，不使用 microtask 延迟
+      notifyListeners();
     }
   }
 
@@ -45,9 +43,8 @@ class ImageCarouselController extends ChangeNotifier {
     if (index >= 0 && index < _totalCount && _currentIndex != index) {
       _currentIndex = index;
       _recordUserInteraction();
-      Future.microtask(() {
-        notifyListeners();
-      });
+      // 立即通知，不使用 microtask 延迟
+      notifyListeners();
     }
   }
 
@@ -104,9 +101,7 @@ class ImageCarouselController extends ChangeNotifier {
       }
     });
 
-    Future.microtask(() {
-      notifyListeners();
-    });
+    notifyListeners();
   }
 
   /// 停止自动播放
@@ -115,18 +110,14 @@ class ImageCarouselController extends ChangeNotifier {
     _isPaused = false;
     _autoPlayTimer?.cancel();
     _autoPlayTimer = null;
-    Future.microtask(() {
-      notifyListeners();
-    });
+    notifyListeners();
   }
 
   /// 暂停自动播放
   void pauseAutoPlay() {
     if (_isAutoPlaying && !_isPaused) {
       _isPaused = true;
-      Future.microtask(() {
-        notifyListeners();
-      });
+      notifyListeners();
     }
   }
 
@@ -134,9 +125,7 @@ class ImageCarouselController extends ChangeNotifier {
   void resumeAutoPlay() {
     if (_isAutoPlaying && _isPaused) {
       _isPaused = false;
-      Future.microtask(() {
-        notifyListeners();
-      });
+      notifyListeners();
     }
   }
 
@@ -195,9 +184,7 @@ class ImageCarouselController extends ChangeNotifier {
     _lastUserInteraction = null;
     _autoPlayTimer?.cancel();
     _autoPlayTimer = null;
-    Future.microtask(() {
-      notifyListeners();
-    });
+    notifyListeners();
   }
 
   @override
