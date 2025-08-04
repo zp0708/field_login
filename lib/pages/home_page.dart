@@ -63,7 +63,7 @@ class HomePage extends StatelessWidget {
     final components = [
       _ComponentItem(
         title: '图片轮播器',
-        description: '支持自动播放、手动控制、多种指示器的图片轮播组件',
+        description: '支持自动播放、手动控制、多种指示器、缩放、预加载、错误重试等功能的图片轮播组件',
         icon: Icons.image,
         color: Colors.blue,
         demoPage: const CarouselDemo(),
@@ -153,4 +153,4 @@ class _ComponentItem {
     required this.color,
     this.demoPage,
   });
-} 
+}

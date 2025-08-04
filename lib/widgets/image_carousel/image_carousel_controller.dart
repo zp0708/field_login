@@ -6,12 +6,18 @@ class ImageCarouselController extends ChangeNotifier {
   int _currentIndex = 0;
   int _totalCount = 0;
   bool _isAutoPlaying = false;
+  bool _isPaused = false;
   Duration _autoPlayInterval = const Duration(seconds: 3);
+  DateTime? _lastUserInteraction;
+  Duration _pauseAfterInteraction = const Duration(seconds: 5);
 
   // Getters
   int get currentIndex => _currentIndex;
   int get totalCount => _totalCount;
   bool get isAutoPlaying => _isAutoPlaying;
+  bool get isPaused => _isPaused;
+  Duration get autoPlayInterval => _autoPlayInterval;
+  DateTime? get lastUserInteraction => _lastUserInteraction;
 
   /// 设置图片总数
   void setTotalCount(int count) {
@@ -27,6 +33,7 @@ class ImageCarouselController extends ChangeNotifier {
   void updateCurrentIndex(int index) {
     if (_currentIndex != index) {
       _currentIndex = index;
+      _recordUserInteraction();
       Future.microtask(() {
         notifyListeners();
       });
@@ -37,6 +44,7 @@ class ImageCarouselController extends ChangeNotifier {
   void setCurrentIndex(int index) {
     if (index >= 0 && index < _totalCount && _currentIndex != index) {
       _currentIndex = index;
+      _recordUserInteraction();
       Future.microtask(() {
         notifyListeners();
       });
@@ -68,18 +76,34 @@ class ImageCarouselController extends ChangeNotifier {
     setCurrentIndex(index);
   }
 
+  /// 记录用户交互
+  void _recordUserInteraction() {
+    _lastUserInteraction = DateTime.now();
+    if (_isAutoPlaying && _isPaused) {
+      // 用户交互后，延迟恢复自动播放
+      Timer(_pauseAfterInteraction, () {
+        if (_isAutoPlaying && _isPaused) {
+          resumeAutoPlay();
+        }
+      });
+    }
+  }
+
   /// 开始自动播放
   void startAutoPlay({Duration? interval}) {
     if (_totalCount <= 1) return;
-    
+
     _isAutoPlaying = true;
+    _isPaused = false;
     _autoPlayInterval = interval ?? _autoPlayInterval;
-    
+
     _autoPlayTimer?.cancel();
     _autoPlayTimer = Timer.periodic(_autoPlayInterval, (timer) {
-      nextPage();
+      if (!_isPaused) {
+        nextPage();
+      }
     });
-    
+
     Future.microtask(() {
       notifyListeners();
     });
@@ -88,11 +112,32 @@ class ImageCarouselController extends ChangeNotifier {
   /// 停止自动播放
   void stopAutoPlay() {
     _isAutoPlaying = false;
+    _isPaused = false;
     _autoPlayTimer?.cancel();
     _autoPlayTimer = null;
     Future.microtask(() {
       notifyListeners();
     });
+  }
+
+  /// 暂停自动播放
+  void pauseAutoPlay() {
+    if (_isAutoPlaying && !_isPaused) {
+      _isPaused = true;
+      Future.microtask(() {
+        notifyListeners();
+      });
+    }
+  }
+
+  /// 恢复自动播放
+  void resumeAutoPlay() {
+    if (_isAutoPlaying && _isPaused) {
+      _isPaused = false;
+      Future.microtask(() {
+        notifyListeners();
+      });
+    }
   }
 
   /// 切换自动播放状态
@@ -101,6 +146,17 @@ class ImageCarouselController extends ChangeNotifier {
       stopAutoPlay();
     } else {
       startAutoPlay(interval: interval);
+    }
+  }
+
+  /// 切换暂停状态
+  void togglePause() {
+    if (_isAutoPlaying) {
+      if (_isPaused) {
+        resumeAutoPlay();
+      } else {
+        pauseAutoPlay();
+      }
     }
   }
 
@@ -113,9 +169,40 @@ class ImageCarouselController extends ChangeNotifier {
     }
   }
 
+  /// 设置交互后暂停时间
+  void setPauseAfterInteraction(Duration duration) {
+    _pauseAfterInteraction = duration;
+  }
+
+  /// 获取状态信息
+  Map<String, dynamic> getStatus() {
+    return {
+      'currentIndex': _currentIndex,
+      'totalCount': _totalCount,
+      'isAutoPlaying': _isAutoPlaying,
+      'isPaused': _isPaused,
+      'autoPlayInterval': _autoPlayInterval.inMilliseconds,
+      'lastUserInteraction': _lastUserInteraction?.millisecondsSinceEpoch,
+      'progress': _totalCount > 0 ? (_currentIndex + 1) / _totalCount : 0.0,
+    };
+  }
+
+  /// 重置控制器状态
+  void reset() {
+    _currentIndex = 0;
+    _isAutoPlaying = false;
+    _isPaused = false;
+    _lastUserInteraction = null;
+    _autoPlayTimer?.cancel();
+    _autoPlayTimer = null;
+    Future.microtask(() {
+      notifyListeners();
+    });
+  }
+
   @override
   void dispose() {
     _autoPlayTimer?.cancel();
     super.dispose();
   }
-} 
+}
