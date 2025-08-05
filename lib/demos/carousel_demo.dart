@@ -4,7 +4,8 @@ import '../widgets/image_carousel/image_carousel_controller.dart';
 import '../widgets/image_carousel/overlays/indicator_overlay.dart';
 import '../widgets/image_carousel/overlays/page_counter_overlay.dart';
 import '../widgets/image_carousel/overlays/control_buttons_overlay.dart';
-import '../widgets/image_carousel/carousel_indicator.dart';
+import '../widgets/image_carousel/overlays/carousel_indicator.dart';
+import '../widgets/image_carousel/image_viewer_dialog.dart';
 
 class CarouselDemo extends StatefulWidget {
   const CarouselDemo({super.key});
@@ -248,6 +249,16 @@ class _CarouselDemoState extends State<CarouselDemo> {
                     activeColor: Colors.blue,
                   ),
                 ],
+                onImageTap: (image, index) {
+                  print('image: $image, index: $index');
+                  ImageViewerDialog.show(
+                    context, 
+                    images: _images,
+                     initialIndex: 
+                     index, 
+                     carouselController: _sharedController,
+                  );
+                },
               ),
             ),
             const SizedBox(height: 16),

@@ -12,10 +12,10 @@ class ImageCarousel extends StatefulWidget {
   final double? width;
   final BoxFit fit;
   final BorderRadius? borderRadius;
-  final VoidCallback? onImageTap;
+  final Widget? Function(String image, int index)? onImageTap;
   final Widget? Function(String image, int index)? imageBuilder;
   final bool infiniteScroll;
-  final Function(int index)? onImageViewer;
+
   // 新增功能
   final bool enableGestureControl; // 启用手势控制
   final bool enablePreload; // 启用预加载
@@ -44,7 +44,6 @@ class ImageCarousel extends StatefulWidget {
     this.onImageTap,
     this.imageBuilder,
     this.infiniteScroll = true,
-    this.onImageViewer,
     // 新增参数
     this.enableGestureControl = true,
     this.enablePreload = true,
@@ -291,15 +290,15 @@ class _ImageCarouselState extends State<ImageCarousel> {
     if (widget.imageBuilder != null) {
       final customWidget = widget.imageBuilder!(image, index);
       if (customWidget != null) {
-        return _buildGestureWrapper(customWidget, index);
+        return _buildGestureWrapper(customWidget, image, index);
       }
     }
 
     // 默认图片构建器
-    return _buildGestureWrapper(_buildDefaultImage(image, index), index);
+    return _buildGestureWrapper(_buildDefaultImage(image, index), image, index);
   }
 
-  Widget _buildGestureWrapper(Widget child, int index) {
+  Widget _buildGestureWrapper(Widget child, String image, int index) {
     Widget wrappedChild = child;
 
     // 添加缩放功能
@@ -315,7 +314,7 @@ class _ImageCarouselState extends State<ImageCarousel> {
     // 添加手势控制
     if (widget.enableGestureControl) {
       wrappedChild = GestureDetector(
-        onTap: widget.onImageViewer != null ? () => widget.onImageViewer!(index) : widget.onImageTap,
+        onTap: () => widget.onImageTap?.call(image, index),
         onDoubleTap: widget.enableZoom
             ? () {
                 // 双击缩放逻辑可以在这里添加
@@ -325,7 +324,7 @@ class _ImageCarouselState extends State<ImageCarousel> {
       );
     } else {
       wrappedChild = GestureDetector(
-        onTap: widget.onImageViewer != null ? () => widget.onImageViewer!(index) : widget.onImageTap,
+        onTap: () => widget.onImageTap?.call(image, index),
         child: wrappedChild,
       );
     }
