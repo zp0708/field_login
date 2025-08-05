@@ -242,6 +242,8 @@ class _CarouselDemoState extends State<CarouselDemo> {
                 controller: _sharedController,
                 autoPlay: false,
                 borderRadius: BorderRadius.circular(12),
+                enableHeroAnimation: true,
+                heroTagPrefix: 'carousel_demo',
                 overlaysBuilder: (controller) => [
                   IndicatorOverlay(
                     controller: controller,
@@ -254,9 +256,10 @@ class _CarouselDemoState extends State<CarouselDemo> {
                   ImageViewerDialog.show(
                     context, 
                     images: _images,
-                     initialIndex: 
-                     index, 
-                     carouselController: _sharedController,
+                    initialIndex: index, 
+                    carouselController: _sharedController,
+                    enableHeroAnimation: true,
+                    heroTagPrefix: 'carousel_demo',
                   );
                 },
               ),

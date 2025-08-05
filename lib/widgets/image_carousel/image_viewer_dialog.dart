@@ -7,6 +7,8 @@ class ImageViewerDialog extends StatefulWidget {
   final int initialIndex;
   final ImageCarouselController? carouselController;
   final double? height;
+  final bool enableHeroAnimation;
+  final String? heroTagPrefix;
 
   const ImageViewerDialog({
     super.key,
@@ -14,6 +16,8 @@ class ImageViewerDialog extends StatefulWidget {
     required this.initialIndex,
     this.carouselController,
     this.height,
+    this.enableHeroAnimation = false,
+    this.heroTagPrefix,
   });
 
   /// 显示图片查看弹窗
@@ -23,36 +27,30 @@ class ImageViewerDialog extends StatefulWidget {
     required int initialIndex,
     ImageCarouselController? carouselController,
     double? height,
+    bool enableHeroAnimation = false,
+    String? heroTagPrefix,
   }) {
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (context) => ImageViewerDialog(
-        images: images,
-        height: height,
-        initialIndex: initialIndex,
-        carouselController: carouselController,
-      ),
-    );
-  }
-
-  /// 从轮播图控制器创建图片查看弹窗
-  static void showFromCarousel(
-    BuildContext context, {
-    required List<String> images,
-    required int initialIndex,
-    ImageCarouselController? carouselController,
-    double? height,
-  }) {
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      useSafeArea: false,
-      builder: (context) => ImageViewerDialog(
-        images: images,
-        initialIndex: initialIndex,
-        carouselController: carouselController,
-        height: height,
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        barrierDismissible: true,
+        barrierColor: Colors.black.withOpacity(0.8),
+        pageBuilder: (context, animation, secondaryAnimation) {
+          return ImageViewerDialog(
+            images: images,
+            height: height,
+            initialIndex: initialIndex,
+            carouselController: carouselController,
+            enableHeroAnimation: enableHeroAnimation,
+            heroTagPrefix: heroTagPrefix,
+          );
+        },
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(
+            opacity: animation,
+            child: child,
+          );
+        },
       ),
     );
   }
@@ -86,18 +84,17 @@ class _ImageViewerDialogState extends State<ImageViewerDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
+
+    
+    return Scaffold(
       backgroundColor: Colors.transparent,
-      insetPadding: EdgeInsets.zero,
-      child: Container(
-        padding: EdgeInsets.all(20),
-        color: Colors.black.withOpacity(0.5), // 改为半透明
-        child: SafeArea(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // 图片轮播
-              Flexible(
+      body: SafeArea(
+        child: Column(
+          children: [
+            // 图片轮播
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: ImageCarousel(
                   images: widget.images,
                   controller: _viewerController,
@@ -105,27 +102,35 @@ class _ImageViewerDialogState extends State<ImageViewerDialog> {
                   enableZoom: true,
                   height: widget.height,
                   borderRadius: BorderRadius.circular(9.0),
+                  enableHeroAnimation: widget.enableHeroAnimation,
+                  heroTagPrefix: widget.heroTagPrefix,
                 ),
               ),
-              SizedBox(height: 20),
-              GestureDetector(
-                onTap: () => Navigator.of(context).pop(),
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.5),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.close,
-                    color: Colors.white,
-                    size: 24,
+            ),
+            SizedBox(height: 20),
+            Align(
+              alignment: Alignment.center,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.5),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 24,
+                    ),
                   ),
                 ),
-              )
-            ],
-          ),
+              ),
+            ),
+          ],
         ),
       ),
     );

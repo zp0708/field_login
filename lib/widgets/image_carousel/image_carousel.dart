@@ -36,6 +36,9 @@ class ImageCarousel extends StatefulWidget {
   final int? maxWidthDiskCache; // 磁盘缓存最大宽度
   final int? maxHeightDiskCache; // 磁盘缓存最大高度
   final bool useOldImageOnUrlChange; // URL变化时是否使用旧图片
+  // Hero动画配置
+  final bool enableHeroAnimation; // 启用Hero动画
+  final String? heroTagPrefix; // Hero标签前缀
   // 覆盖层构建器
   final List<Widget> Function(ImageCarouselController controller)? overlaysBuilder; // 覆盖层构建器
 
@@ -71,6 +74,9 @@ class ImageCarousel extends StatefulWidget {
     this.maxWidthDiskCache,
     this.maxHeightDiskCache,
     this.useOldImageOnUrlChange = true,
+    // Hero动画参数
+    this.enableHeroAnimation = false,
+    this.heroTagPrefix,
     // 覆盖层参数
     this.overlaysBuilder,
   });
@@ -357,6 +363,24 @@ class _ImageCarouselState extends State<ImageCarousel> {
   }
 
   Widget _buildDefaultImage(String image, int index) {
+    // 如果启用Hero动画，则包装Hero组件
+    if (widget.enableHeroAnimation) {
+      final heroTag = widget.heroTagPrefix != null 
+          ? '${widget.heroTagPrefix}_$index'
+          : 'carousel_image_$index';
+      
+
+      
+      return Hero(
+        tag: heroTag,
+        child: _buildImageWidget(image, index),
+      );
+    }
+
+    return _buildImageWidget(image, index);
+  }
+
+  Widget _buildImageWidget(String image, int index) {
     if (widget.enableCache) {
       return CachedNetworkImage(
         imageUrl: image,

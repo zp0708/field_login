@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../demos/carousel_demo.dart';
 import '../demos/carousel_cache_demo.dart';
+import '../demos/carousel_hero_demo.dart';
+import '../demos/hero_test_demo.dart';
 import '../demos/progress_demo.dart';
 import '../demos/phone_input_demo.dart';
 import '../demos/shape_tab_demo.dart';
@@ -75,6 +77,20 @@ class HomePage extends StatelessWidget {
         icon: Icons.cached,
         color: Colors.teal,
         demoPage: const CarouselCacheDemo(),
+      ),
+      _ComponentItem(
+        title: '轮播图Hero动画',
+        description: '展示轮播图的Hero动画效果，点击图片时平滑过渡到全屏查看',
+        icon: Icons.animation,
+        color: Colors.purple,
+        demoPage: const CarouselHeroDemo(),
+      ),
+      _ComponentItem(
+        title: 'Hero动画测试',
+        description: '简单的Hero动画测试页面，用于验证Hero动画功能是否正常工作',
+        icon: Icons.flip_camera_android,
+        color: Colors.orange,
+        demoPage: const HeroTestDemo(),
       ),
       _ComponentItem(
         title: '进度对话框',
