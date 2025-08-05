@@ -67,7 +67,6 @@ class _CarouselDemoState extends State<CarouselDemo> {
                 ImageViewerDialog.showFromCarousel(
                   context,
                   images: _images,
-                  height: 300,
                   initialIndex: index,
                 );
               },

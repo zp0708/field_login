@@ -92,39 +92,41 @@ class _ImageViewerDialogState extends State<ImageViewerDialog> {
       child: Container(
         padding: EdgeInsets.all(20),
         color: Colors.black.withOpacity(0.5), // 改为半透明
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // 图片轮播
-            Flexible(
-              child: ImageCarousel(
-                images: widget.images,
-                controller: _viewerController,
-                autoPlay: false,
-                enableZoom: true,
-                height: widget.height,
-                borderRadius: BorderRadius.circular(9.0),
-                showIndicator: true, // 隐藏默认指示器
-              ),
-            ),
-            SizedBox(height: 20),
-            GestureDetector(
-              onTap: () => Navigator.of(context).pop(),
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.5),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.close,
-                  color: Colors.white,
-                  size: 24,
+        child: SafeArea(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // 图片轮播
+              Flexible(
+                child: ImageCarousel(
+                  images: widget.images,
+                  controller: _viewerController,
+                  autoPlay: false,
+                  enableZoom: true,
+                  height: widget.height,
+                  borderRadius: BorderRadius.circular(9.0),
+                  showIndicator: true, // 隐藏默认指示器
                 ),
               ),
-            )
-          ],
+              SizedBox(height: 20),
+              GestureDetector(
+                onTap: () => Navigator.of(context).pop(),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.5),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.close,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+              )
+            ],
+          ),
         ),
       ),
     );
