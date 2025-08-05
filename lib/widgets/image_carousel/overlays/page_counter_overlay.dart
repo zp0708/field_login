@@ -18,7 +18,7 @@ class PageCounterOverlay extends StatelessWidget {
     this.textStyle,
     this.backgroundColor,
     this.borderRadius,
-    this.padding = const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+    this.padding = const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
     this.separator = ' / ',
     this.showTotal = true,
     this.formatter,
@@ -54,7 +54,7 @@ class PageCounterOverlay extends StatelessWidget {
               text,
               style: textStyle ?? const TextStyle(
                 color: Colors.white,
-                fontSize: 14,
+                fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
             ),

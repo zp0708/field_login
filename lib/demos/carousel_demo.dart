@@ -104,7 +104,7 @@ class _CarouselDemoState extends State<CarouselDemo> {
                   IndicatorOverlay(
                     controller: controller,
                     type: CarouselIndicatorType.dots,
-                    activeColor: Colors.blue,
+                    activeColor: Colors.red,
                     inactiveColor: Colors.grey,
                   ),
                 ],
@@ -307,8 +307,9 @@ class _CarouselDemoState extends State<CarouselDemo> {
             const SizedBox(height: 24),
 
             // 控制按钮
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
               children: [
                 ElevatedButton(
                   onPressed: () => _sharedController.previousPage(),

@@ -45,15 +45,11 @@ class ControlButtonsOverlay extends StatelessWidget {
                   child: ListenableBuilder(
                     listenable: controller,
                     builder: (context, child) {
-                      final canGoPrevious = controller.currentIndex > 0;
-                      return Opacity(
-                        opacity: canGoPrevious ? 1.0 : 0.5,
-                        child: _buildControlButton(
+                      return _buildControlButton(
                           context,
                           icon: previousIcon ?? Icons.chevron_left,
-                          onTap: canGoPrevious ? (onPreviousTap ?? () => controller.previousPage()) : null,
-                        ),
-                      );
+                          onTap: () => controller.previousPage(),
+                        );
                     },
                   ),
                 ),
@@ -73,15 +69,11 @@ class ControlButtonsOverlay extends StatelessWidget {
                   child: ListenableBuilder(
                     listenable: controller,
                     builder: (context, child) {
-                      final canGoNext = controller.currentIndex < controller.totalCount - 1;
-                      return Opacity(
-                        opacity: canGoNext ? 1.0 : 0.5,
-                        child: _buildControlButton(
+                      return _buildControlButton(
                           context,
                           icon: nextIcon ?? Icons.chevron_right,
-                          onTap: canGoNext ? (onNextTap ?? () => controller.nextPage()) : null,
-                        ),
-                      );
+                          onTap: () => controller.nextPage(),
+                        );
                     },
                   ),
                 ),

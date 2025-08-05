@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../image_carousel_controller.dart';
-import '../carousel_indicator.dart';
+import 'carousel_indicator.dart';
 
 /// 指示器覆盖层组件
 class IndicatorOverlay extends StatelessWidget {
