@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'image_carousel_controller.dart';
-import 'carousel_indicator.dart';
 
 /// 图片轮播器组件
 class ImageCarousel extends StatefulWidget {
@@ -13,12 +12,6 @@ class ImageCarousel extends StatefulWidget {
   final double? width;
   final BoxFit fit;
   final BorderRadius? borderRadius;
-  final bool showIndicator;
-  final CarouselIndicatorType indicatorType;
-  final Color? indicatorActiveColor;
-  final Color? indicatorInactiveColor;
-  final double? indicatorSize;
-  final EdgeInsetsGeometry? indicatorPadding;
   final VoidCallback? onImageTap;
   final Widget? Function(String image, int index)? imageBuilder;
   final bool infiniteScroll;
@@ -35,6 +28,8 @@ class ImageCarousel extends StatefulWidget {
   final bool enableZoom; // 启用缩放
   final double minScale; // 最小缩放比例
   final double maxScale; // 最大缩放比例
+  // 覆盖层构建器
+  final List<Widget> Function(ImageCarouselController controller)? overlaysBuilder; // 覆盖层构建器
 
   const ImageCarousel({
     super.key,
@@ -46,12 +41,6 @@ class ImageCarousel extends StatefulWidget {
     this.width,
     this.fit = BoxFit.cover,
     this.borderRadius,
-    this.showIndicator = true,
-    this.indicatorType = CarouselIndicatorType.dots,
-    this.indicatorActiveColor,
-    this.indicatorInactiveColor,
-    this.indicatorSize,
-    this.indicatorPadding,
     this.onImageTap,
     this.imageBuilder,
     this.infiniteScroll = true,
@@ -68,6 +57,8 @@ class ImageCarousel extends StatefulWidget {
     this.enableZoom = false,
     this.minScale = 0.5,
     this.maxScale = 3.0,
+    // 覆盖层参数
+    this.overlaysBuilder,
   });
 
   @override
@@ -464,61 +455,8 @@ class _ImageCarouselState extends State<ImageCarousel> {
             child: _buildInfinitePageView(),
           ),
 
-          // 指示器
-          if (widget.showIndicator && widget.images.length > 1)
-            Positioned(
-              bottom: 10,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: AnimatedBuilder(
-                  animation: _controller,
-                  builder: (context, child) {
-                    return CarouselIndicator(
-                      currentIndex: _controller.currentIndex,
-                      totalCount: _controller.totalCount,
-                      type: widget.indicatorType,
-                      activeColor: widget.indicatorActiveColor,
-                      inactiveColor: widget.indicatorInactiveColor,
-                      size: widget.indicatorSize,
-                      padding: widget.indicatorPadding,
-                      onIndicatorTap: () {
-                        // 可以在这里添加点击指示器的逻辑
-                      },
-                    );
-                  },
-                ),
-              ),
-            ),
-
-          if (widget.showIndicator && widget.images.length > 1)
-            Positioned(
-              bottom: 10,
-              right: 10,
-              child: ListenableBuilder(
-                listenable: _controller,
-                builder: (context, child) {
-                  return Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      '${_controller.currentIndex + 1} / ${widget.images.length}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
+          // 覆盖层
+          if (widget.overlaysBuilder != null) ...widget.overlaysBuilder!(_controller),
         ],
       ),
     );

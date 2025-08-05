@@ -105,7 +105,6 @@ class _ImageViewerDialogState extends State<ImageViewerDialog> {
                   enableZoom: true,
                   height: widget.height,
                   borderRadius: BorderRadius.circular(9.0),
-                  showIndicator: true, // 隐藏默认指示器
                 ),
               ),
               SizedBox(height: 20),
