@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'image_carousel_controller.dart';
 
 /// 图片轮播器组件
@@ -28,6 +29,13 @@ class ImageCarousel extends StatefulWidget {
   final bool enableZoom; // 启用缩放
   final double minScale; // 最小缩放比例
   final double maxScale; // 最大缩放比例
+  // 缓存配置
+  final bool enableCache; // 启用缓存
+  final int? memCacheWidth; // 内存缓存宽度
+  final int? memCacheHeight; // 内存缓存高度
+  final int? maxWidthDiskCache; // 磁盘缓存最大宽度
+  final int? maxHeightDiskCache; // 磁盘缓存最大高度
+  final bool useOldImageOnUrlChange; // URL变化时是否使用旧图片
   // 覆盖层构建器
   final List<Widget> Function(ImageCarouselController controller)? overlaysBuilder; // 覆盖层构建器
 
@@ -56,6 +64,13 @@ class ImageCarousel extends StatefulWidget {
     this.enableZoom = false,
     this.minScale = 0.5,
     this.maxScale = 3.0,
+    // 缓存配置参数
+    this.enableCache = true,
+    this.memCacheWidth,
+    this.memCacheHeight,
+    this.maxWidthDiskCache,
+    this.maxHeightDiskCache,
+    this.useOldImageOnUrlChange = true,
     // 覆盖层参数
     this.overlaysBuilder,
   });
@@ -275,9 +290,18 @@ class _ImageCarouselState extends State<ImageCarousel> {
   }
 
   void _preloadImage(int index) {
-    // 这里可以添加预加载逻辑，比如使用 precacheImage
     if (index >= 0 && index < widget.images.length) {
-      precacheImage(NetworkImage(widget.images[index]), context);
+      if (widget.enableCache) {
+        // 使用 CachedNetworkImageProvider 进行预加载
+        final imageProvider = CachedNetworkImageProvider(
+          widget.images[index],
+          cacheKey: 'carousel_$index',
+        );
+        precacheImage(imageProvider, context);
+      } else {
+        // 使用 NetworkImage 进行预加载
+        precacheImage(NetworkImage(widget.images[index]), context);
+      }
     }
   }
 
@@ -333,20 +357,46 @@ class _ImageCarouselState extends State<ImageCarousel> {
   }
 
   Widget _buildDefaultImage(String image, int index) {
-    return Image.network(
-      image,
-      fit: widget.fit,
-      errorBuilder: (context, error, stackTrace) {
-        return _buildErrorWidget(index, error);
-      },
-      loadingBuilder: (context, child, loadingProgress) {
-        if (loadingProgress == null) {
+    if (widget.enableCache) {
+      return CachedNetworkImage(
+        imageUrl: image,
+        fit: widget.fit,
+        placeholder: (context, url) {
+          return _buildLoadingWidget(null);
+        },
+        errorWidget: (context, url, error) {
+          return _buildErrorWidget(index, error);
+        },
+        imageBuilder: (context, imageProvider) {
           _imageLoadStates[index] = true;
-          return child;
-        }
-        return _buildLoadingWidget(loadingProgress);
-      },
-    );
+          return Image(image: imageProvider, fit: widget.fit);
+        },
+        // 缓存配置
+        memCacheWidth: widget.memCacheWidth ?? 800, // 内存缓存宽度
+        memCacheHeight: widget.memCacheHeight ?? 600, // 内存缓存高度
+        maxWidthDiskCache: widget.maxWidthDiskCache ?? 1024, // 磁盘缓存最大宽度
+        maxHeightDiskCache: widget.maxHeightDiskCache ?? 768, // 磁盘缓存最大高度
+        // 缓存策略
+        cacheKey: 'carousel_$index', // 自定义缓存键
+        useOldImageOnUrlChange: widget.useOldImageOnUrlChange, // URL变化时使用旧图片
+      );
+    } else {
+      // 不使用缓存，回退到原始 Image.network
+      return Image.network(
+        image,
+        fit: widget.fit,
+        errorBuilder: (context, error, stackTrace) {
+          return _buildErrorWidget(index, error);
+        },
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) {
+            _imageLoadStates[index] = true;
+            return child;
+          }
+          return _buildLoadingWidget(loadingProgress);
+        },
+      );
+    }
   }
 
   Widget _buildErrorWidget(int index, Object error) {
@@ -385,7 +435,7 @@ class _ImageCarouselState extends State<ImageCarousel> {
     );
   }
 
-  Widget _buildLoadingWidget(ImageChunkEvent loadingProgress) {
+  Widget _buildLoadingWidget([ImageChunkEvent? loadingProgress]) {
     if (widget.placeholder != null) {
       return widget.placeholder!;
     }
@@ -398,13 +448,15 @@ class _ImageCarouselState extends State<ImageCarousel> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             CircularProgressIndicator(
-              value: loadingProgress.expectedTotalBytes != null
-                  ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+              value: loadingProgress?.expectedTotalBytes != null
+                  ? loadingProgress!.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
                   : null,
             ),
             const SizedBox(height: 8),
             Text(
-              '加载中... ${((loadingProgress.cumulativeBytesLoaded / (loadingProgress.expectedTotalBytes ?? 1)) * 100).toStringAsFixed(0)}%',
+              loadingProgress != null
+                  ? '加载中... ${((loadingProgress.cumulativeBytesLoaded / (loadingProgress.expectedTotalBytes ?? 1)) * 100).toStringAsFixed(0)}%'
+                  : '加载中...',
               style: const TextStyle(
                 fontSize: 12,
                 color: Colors.grey,

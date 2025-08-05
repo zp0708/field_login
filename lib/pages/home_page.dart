@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../demos/carousel_demo.dart';
+import '../demos/carousel_cache_demo.dart';
 import '../demos/progress_demo.dart';
 import '../demos/phone_input_demo.dart';
 import '../demos/shape_tab_demo.dart';
@@ -67,6 +68,13 @@ class HomePage extends StatelessWidget {
         icon: Icons.image,
         color: Colors.blue,
         demoPage: const CarouselDemo(),
+      ),
+      _ComponentItem(
+        title: '轮播图缓存功能',
+        description: '展示轮播图的图片缓存功能，包括内存缓存、磁盘缓存、预加载等特性',
+        icon: Icons.cached,
+        color: Colors.teal,
+        demoPage: const CarouselCacheDemo(),
       ),
       _ComponentItem(
         title: '进度对话框',
