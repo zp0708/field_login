@@ -126,11 +126,13 @@ class _CarouselHeroDemoState extends State<CarouselHeroDemo> {
                   ),
                 ),
                 onImageTap: (image, index) {
+                  print('点击图片 - 索引: $index, 图片: $image');
+                  print('控制器当前索引: ${_controller.currentIndex}');
                   ImageViewerDialog.show(
                     context,
                     images: _images,
                     initialIndex: index,
-                    carouselController: _controller,
+                    controller: _controller,
                     enableHeroAnimation: _enableHeroAnimation,
                     heroTagPrefix: _heroTagPrefix,
                   );

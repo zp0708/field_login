@@ -5,7 +5,7 @@ import 'image_carousel_controller.dart';
 class ImageViewerDialog extends StatefulWidget {
   final List<String> images;
   final int initialIndex;
-  final ImageCarouselController? carouselController;
+  final ImageCarouselController? controller;
   final double? height;
   final bool enableHeroAnimation;
   final String? heroTagPrefix;
@@ -14,7 +14,7 @@ class ImageViewerDialog extends StatefulWidget {
     super.key,
     required this.images,
     required this.initialIndex,
-    this.carouselController,
+    this.controller,
     this.height,
     this.enableHeroAnimation = false,
     this.heroTagPrefix,
@@ -25,7 +25,7 @@ class ImageViewerDialog extends StatefulWidget {
     BuildContext context, {
     required List<String> images,
     required int initialIndex,
-    ImageCarouselController? carouselController,
+    ImageCarouselController? controller,
     double? height,
     bool enableHeroAnimation = false,
     String? heroTagPrefix,
@@ -40,7 +40,7 @@ class ImageViewerDialog extends StatefulWidget {
             images: images,
             height: height,
             initialIndex: initialIndex,
-            carouselController: carouselController,
+            controller: controller,
             enableHeroAnimation: enableHeroAnimation,
             heroTagPrefix: heroTagPrefix,
           );
@@ -65,18 +65,32 @@ class _ImageViewerDialogState extends State<ImageViewerDialog> {
   @override
   void initState() {
     super.initState();
-    if (widget.carouselController == null) {
+    print('ImageViewerDialog initState - 初始索引: ${widget.initialIndex}');
+    if (widget.controller == null) {
       _viewerController = ImageCarouselController();
       _viewerController.setTotalCount(widget.images.length);
       _viewerController.setCurrentIndex(widget.initialIndex);
     } else {
-      _viewerController = widget.carouselController!;
+      _viewerController = widget.controller!;
+      print('使用共享控制器 - 控制器当前索引: ${_viewerController.currentIndex}');
+      // 确保共享控制器也设置正确的初始索引
+      _viewerController.setCurrentIndex(widget.initialIndex);
+      print('设置后控制器索引: ${_viewerController.currentIndex}');
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 确保在依赖变化时也设置正确的索引
+    if (widget.controller != null) {
+      _viewerController.setCurrentIndex(widget.initialIndex);
     }
   }
 
   @override
   void dispose() {
-    if (widget.carouselController == null) {
+    if (widget.controller == null) {
       _viewerController.dispose();
     }
     super.dispose();

@@ -97,9 +97,20 @@ class _ImageCarouselState extends State<ImageCarousel> {
   void initState() {
     super.initState();
     _controller = widget.controller ?? ImageCarouselController();
+    
+    // 如果有外部控制器，使用控制器的当前索引作为初始页面
+    int initialPage = 0;
+    if (widget.controller != null) {
+      initialPage = widget.infiniteScroll 
+          ? 5000 + widget.controller!.currentIndex
+          : widget.controller!.currentIndex;
+    } else {
+      initialPage = widget.infiniteScroll ? 5000 : 0;
+    }
+    
     // 根据是否启用无限滚动来决定初始页面
     _pageController = PageController(
-      initialPage: widget.infiniteScroll ? 5000 : 0,
+      initialPage: initialPage,
     );
     _controller.setTotalCount(widget.images.length);
 
@@ -109,10 +120,10 @@ class _ImageCarouselState extends State<ImageCarousel> {
     // 确保初始状态同步
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.infiniteScroll) {
-        final initialIndex = 5000 % widget.images.length;
+        final initialIndex = initialPage % widget.images.length;
         _controller.updateCurrentIndex(initialIndex);
       } else {
-        _controller.updateCurrentIndex(0);
+        _controller.updateCurrentIndex(widget.controller?.currentIndex ?? 0);
       }
     });
 
@@ -145,6 +156,21 @@ class _ImageCarouselState extends State<ImageCarousel> {
           _retryCounts[i] = 0;
         }
       });
+    }
+
+    // 处理控制器变化
+    if (oldWidget.controller != widget.controller) {
+      if (widget.controller != null) {
+        // 如果有新的控制器，确保PageController设置正确的初始页面
+        final currentIndex = widget.controller!.currentIndex;
+        final targetPage = widget.infiniteScroll 
+            ? 5000 + currentIndex
+            : currentIndex;
+        
+        if (_pageController.hasClients) {
+          _pageController.jumpToPage(targetPage);
+        }
+      }
     }
 
     // 处理自动播放状态变化
@@ -368,8 +394,6 @@ class _ImageCarouselState extends State<ImageCarousel> {
       final heroTag = widget.heroTagPrefix != null 
           ? '${widget.heroTagPrefix}_$index'
           : 'carousel_image_$index';
-      
-
       
       return Hero(
         tag: heroTag,

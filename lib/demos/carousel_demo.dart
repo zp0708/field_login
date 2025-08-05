@@ -100,6 +100,7 @@ class _CarouselDemoState extends State<CarouselDemo> {
               child: ImageCarousel(
                 images: _images,
                 autoPlay: false,
+                enableHeroAnimation: true,
                 borderRadius: BorderRadius.circular(12),
                 overlaysBuilder: (controller) => [
                   IndicatorOverlay(
@@ -109,6 +110,14 @@ class _CarouselDemoState extends State<CarouselDemo> {
                     inactiveColor: Colors.grey,
                   ),
                 ],
+                onImageTap: (image, index) {
+                  ImageViewerDialog.show(
+                    context, 
+                    images: _images,
+                    initialIndex: index, 
+                    enableHeroAnimation: true,
+                  );
+                },
               ),
             ),
             const SizedBox(height: 24),
@@ -257,7 +266,7 @@ class _CarouselDemoState extends State<CarouselDemo> {
                     context, 
                     images: _images,
                     initialIndex: index, 
-                    carouselController: _sharedController,
+                    controller: _sharedController,
                     enableHeroAnimation: true,
                     heroTagPrefix: 'carousel_demo',
                   );
