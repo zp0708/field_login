@@ -76,8 +76,6 @@ class _ImageViewerDialogState extends State<ImageViewerDialog> {
       _viewerController.setCurrentIndex(widget.initialIndex);
     } else {
       _viewerController = widget.controller!;
-      // 确保共享控制器也设置正确的初始索引
-      // _viewerController.setCurrentIndex(widget.initialIndex);
     }
   }
 
