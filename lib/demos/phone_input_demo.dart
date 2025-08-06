@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../widgets/phone_input_widget.dart';
+import '../widgets/phone_input_widget/phone_input_widget.dart';
 
 class PhoneInputDemo extends StatefulWidget {
   const PhoneInputDemo({super.key});
@@ -21,88 +21,91 @@ class _PhoneInputDemoState extends State<PhoneInputDemo> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: const Text('手机号输入框演示'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'PhoneInputWidget 手机号输入框',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'PhoneInputWidget 手机号输入框',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 30),
+              const SizedBox(height: 30),
 
-            // 手机号输入框
-            PhoneInputWidget(
-              controller: _phoneController,
-              onChanged: (value) {
-                setState(() {
-                  _phoneNumber = value;
-                });
-              },
-            ),
-            const SizedBox(height: 20),
+              // 手机号输入框
+              PhoneInputWidget(
+                controller: _phoneController,
+                onChanged: (value) {
+                  setState(() {
+                    _phoneNumber = value;
+                  });
+                },
+              ),
+              const SizedBox(height: 20),
 
-            // 显示输入的手机号
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      '当前输入的手机号:',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+              // 显示输入的手机号
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '当前输入的手机号:',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _phoneNumber.isEmpty ? '未输入' : _phoneNumber,
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: _phoneNumber.isEmpty ? Colors.grey : Colors.black,
+                      const SizedBox(height: 8),
+                      Text(
+                        _phoneNumber.isEmpty ? '未输入' : _phoneNumber,
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: _phoneNumber.isEmpty ? Colors.grey : Colors.black,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-            // 功能说明
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      '功能特性:',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+              // 功能说明
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '功能特性:',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    _buildFeatureItem('手机号格式化'),
-                    _buildFeatureItem('输入验证'),
-                    _buildFeatureItem('自定义样式'),
-                    _buildFeatureItem('实时格式化'),
-                  ],
+                      const SizedBox(height: 8),
+                      _buildFeatureItem('手机号格式化'),
+                      _buildFeatureItem('输入验证'),
+                      _buildFeatureItem('自定义样式'),
+                      _buildFeatureItem('实时格式化'),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -124,4 +127,4 @@ class _PhoneInputDemoState extends State<PhoneInputDemo> {
       ),
     );
   }
-} 
+}

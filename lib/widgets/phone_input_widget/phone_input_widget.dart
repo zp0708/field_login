@@ -1,6 +1,7 @@
+import 'package:field_login/widgets/phone_input_widget/keyboard_listener_mixin.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../style/adapt.dart';
+import '../../style/adapt.dart';
 
 class PhoneInputWidget extends StatefulWidget {
   final String? initialValue;
@@ -30,7 +31,7 @@ class PhoneInputWidget extends StatefulWidget {
   State<PhoneInputWidget> createState() => _PhoneInputWidgetState();
 }
 
-class _PhoneInputWidgetState extends State<PhoneInputWidget> {
+class _PhoneInputWidgetState extends State<PhoneInputWidget> with KeyboardListenerMixin {
   late FocusNode _focusNode;
   late TextEditingController _controller;
   bool _isFocused = false;
@@ -59,6 +60,11 @@ class _PhoneInputWidgetState extends State<PhoneInputWidget> {
       _controller.dispose();
     }
     super.dispose();
+  }
+
+  @override
+  void onKeyboardVisibilityChanged(bool visible, double keyboardHeight) {
+    print("Keyboard is now ${visible ? "visible" : "hidden"}, $keyboardHeight");
   }
 
   Color _getBorderColor() {

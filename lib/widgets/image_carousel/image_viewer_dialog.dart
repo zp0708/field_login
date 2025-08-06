@@ -113,6 +113,7 @@ class _ImageViewerDialogState extends State<ImageViewerDialog> {
               images: widget.images,
               controller: _viewerController,
               autoPlay: false,
+              enableZoom: true,
               borderRadius: BorderRadius.circular(9.0),
               showIndicator: true, // 隐藏默认指示器
             ),
