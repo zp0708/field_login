@@ -34,7 +34,7 @@ class ImageViewerDialog extends StatefulWidget {
       PageRouteBuilder(
         opaque: false,
         barrierDismissible: true,
-        barrierColor: Colors.black.withOpacity(0.8),
+        barrierColor: Color.fromRGBO(0, 0, 0, 0.8),
         pageBuilder: (context, animation, secondaryAnimation) {
           return ImageViewerDialog(
             images: images,
@@ -65,17 +65,14 @@ class _ImageViewerDialogState extends State<ImageViewerDialog> {
   @override
   void initState() {
     super.initState();
-    print('ImageViewerDialog initState - 初始索引: ${widget.initialIndex}');
     if (widget.controller == null) {
       _viewerController = ImageCarouselController();
       _viewerController.setTotalCount(widget.images.length);
       _viewerController.setCurrentIndex(widget.initialIndex);
     } else {
       _viewerController = widget.controller!;
-      print('使用共享控制器 - 控制器当前索引: ${_viewerController.currentIndex}');
       // 确保共享控制器也设置正确的初始索引
       _viewerController.setCurrentIndex(widget.initialIndex);
-      print('设置后控制器索引: ${_viewerController.currentIndex}');
     }
   }
 
@@ -98,13 +95,12 @@ class _ImageViewerDialogState extends State<ImageViewerDialog> {
 
   @override
   Widget build(BuildContext context) {
-
-    
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Column(
           children: [
+            SizedBox(height: 20),
             // 图片轮播
             Expanded(
               child: Padding(
@@ -132,7 +128,7 @@ class _ImageViewerDialogState extends State<ImageViewerDialog> {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.5),
+                      color: Color.fromRGBO(0, 0, 0, 0.5),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(

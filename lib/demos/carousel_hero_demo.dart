@@ -12,7 +12,7 @@ class CarouselHeroDemo extends StatefulWidget {
 
 class _CarouselHeroDemoState extends State<CarouselHeroDemo> {
   final ImageCarouselController _controller = ImageCarouselController();
-  
+
   final List<String> _images = [
     'https://picsum.photos/800/400?random=1',
     'https://picsum.photos/800/400?random=2',
@@ -44,9 +44,9 @@ class _CarouselHeroDemoState extends State<CarouselHeroDemo> {
             margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.purple.withOpacity(0.1),
+              color: Color.fromRGBO(147, 112, 219, 0.1),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.purple.withOpacity(0.3)),
+              border: Border.all(color: Color.fromRGBO(147, 112, 219, 0.3)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -67,7 +67,6 @@ class _CarouselHeroDemoState extends State<CarouselHeroDemo> {
               ],
             ),
           ),
-
           Container(
             height: 250,
             margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -75,7 +74,7 @@ class _CarouselHeroDemoState extends State<CarouselHeroDemo> {
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Color.fromRGBO(0, 0, 0, 0.1),
                   blurRadius: 10,
                   offset: const Offset(0, 5),
                 ),
@@ -126,8 +125,6 @@ class _CarouselHeroDemoState extends State<CarouselHeroDemo> {
                   ),
                 ),
                 onImageTap: (image, index) {
-                  print('点击图片 - 索引: $index, 图片: $image');
-                  print('控制器当前索引: ${_controller.currentIndex}');
                   ImageViewerDialog.show(
                     context,
                     images: _images,
@@ -152,9 +149,7 @@ class _CarouselHeroDemoState extends State<CarouselHeroDemo> {
                           margin: const EdgeInsets.symmetric(horizontal: 4),
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: controller.currentIndex == index
-                                ? Colors.white
-                                : Colors.white.withOpacity(0.5),
+                            color: controller.currentIndex == index ? Colors.white : Color.fromRGBO(255, 255, 255, 0.5),
                           ),
                         ),
                       ),
@@ -166,7 +161,7 @@ class _CarouselHeroDemoState extends State<CarouselHeroDemo> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.6),
+                        color: Color.fromRGBO(0, 0, 0, 0.6),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: const Text(
@@ -179,7 +174,6 @@ class _CarouselHeroDemoState extends State<CarouselHeroDemo> {
               ),
             ),
           ),
-
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
@@ -188,7 +182,6 @@ class _CarouselHeroDemoState extends State<CarouselHeroDemo> {
                 children: [
                   const Text('Hero动画配置', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
-                  
                   SwitchListTile(
                     title: const Text('启用Hero动画'),
                     subtitle: const Text('点击图片时显示平滑的过渡动画'),
@@ -196,11 +189,9 @@ class _CarouselHeroDemoState extends State<CarouselHeroDemo> {
                     onChanged: (value) {
                       setState(() {
                         _enableHeroAnimation = value;
-
                       });
                     },
                   ),
-
                   ListTile(
                     title: const Text('Hero标签前缀'),
                     subtitle: Text('当前: $_heroTagPrefix'),
@@ -220,14 +211,13 @@ class _CarouselHeroDemoState extends State<CarouselHeroDemo> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 16),
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.1),
+                      color: Color.fromRGBO(33, 150, 243, 0.1),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                      border: Border.all(color: Color.fromRGBO(33, 150, 243, 0.3)),
                     ),
                     child: const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -250,4 +240,4 @@ class _CarouselHeroDemoState extends State<CarouselHeroDemo> {
       ),
     );
   }
-} 
+}

@@ -47,7 +47,7 @@ class PageCounterOverlay extends StatelessWidget {
           return Container(
             padding: padding,
             decoration: BoxDecoration(
-              color: backgroundColor ?? Colors.black.withOpacity(0.5),
+              color: backgroundColor ?? Color.fromRGBO(0, 0, 0, 0.5),
               borderRadius: borderRadius ?? BorderRadius.circular(20),
             ),
             child: Text(

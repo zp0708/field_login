@@ -112,9 +112,9 @@ class _CarouselDemoState extends State<CarouselDemo> {
                 ],
                 onImageTap: (image, index) {
                   ImageViewerDialog.show(
-                    context, 
+                    context,
                     images: _images,
-                    initialIndex: index, 
+                    initialIndex: index,
                     enableHeroAnimation: true,
                   );
                 },
@@ -261,11 +261,10 @@ class _CarouselDemoState extends State<CarouselDemo> {
                   ),
                 ],
                 onImageTap: (image, index) {
-                  print('image: $image, index: $index');
                   ImageViewerDialog.show(
-                    context, 
+                    context,
                     images: _images,
-                    initialIndex: index, 
+                    initialIndex: index,
                     controller: _sharedController,
                     enableHeroAnimation: true,
                     heroTagPrefix: 'carousel_demo',

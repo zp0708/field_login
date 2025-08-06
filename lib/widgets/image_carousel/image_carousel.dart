@@ -13,7 +13,8 @@ class ImageCarousel extends StatefulWidget {
   final double? width;
   final BoxFit fit;
   final BorderRadius? borderRadius;
-  final Widget? Function(String image, int index)? onImageTap;
+  final bool enableCache;
+  final void Function(String image, int index)? onImageTap;
   final Widget? Function(String image, int index)? imageBuilder;
   final bool infiniteScroll;
 
@@ -29,13 +30,6 @@ class ImageCarousel extends StatefulWidget {
   final bool enableZoom; // 启用缩放
   final double minScale; // 最小缩放比例
   final double maxScale; // 最大缩放比例
-  // 缓存配置
-  final bool enableCache; // 启用缓存
-  final int? memCacheWidth; // 内存缓存宽度
-  final int? memCacheHeight; // 内存缓存高度
-  final int? maxWidthDiskCache; // 磁盘缓存最大宽度
-  final int? maxHeightDiskCache; // 磁盘缓存最大高度
-  final bool useOldImageOnUrlChange; // URL变化时是否使用旧图片
   // Hero动画配置
   final bool enableHeroAnimation; // 启用Hero动画
   final String? heroTagPrefix; // Hero标签前缀
@@ -67,13 +61,7 @@ class ImageCarousel extends StatefulWidget {
     this.enableZoom = false,
     this.minScale = 0.5,
     this.maxScale = 3.0,
-    // 缓存配置参数
     this.enableCache = true,
-    this.memCacheWidth,
-    this.memCacheHeight,
-    this.maxWidthDiskCache,
-    this.maxHeightDiskCache,
-    this.useOldImageOnUrlChange = true,
     // Hero动画参数
     this.enableHeroAnimation = false,
     this.heroTagPrefix,
@@ -97,17 +85,15 @@ class _ImageCarouselState extends State<ImageCarousel> {
   void initState() {
     super.initState();
     _controller = widget.controller ?? ImageCarouselController();
-    
+
     // 如果有外部控制器，使用控制器的当前索引作为初始页面
     int initialPage = 0;
     if (widget.controller != null) {
-      initialPage = widget.infiniteScroll 
-          ? 5000 + widget.controller!.currentIndex
-          : widget.controller!.currentIndex;
+      initialPage = widget.infiniteScroll ? 5000 + widget.controller!.currentIndex : widget.controller!.currentIndex;
     } else {
       initialPage = widget.infiniteScroll ? 5000 : 0;
     }
-    
+
     // 根据是否启用无限滚动来决定初始页面
     _pageController = PageController(
       initialPage: initialPage,
@@ -163,10 +149,8 @@ class _ImageCarouselState extends State<ImageCarousel> {
       if (widget.controller != null) {
         // 如果有新的控制器，确保PageController设置正确的初始页面
         final currentIndex = widget.controller!.currentIndex;
-        final targetPage = widget.infiniteScroll 
-            ? 5000 + currentIndex
-            : currentIndex;
-        
+        final targetPage = widget.infiniteScroll ? 5000 + currentIndex : currentIndex;
+
         if (_pageController.hasClients) {
           _pageController.jumpToPage(targetPage);
         }
@@ -391,10 +375,8 @@ class _ImageCarouselState extends State<ImageCarousel> {
   Widget _buildDefaultImage(String image, int index) {
     // 如果启用Hero动画，则包装Hero组件
     if (widget.enableHeroAnimation) {
-      final heroTag = widget.heroTagPrefix != null 
-          ? '${widget.heroTagPrefix}_$index'
-          : 'carousel_image_$index';
-      
+      final heroTag = widget.heroTagPrefix != null ? '${widget.heroTagPrefix}_$index' : 'carousel_image_$index';
+
       return Hero(
         tag: heroTag,
         child: _buildImageWidget(image, index),
@@ -419,14 +401,6 @@ class _ImageCarouselState extends State<ImageCarousel> {
           _imageLoadStates[index] = true;
           return Image(image: imageProvider, fit: widget.fit);
         },
-        // 缓存配置
-        memCacheWidth: widget.memCacheWidth ?? 800, // 内存缓存宽度
-        memCacheHeight: widget.memCacheHeight ?? 600, // 内存缓存高度
-        maxWidthDiskCache: widget.maxWidthDiskCache ?? 1024, // 磁盘缓存最大宽度
-        maxHeightDiskCache: widget.maxHeightDiskCache ?? 768, // 磁盘缓存最大高度
-        // 缓存策略
-        cacheKey: 'carousel_$index', // 自定义缓存键
-        useOldImageOnUrlChange: widget.useOldImageOnUrlChange, // URL变化时使用旧图片
       );
     } else {
       // 不使用缓存，回退到原始 Image.network

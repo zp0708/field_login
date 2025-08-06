@@ -93,7 +93,7 @@ class ControlButtonsOverlay extends StatelessWidget {
       width: buttonSize,
       height: buttonSize,
       decoration: BoxDecoration(
-        color: backgroundColor ?? Colors.black.withOpacity(0.5),
+        color: backgroundColor ?? Color.fromRGBO(0, 0, 0, 0.5),
         borderRadius: borderRadius ?? BorderRadius.circular(buttonSize / 2),
       ),
       child: Material(
