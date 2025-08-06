@@ -22,7 +22,7 @@ class _CarouselDemoState extends State<CarouselDemo> {
   // 配置状态
   bool _autoPlay = false;
   bool _enableZoom = false;
-  bool _enableHeroAnimation = false;
+  bool _enableHeroAnimation = true;
   bool _showOverlays = true;
   double _autoPlayInterval = 3.0;
   double _minScale = 0.5;
@@ -152,7 +152,9 @@ class _CarouselDemoState extends State<CarouselDemo> {
           title: const Text('Hero动画'),
           subtitle: const Text('启用Hero过渡动画'),
           value: _enableHeroAnimation,
-          onChanged: (value) => setState(() => _enableHeroAnimation = value),
+          onChanged: (value) {
+            setState(() => _enableHeroAnimation = value);
+          },
           activeColor: Colors.blue,
         ),
         SwitchListTile(
@@ -195,40 +197,40 @@ class _CarouselDemoState extends State<CarouselDemo> {
             const SizedBox(height: 24),
 
             // 基础轮播图
-            _buildBasicDemo(),
-            const SizedBox(height: 24),
+            // _buildBasicDemo(),
+            // const SizedBox(height: 24),
 
-            // 自动播放轮播图
-            _buildAutoPlayDemo(),
-            const SizedBox(height: 24),
+            // // 自动播放轮播图
+            // _buildAutoPlayDemo(),
+            // const SizedBox(height: 24),
 
-            // 缩放功能轮播图
-            _buildZoomDemo(),
-            const SizedBox(height: 24),
+            // // 缩放功能轮播图
+            // _buildZoomDemo(),
+            // const SizedBox(height: 24),
 
-            // Hero动画轮播图
-            _buildHeroDemo(),
-            const SizedBox(height: 24),
+            // // Hero动画轮播图
+            // _buildHeroDemo(),
+            // const SizedBox(height: 24),
 
-            // 自定义UI轮播图
-            _buildCustomUIDemo(),
-            const SizedBox(height: 24),
+            // // 自定义UI轮播图
+            // _buildCustomUIDemo(),
+            // const SizedBox(height: 24),
 
-            // 覆盖层演示
-            _buildOverlayDemo(),
-            const SizedBox(height: 24),
+            // // 覆盖层演示
+            // _buildOverlayDemo(),
+            // const SizedBox(height: 24),
 
-            // 控制器演示
-            _buildControllerDemo(),
-            const SizedBox(height: 24),
+            // // 控制器演示
+            // _buildControllerDemo(),
+            // const SizedBox(height: 24),
 
-            // 错误处理演示
-            _buildErrorDemo(),
-            const SizedBox(height: 24),
+            // // 错误处理演示
+            // _buildErrorDemo(),
+            // const SizedBox(height: 24),
 
-            // 滑动测试演示
-            _buildSwipeTestDemo(),
-            const SizedBox(height: 24),
+            // // 滑动测试演示
+            // _buildSwipeTestDemo(),
+            // const SizedBox(height: 24),
           ],
         ),
       ),
@@ -369,8 +371,9 @@ class _CarouselDemoState extends State<CarouselDemo> {
           ),
         ),
         const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
           children: [
             ElevatedButton.icon(
               onPressed: () => _advancedController.previousPage(),

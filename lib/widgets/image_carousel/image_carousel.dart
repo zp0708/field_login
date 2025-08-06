@@ -212,21 +212,17 @@ class _ImageCarouselState extends State<ImageCarousel> {
   int _calculateInitialPage() {
     if (widget.controller != null) {
       final int controllerIndex = widget.controller!.currentIndex;
-      return widget.options.infiniteScroll ? 5000 + controllerIndex : controllerIndex;
+      return widget.options.infiniteScroll ? controllerIndex : controllerIndex;
     }
-    return widget.options.infiniteScroll ? 5000 : 0;
+    // 对于无限滚动，直接使用0作为初始页面
+    // 因为 itemCount 为 null，PageView 可以无限滚动
+    return 0;
   }
 
   /// 同步初始索引
   void _syncInitialIndex() {
-    if (widget.options.infiniteScroll) {
-      final int initialPage = _calculateInitialPage();
-      final int initialIndex = initialPage % widget.images.length;
-      _controller.updateCurrentIndex(initialIndex);
-    } else {
-      final int controllerIndex = widget.controller?.currentIndex ?? 0;
-      _controller.updateCurrentIndex(controllerIndex);
-    }
+    final int initialIndex = widget.controller?.currentIndex ?? 0;
+    _controller.updateCurrentIndex(initialIndex);
   }
 
   /// 初始化自动播放
@@ -267,10 +263,9 @@ class _ImageCarouselState extends State<ImageCarousel> {
     if (oldWidget.controller != widget.controller) {
       if (widget.controller != null) {
         final int currentIndex = widget.controller!.currentIndex;
-        final int targetPage = widget.options.infiniteScroll ? 5000 + currentIndex : currentIndex;
 
         if (_pageController.hasClients) {
-          _pageController.jumpToPage(targetPage);
+          _pageController.jumpToPage(currentIndex);
         }
       }
     }

@@ -77,25 +77,7 @@ class _ImageViewerDialogState extends State<ImageViewerDialog> {
     } else {
       _viewerController = widget.controller!;
       // 确保共享控制器也设置正确的初始索引
-      _viewerController.setCurrentIndex(widget.initialIndex);
-    }
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // 确保在依赖变化时也设置正确的索引
-    if (widget.controller != null) {
-      _viewerController.setCurrentIndex(widget.initialIndex);
-    }
-  }
-
-  @override
-  void didUpdateWidget(ImageViewerDialog oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // 确保在widget更新时也设置正确的索引
-    if (widget.initialIndex != oldWidget.initialIndex) {
-      _viewerController.setCurrentIndex(widget.initialIndex);
+      // _viewerController.setCurrentIndex(widget.initialIndex);
     }
   }
 
