@@ -1,5 +1,5 @@
+import 'package:field_login/demos/carousel_demo.dart';
 import 'package:flutter/material.dart';
-import '../demos/carousel_demo.dart';
 import '../demos/progress_demo.dart';
 import '../demos/phone_input_demo.dart';
 import '../demos/shape_tab_demo.dart';

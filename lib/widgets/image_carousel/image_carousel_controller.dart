@@ -50,21 +50,15 @@ class ImageCarouselController extends ChangeNotifier {
 
   /// 下一页
   void nextPage() {
-    if (_currentIndex < _totalCount - 1) {
-      setCurrentIndex(_currentIndex + 1);
-    } else {
-      // 循环到第一页
-      setCurrentIndex(0);
+    if (_totalCount > 0) {
+      setCurrentIndex((_currentIndex + 1) % _totalCount);
     }
   }
 
   /// 上一页
   void previousPage() {
-    if (_currentIndex > 0) {
-      setCurrentIndex(_currentIndex - 1);
-    } else {
-      // 循环到最后一页
-      setCurrentIndex(_totalCount - 1);
+    if (_totalCount > 0) {
+      setCurrentIndex((_currentIndex - 1 + _totalCount) % _totalCount);
     }
   }
 

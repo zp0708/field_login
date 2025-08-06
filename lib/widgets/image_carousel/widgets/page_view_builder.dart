@@ -64,7 +64,7 @@ class InfinitePageViewBuilder extends StatelessWidget {
     return PageView.builder(
       controller: controller,
       onPageChanged: onPageChanged,
-      itemCount: 10000,
+      itemCount: null, // 使用null表示无限滚动
       itemBuilder: (BuildContext context, int index) {
         final int actualIndex = index % images.length;
         return PageItemBuilder(

@@ -1,10 +1,10 @@
-import 'package:field_login/widgets/image_carousel/overlays/indicator_overlay.dart';
 import 'package:flutter/material.dart';
 import '../widgets/image_carousel/image_carousel.dart';
 import '../widgets/image_carousel/image_carousel_controller.dart';
 import '../widgets/image_carousel/image_viewer_dialog.dart';
 import '../widgets/image_carousel/models/carousel_options.dart';
 import '../widgets/image_carousel/overlays/carousel_indicator.dart';
+import '../widgets/image_carousel/overlays/indicator_overlay.dart';
 import '../widgets/image_carousel/overlays/page_counter_overlay.dart';
 import '../widgets/image_carousel/overlays/control_buttons_overlay.dart';
 
@@ -61,6 +61,111 @@ class _CarouselDemoState extends State<CarouselDemo> {
     );
   }
 
+  void _showConfigDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            const Icon(Icons.settings, color: Colors.blue),
+            const SizedBox(width: 8),
+            const Text('配置面板'),
+          ],
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: _buildConfigContent(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('关闭'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildConfigContent() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SwitchListTile(
+          title: const Text('自动播放'),
+          subtitle: const Text('启用自动轮播功能'),
+          value: _autoPlay,
+          onChanged: (value) => setState(() => _autoPlay = value),
+          activeColor: Colors.blue,
+        ),
+        if (_autoPlay) ...[
+          ListTile(
+            title: const Text('播放间隔'),
+            subtitle: Slider(
+              value: _autoPlayInterval,
+              min: 1.0,
+              max: 10.0,
+              divisions: 9,
+              label: '${_autoPlayInterval.toStringAsFixed(1)}秒',
+              onChanged: (value) => setState(() => _autoPlayInterval = value),
+              activeColor: Colors.blue,
+              thumbColor: Colors.blue,
+            ),
+          ),
+        ],
+        SwitchListTile(
+          title: const Text('缩放功能'),
+          subtitle: const Text('支持双指缩放图片'),
+          value: _enableZoom,
+          onChanged: (value) => setState(() => _enableZoom = value),
+          activeColor: Colors.blue,
+        ),
+        if (_enableZoom) ...[
+          ListTile(
+            title: const Text('最小缩放'),
+            subtitle: Slider(
+              value: _minScale,
+              min: 0.1,
+              max: 1.0,
+              divisions: 9,
+              label: _minScale.toStringAsFixed(1),
+              onChanged: (value) => setState(() => _minScale = value),
+              activeColor: Colors.blue,
+              thumbColor: Colors.blue,
+            ),
+          ),
+          ListTile(
+            title: const Text('最大缩放'),
+            subtitle: Slider(
+              value: _maxScale,
+              min: 1.0,
+              max: 5.0,
+              divisions: 8,
+              label: _maxScale.toStringAsFixed(1),
+              onChanged: (value) => setState(() => _maxScale = value),
+              activeColor: Colors.blue,
+              thumbColor: Colors.blue,
+            ),
+          ),
+        ],
+        SwitchListTile(
+          title: const Text('Hero动画'),
+          subtitle: const Text('启用Hero过渡动画'),
+          value: _enableHeroAnimation,
+          onChanged: (value) => setState(() => _enableHeroAnimation = value),
+          activeColor: Colors.blue,
+        ),
+        SwitchListTile(
+          title: const Text('显示覆盖层'),
+          subtitle: const Text('显示指示器和控制按钮'),
+          value: _showOverlays,
+          onChanged: (value) => setState(() => _showOverlays = value),
+          activeColor: Colors.blue,
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -69,6 +174,12 @@ class _CarouselDemoState extends State<CarouselDemo> {
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
         elevation: 2,
+        actions: [
+          IconButton(
+            onPressed: () => _showConfigDialog(context),
+            icon: Icon(Icons.settings),
+          )
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -77,10 +188,6 @@ class _CarouselDemoState extends State<CarouselDemo> {
           children: [
             // 标题和描述
             _buildHeader(),
-            const SizedBox(height: 24),
-
-            // 配置面板
-            _buildConfigPanel(),
             const SizedBox(height: 24),
 
             // 高级演示轮播图
@@ -137,7 +244,7 @@ class _CarouselDemoState extends State<CarouselDemo> {
         border: Border.all(color: Colors.blue.shade200),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Text(
             '🎠 图片轮播器功能演示',
@@ -154,91 +261,6 @@ class _CarouselDemoState extends State<CarouselDemo> {
               fontSize: 14,
               color: Colors.grey,
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildConfigPanel() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            '⚙️ 配置面板',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 12),
-          SwitchListTile(
-            title: const Text('自动播放'),
-            subtitle: const Text('启用自动轮播功能'),
-            value: _autoPlay,
-            onChanged: (value) => setState(() => _autoPlay = value),
-          ),
-          if (_autoPlay) ...[
-            ListTile(
-              title: const Text('播放间隔'),
-              subtitle: Slider(
-                value: _autoPlayInterval,
-                min: 1.0,
-                max: 10.0,
-                divisions: 9,
-                label: '${_autoPlayInterval.toStringAsFixed(1)}秒',
-                onChanged: (value) => setState(() => _autoPlayInterval = value),
-              ),
-            ),
-          ],
-          SwitchListTile(
-            title: const Text('缩放功能'),
-            subtitle: const Text('支持双指缩放图片'),
-            value: _enableZoom,
-            onChanged: (value) => setState(() => _enableZoom = value),
-          ),
-          if (_enableZoom) ...[
-            ListTile(
-              title: const Text('最小缩放'),
-              subtitle: Slider(
-                value: _minScale,
-                min: 0.1,
-                max: 1.0,
-                divisions: 9,
-                label: _minScale.toStringAsFixed(1),
-                onChanged: (value) => setState(() => _minScale = value),
-              ),
-            ),
-            ListTile(
-              title: const Text('最大缩放'),
-              subtitle: Slider(
-                value: _maxScale,
-                min: 1.0,
-                max: 5.0,
-                divisions: 8,
-                label: _maxScale.toStringAsFixed(1),
-                onChanged: (value) => setState(() => _maxScale = value),
-              ),
-            ),
-          ],
-          SwitchListTile(
-            title: const Text('Hero动画'),
-            subtitle: const Text('启用Hero过渡动画'),
-            value: _enableHeroAnimation,
-            onChanged: (value) => setState(() => _enableHeroAnimation = value),
-          ),
-          SwitchListTile(
-            title: const Text('显示覆盖层'),
-            subtitle: const Text('显示指示器和控制按钮'),
-            value: _showOverlays,
-            onChanged: (value) => setState(() => _showOverlays = value),
           ),
         ],
       ),
@@ -275,7 +297,6 @@ class _CarouselDemoState extends State<CarouselDemo> {
                 minScale: _minScale,
                 maxScale: _maxScale,
                 enableHeroAnimation: _enableHeroAnimation,
-                heroTagPrefix: 'advanced_demo',
                 enableCache: true,
                 enablePreload: true,
                 preloadCount: 2,
@@ -307,12 +328,12 @@ class _CarouselDemoState extends State<CarouselDemo> {
                   ),
                 ),
               ),
-              onImageTap: (image, index) {
+              onImageTap: (controller, image, index) {
                 ImageViewerDialog.show(
                   context,
                   images: _images,
                   initialIndex: index,
-                  controller: _advancedController,
+                  controller: controller,
                   enableHeroAnimation: _enableHeroAnimation,
                 );
               },
@@ -403,7 +424,7 @@ class _CarouselDemoState extends State<CarouselDemo> {
                 autoPlay: false,
               ),
               borderRadius: BorderRadius.circular(12),
-              onImageTap: (image, index) {
+              onImageTap: (controller, image, index) {
                 _showSnackBar('点击了第 ${index + 1} 张图片');
               },
             ),
@@ -440,20 +461,9 @@ class _CarouselDemoState extends State<CarouselDemo> {
                 autoPlayInterval: Duration(seconds: 3),
               ),
               borderRadius: BorderRadius.circular(12),
-              overlaysBuilder: (controller) => [
-                Positioned(
-                  bottom: 16,
-                  left: 0,
-                  right: 0,
-                  child: CarouselIndicator(
-                    currentIndex: controller.currentIndex,
-                    totalCount: _images.length,
-                    type: CarouselIndicatorType.progress,
-                    activeColor: Colors.white,
-                    inactiveColor: Colors.white.withOpacity(0.3),
-                  ),
-                ),
-              ],
+              onImageTap: (controller, image, index) {
+                _showSnackBar('支持双指缩放，点击查看大图');
+              },
             ),
           ),
         ),
@@ -490,7 +500,7 @@ class _CarouselDemoState extends State<CarouselDemo> {
                 maxScale: 3.0,
               ),
               borderRadius: BorderRadius.circular(12),
-              onImageTap: (image, index) {
+              onImageTap: (controller, image, index) {
                 _showSnackBar('支持双指缩放，点击查看大图');
               },
             ),
@@ -528,13 +538,13 @@ class _CarouselDemoState extends State<CarouselDemo> {
                 heroTagPrefix: 'hero_demo',
               ),
               borderRadius: BorderRadius.circular(12),
-              onImageTap: (image, index) {
-                showDialog(
-                  context: context,
-                  builder: (context) => ImageViewerDialog(
-                    images: _images,
-                    initialIndex: index,
-                  ),
+              onImageTap: (controller, image, index) {
+                ImageViewerDialog.show(
+                  context,
+                  images: _images,
+                  initialIndex: index,
+                  enableHeroAnimation: true,
+                  heroTagPrefix: 'hero_demo',
                 );
               },
             ),
@@ -718,17 +728,11 @@ class _CarouselDemoState extends State<CarouselDemo> {
                   ),
                 ),
                 // 底部指示器
-                Positioned(
-                  bottom: 16,
-                  left: 0,
-                  right: 0,
-                  child: CarouselIndicator(
-                    currentIndex: controller.currentIndex,
-                    totalCount: _images.length,
-                    type: CarouselIndicatorType.dots,
-                    activeColor: Colors.white,
-                    inactiveColor: Colors.white.withOpacity(0.5),
-                  ),
+                IndicatorOverlay(
+                  controller: controller,
+                  type: CarouselIndicatorType.dots,
+                  activeColor: Colors.white,
+                  inactiveColor: Colors.white.withOpacity(0.5),
                 ),
                 // 控制按钮
                 ControlButtonsOverlay(
@@ -816,14 +820,9 @@ class _CarouselDemoState extends State<CarouselDemo> {
               label: const Text('停止播放'),
             ),
             ElevatedButton.icon(
-              onPressed: () => _sharedController.pauseAutoPlay(),
+              onPressed: () => _sharedController.toggleAutoPlay(),
               icon: const Icon(Icons.pause),
-              label: const Text('暂停播放'),
-            ),
-            ElevatedButton.icon(
-              onPressed: () => _sharedController.resumeAutoPlay(),
-              icon: const Icon(Icons.play_circle),
-              label: const Text('恢复播放'),
+              label: const Text('切换播放'),
             ),
           ],
         ),
@@ -832,18 +831,11 @@ class _CarouselDemoState extends State<CarouselDemo> {
   }
 
   Widget _buildErrorDemo() {
-    final errorImages = [
-      'https://invalid-url-1.com/image.jpg',
-      'https://invalid-url-2.com/image.jpg',
-      'https://picsum.photos/400/200?random=1',
-      'https://invalid-url-3.com/image.jpg',
-    ];
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          '⚠️ 错误处理演示',
+          '❌ 错误处理演示',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
@@ -859,27 +851,16 @@ class _CarouselDemoState extends State<CarouselDemo> {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: ImageCarousel(
-              images: errorImages,
+              images: [
+                'https://invalid-url-1.com/image.jpg',
+                'https://invalid-url-2.com/image.jpg',
+                'https://picsum.photos/400/200?random=1',
+              ],
               options: const ImageCarouselOptions(
                 autoPlay: false,
                 enableErrorRetry: true,
-                maxRetryCount: 3,
-                retryDelay: Duration(seconds: 2),
               ),
               borderRadius: BorderRadius.circular(12),
-              placeholder: Container(
-                color: Colors.grey.shade200,
-                child: const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      CircularProgressIndicator(),
-                      SizedBox(height: 8),
-                      Text('加载中...'),
-                    ],
-                  ),
-                ),
-              ),
               errorWidget: Container(
                 color: Colors.red.shade100,
                 child: const Center(
@@ -888,13 +869,9 @@ class _CarouselDemoState extends State<CarouselDemo> {
                     children: [
                       Icon(Icons.error_outline, size: 48, color: Colors.red),
                       SizedBox(height: 8),
-                      Text('加载失败'),
+                      Text('图片加载失败'),
                       SizedBox(height: 8),
-                      Text(
-                        '网络错误，请检查网络连接',
-                        style: TextStyle(fontSize: 12),
-                        textAlign: TextAlign.center,
-                      ),
+                      Text('点击重试'),
                     ],
                   ),
                 ),
@@ -930,12 +907,21 @@ class _CarouselDemoState extends State<CarouselDemo> {
               images: _images,
               options: const ImageCarouselOptions(
                 autoPlay: false,
+                enableGestureControl: true,
               ),
               borderRadius: BorderRadius.circular(12),
-              onImageTap: (image, index) {
-                _showSnackBar('点击了第 ${index + 1} 张图片');
+              onImageTap: (controller, image, index) {
+                _showSnackBar('当前索引: ${controller.currentIndex + 1}');
               },
             ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          '💡 提示：左右滑动切换图片，点击图片查看当前索引',
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey,
           ),
         ),
       ],

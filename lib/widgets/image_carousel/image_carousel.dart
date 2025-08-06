@@ -28,7 +28,7 @@ class ImageCarousel extends StatefulWidget {
   final Widget? errorWidget;
 
   /// 图片点击回调
-  final void Function(String image, int index)? onImageTap;
+  final void Function(ImageCarouselController controller, String image, int index)? onImageTap;
 
   /// 自定义图片构建器
   final Widget? Function(String image, int index)? imageBuilder;
@@ -211,7 +211,8 @@ class _ImageCarouselState extends State<ImageCarousel> {
   /// 计算初始页面
   int _calculateInitialPage() {
     if (widget.controller != null) {
-      return widget.options.infiniteScroll ? 5000 + widget.controller!.currentIndex : widget.controller!.currentIndex;
+      final int controllerIndex = widget.controller!.currentIndex;
+      return widget.options.infiniteScroll ? 5000 + controllerIndex : controllerIndex;
     }
     return widget.options.infiniteScroll ? 5000 : 0;
   }
@@ -223,7 +224,8 @@ class _ImageCarouselState extends State<ImageCarousel> {
       final int initialIndex = initialPage % widget.images.length;
       _controller.updateCurrentIndex(initialIndex);
     } else {
-      _controller.updateCurrentIndex(widget.controller?.currentIndex ?? 0);
+      final int controllerIndex = widget.controller?.currentIndex ?? 0;
+      _controller.updateCurrentIndex(controllerIndex);
     }
   }
 
@@ -318,6 +320,8 @@ class _ImageCarouselState extends State<ImageCarousel> {
 
     if (actualIndex != _controller.currentIndex) {
       _isUpdatingFromController = true;
+
+      // 计算最短距离的目标页面
       final int targetPage = _calculateTargetPage(currentPage, actualIndex);
 
       _pageController
@@ -350,10 +354,17 @@ class _ImageCarouselState extends State<ImageCarousel> {
 
   /// 计算目标页面
   int _calculateTargetPage(int currentPage, int actualIndex) {
-    final int currentActualIndex = actualIndex;
     final int targetActualIndex = _controller.currentIndex;
 
-    int shortestDistance = targetActualIndex - currentActualIndex;
+    // 如果目标索引和当前实际索引相同，不需要跳转
+    if (targetActualIndex == actualIndex) {
+      return currentPage;
+    }
+
+    // 计算最短距离
+    int shortestDistance = targetActualIndex - actualIndex;
+
+    // 处理循环情况，选择最短路径
     if (shortestDistance.abs() > widget.images.length / 2) {
       if (shortestDistance > 0) {
         shortestDistance -= widget.images.length;
@@ -377,7 +388,7 @@ class _ImageCarouselState extends State<ImageCarousel> {
         options: widget.options,
         placeholder: widget.placeholder,
         errorWidget: widget.errorWidget,
-        onImageTap: widget.onImageTap,
+        onImageTap: (image, index) => widget.onImageTap?.call(_controller, image, index),
         imageBuilder: widget.imageBuilder,
         errorManager: _errorManager,
       );
@@ -391,7 +402,7 @@ class _ImageCarouselState extends State<ImageCarousel> {
         options: widget.options,
         placeholder: widget.placeholder,
         errorWidget: widget.errorWidget,
-        onImageTap: widget.onImageTap,
+        onImageTap: (image, index) => widget.onImageTap?.call(_controller, image, index),
         imageBuilder: widget.imageBuilder,
         errorManager: _errorManager,
       );
@@ -403,7 +414,7 @@ class _ImageCarouselState extends State<ImageCarousel> {
         options: widget.options,
         placeholder: widget.placeholder,
         errorWidget: widget.errorWidget,
-        onImageTap: widget.onImageTap,
+        onImageTap: (image, index) => widget.onImageTap?.call(_controller, image, index),
         imageBuilder: widget.imageBuilder,
         errorManager: _errorManager,
       );
@@ -413,11 +424,14 @@ class _ImageCarouselState extends State<ImageCarousel> {
   /// 处理页面变化
   void _handlePageChanged(int index) {
     if (!_isUpdatingFromController) {
-      _controller.updateCurrentIndex(index);
+      // 对于无限滚动，需要计算实际的图片索引
+      final int actualIndex = widget.options.infiniteScroll ? index % widget.images.length : index;
+      _controller.updateCurrentIndex(actualIndex);
     }
 
     if (widget.options.enablePreload) {
-      _preloadManager.preloadImages(index, context);
+      final int actualIndex = widget.options.infiniteScroll ? index % widget.images.length : index;
+      _preloadManager.preloadImages(actualIndex, context);
     }
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'image_carousel.dart';
 import 'image_carousel_controller.dart';
+import 'models/carousel_options.dart';
 
 class ImageViewerDialog extends StatefulWidget {
   final List<String> images;
@@ -46,6 +47,10 @@ class ImageViewerDialog extends StatefulWidget {
           );
         },
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          // 如果启用Hero动画，则不使用额外的过渡动画
+          if (enableHeroAnimation) {
+            return child;
+          }
           return FadeTransition(
             opacity: animation,
             child: child,
@@ -86,6 +91,15 @@ class _ImageViewerDialogState extends State<ImageViewerDialog> {
   }
 
   @override
+  void didUpdateWidget(ImageViewerDialog oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // 确保在widget更新时也设置正确的索引
+    if (widget.initialIndex != oldWidget.initialIndex) {
+      _viewerController.setCurrentIndex(widget.initialIndex);
+    }
+  }
+
+  @override
   void dispose() {
     if (widget.controller == null) {
       _viewerController.dispose();
@@ -111,9 +125,9 @@ class _ImageViewerDialogState extends State<ImageViewerDialog> {
                   autoPlay: false,
                   enableZoom: true,
                   height: widget.height,
-                  borderRadius: BorderRadius.circular(9.0),
                   enableHeroAnimation: widget.enableHeroAnimation,
                   heroTagPrefix: widget.heroTagPrefix,
+                  borderRadius: BorderRadius.circular(9.0),
                 ),
               ),
             ),
