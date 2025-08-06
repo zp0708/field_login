@@ -1,72 +1,145 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'image_carousel_controller.dart';
+import 'managers/preload_manager.dart';
+import 'managers/error_manager.dart';
+import 'models/carousel_options.dart';
+import 'widgets/page_view_builder.dart';
 
 /// 图片轮播器组件
+///
+/// 一个功能丰富的图片轮播组件，支持自动播放、手势控制、预加载、
+/// 错误重试、Hero动画等功能。提供高度可定制的配置选项。
 class ImageCarousel extends StatefulWidget {
+  /// 图片列表
   final List<String> images;
+
+  /// 控制器
   final ImageCarouselController? controller;
-  final bool autoPlay;
-  final Duration autoPlayInterval;
-  final double? height;
-  final double? width;
-  final BoxFit fit;
-  final BorderRadius? borderRadius;
-  final bool enableCache;
+
+  /// 配置选项
+  final ImageCarouselOptions options;
+
+  // UI相关配置项
+  /// 占位符组件
+  final Widget? placeholder;
+
+  /// 错误组件
+  final Widget? errorWidget;
+
+  /// 图片点击回调
   final void Function(String image, int index)? onImageTap;
+
+  /// 自定义图片构建器
   final Widget? Function(String image, int index)? imageBuilder;
-  final bool infiniteScroll;
 
-  // 新增功能
-  final bool enableGestureControl; // 启用手势控制
-  final bool enablePreload; // 启用预加载
-  final int preloadCount; // 预加载数量
-  final bool enableErrorRetry; // 启用错误重试
-  final int maxRetryCount; // 最大重试次数
-  final Duration retryDelay; // 重试延迟
-  final Widget? placeholder; // 占位符
-  final Widget? errorWidget; // 错误组件
-  final bool enableZoom; // 启用缩放
-  final double minScale; // 最小缩放比例
-  final double maxScale; // 最大缩放比例
-  // Hero动画配置
-  final bool enableHeroAnimation; // 启用Hero动画
-  final String? heroTagPrefix; // Hero标签前缀
-  // 覆盖层构建器
-  final List<Widget> Function(ImageCarouselController controller)? overlaysBuilder; // 覆盖层构建器
+  /// 圆角
+  final BorderRadius? borderRadius;
 
-  const ImageCarousel({
+  /// 覆盖层构建器
+  final List<Widget> Function(ImageCarouselController controller)? overlaysBuilder;
+
+  /// 创建图片轮播器实例
+  ///
+  /// [images] 图片列表
+  /// [controller] 控制器
+  /// [autoPlay] 是否自动播放
+  /// [autoPlayInterval] 自动播放间隔
+  /// [height] 高度
+  /// [width] 宽度
+  /// [fit] 图片适配方式
+  /// [borderRadius] 圆角
+  /// [enableCache] 是否启用缓存
+  /// [onImageTap] 图片点击回调
+  /// [imageBuilder] 自定义图片构建器
+  /// [infiniteScroll] 是否启用无限滚动
+  /// [enableGestureControl] 是否启用手势控制
+  /// [enablePreload] 是否启用预加载
+  /// [preloadCount] 预加载数量
+  /// [enableErrorRetry] 是否启用错误重试
+  /// [maxRetryCount] 最大重试次数
+  /// [retryDelay] 重试延迟
+  /// [placeholder] 占位符组件
+  /// [errorWidget] 错误组件
+  /// [enableZoom] 是否启用缩放
+  /// [minScale] 最小缩放比例
+  /// [maxScale] 最大缩放比例
+  /// [enableHeroAnimation] 是否启用Hero动画
+  /// [heroTagPrefix] Hero标签前缀
+  /// [overlaysBuilder] 覆盖层构建器
+  ImageCarousel({
     super.key,
     required this.images,
     this.controller,
-    this.autoPlay = false,
-    this.autoPlayInterval = const Duration(seconds: 3),
-    this.height,
-    this.width,
-    this.fit = BoxFit.cover,
-    this.borderRadius,
     this.onImageTap,
     this.imageBuilder,
-    this.infiniteScroll = true,
-    // 新增参数
-    this.enableGestureControl = true,
-    this.enablePreload = true,
-    this.preloadCount = 2,
-    this.enableErrorRetry = true,
-    this.maxRetryCount = 3,
-    this.retryDelay = const Duration(seconds: 2),
+    this.overlaysBuilder,
+    this.borderRadius,
     this.placeholder,
     this.errorWidget,
-    this.enableZoom = false,
-    this.minScale = 0.5,
-    this.maxScale = 3.0,
-    this.enableCache = true,
-    // Hero动画参数
-    this.enableHeroAnimation = false,
-    this.heroTagPrefix,
-    // 覆盖层参数
+    bool autoPlay = false,
+    Duration autoPlayInterval = const Duration(seconds: 3),
+    double? height,
+    double? width,
+    BoxFit fit = BoxFit.cover,
+    bool enableCache = true,
+    bool infiniteScroll = true,
+    bool enableGestureControl = true,
+    bool enablePreload = true,
+    int preloadCount = 2,
+    bool enableErrorRetry = true,
+    int maxRetryCount = 3,
+    Duration retryDelay = const Duration(seconds: 2),
+    bool enableZoom = false,
+    double minScale = 0.5,
+    double maxScale = 3.0,
+    bool enableHeroAnimation = false,
+    String? heroTagPrefix,
+    ImageCarouselOptions? options,
+  }) : options = options ??
+            ImageCarouselOptions(
+              autoPlay: autoPlay,
+              autoPlayInterval: autoPlayInterval,
+              height: height,
+              width: width,
+              fit: fit,
+              enableCache: enableCache,
+              infiniteScroll: infiniteScroll,
+              enableGestureControl: enableGestureControl,
+              enablePreload: enablePreload,
+              preloadCount: preloadCount,
+              enableErrorRetry: enableErrorRetry,
+              maxRetryCount: maxRetryCount,
+              retryDelay: retryDelay,
+              enableZoom: enableZoom,
+              minScale: minScale,
+              maxScale: maxScale,
+              enableHeroAnimation: enableHeroAnimation,
+              heroTagPrefix: heroTagPrefix,
+            );
+
+  /// 创建图片轮播器实例（使用命名参数）
+  ///
+  /// [images] 图片列表
+  /// [options] 配置
+  /// [controller] 控制器
+  /// [borderRadius] 圆角
+  /// [onImageTap] 图片点击回调
+  /// [imageBuilder] 自定义图片构建器
+  /// [placeholder] 占位符组件
+  /// [errorWidget] 错误组件
+  /// [overlaysBuilder] 覆盖层构建器
+  const ImageCarousel.withOptions({
+    super.key,
+    required this.images,
+    required this.options,
+    this.controller,
+    this.onImageTap,
+    this.imageBuilder,
     this.overlaysBuilder,
+    this.borderRadius,
+    this.placeholder,
+    this.errorWidget,
   });
 
   @override
@@ -74,94 +147,139 @@ class ImageCarousel extends StatefulWidget {
 }
 
 class _ImageCarouselState extends State<ImageCarousel> {
+  /// 控制器
   late ImageCarouselController _controller;
+
+  /// 页面控制器
   late PageController _pageController;
+
+  /// 是否正在从控制器更新
   bool _isUpdatingFromController = false;
+
+  /// 同步定时器
   Timer? _syncTimer;
-  final Map<int, int> _retryCounts = {}; // 记录每个图片的重试次数
-  final Map<int, bool> _imageLoadStates = {}; // 记录每个图片的加载状态
+
+  // 管理器实例
+  late ImageCarouselPreloadManager _preloadManager;
+  late ImageCarouselErrorManager _errorManager;
 
   @override
   void initState() {
     super.initState();
-    _controller = widget.controller ?? ImageCarouselController();
+    _initializeManagers();
+    _initializeController();
+    _initializePageController();
+    _initializeAutoPlay();
+    _errorManager.initializeImageStates(widget.images.length);
+  }
 
-    // 如果有外部控制器，使用控制器的当前索引作为初始页面
-    int initialPage = 0;
-    if (widget.controller != null) {
-      initialPage = widget.infiniteScroll ? 5000 + widget.controller!.currentIndex : widget.controller!.currentIndex;
-    } else {
-      initialPage = widget.infiniteScroll ? 5000 : 0;
-    }
-
-    // 根据是否启用无限滚动来决定初始页面
-    _pageController = PageController(
-      initialPage: initialPage,
+  /// 初始化管理器
+  void _initializeManagers() {
+    _preloadManager = ImageCarouselPreloadManager(
+      enablePreload: widget.options.enablePreload,
+      preloadCount: widget.options.preloadCount,
+      enableCache: widget.options.enableCache,
+      images: widget.images,
     );
-    _controller.setTotalCount(widget.images.length);
 
-    // 监听控制器状态变化
+    _errorManager = ImageCarouselErrorManager(
+      enableErrorRetry: widget.options.enableErrorRetry,
+      maxRetryCount: widget.options.maxRetryCount,
+      retryDelay: widget.options.retryDelay,
+      onStateChanged: () => setState(() {}),
+    );
+  }
+
+  /// 初始化控制器
+  void _initializeController() {
+    _controller = widget.controller ?? ImageCarouselController();
+    _controller.setTotalCount(widget.images.length);
     _controller.addListener(_onControllerChanged);
+  }
+
+  /// 初始化页面控制器
+  void _initializePageController() {
+    final int initialPage = _calculateInitialPage();
+    _pageController = PageController(initialPage: initialPage);
 
     // 确保初始状态同步
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (widget.infiniteScroll) {
-        final initialIndex = initialPage % widget.images.length;
-        _controller.updateCurrentIndex(initialIndex);
-      } else {
-        _controller.updateCurrentIndex(widget.controller?.currentIndex ?? 0);
-      }
+      _syncInitialIndex();
     });
+  }
 
-    if (widget.autoPlay) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _controller.startAutoPlay(interval: widget.autoPlayInterval);
-      });
+  /// 计算初始页面
+  int _calculateInitialPage() {
+    if (widget.controller != null) {
+      return widget.options.infiniteScroll ? 5000 + widget.controller!.currentIndex : widget.controller!.currentIndex;
     }
+    return widget.options.infiniteScroll ? 5000 : 0;
+  }
 
-    // 初始化图片加载状态
-    for (int i = 0; i < widget.images.length; i++) {
-      _imageLoadStates[i] = false;
-      _retryCounts[i] = 0;
+  /// 同步初始索引
+  void _syncInitialIndex() {
+    if (widget.options.infiniteScroll) {
+      final int initialPage = _calculateInitialPage();
+      final int initialIndex = initialPage % widget.images.length;
+      _controller.updateCurrentIndex(initialIndex);
+    } else {
+      _controller.updateCurrentIndex(widget.controller?.currentIndex ?? 0);
+    }
+  }
+
+  /// 初始化自动播放
+  void _initializeAutoPlay() {
+    if (widget.options.autoPlay) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _controller.startAutoPlay(interval: widget.options.autoPlayInterval);
+      });
     }
   }
 
   @override
   void didUpdateWidget(ImageCarousel oldWidget) {
     super.didUpdateWidget(oldWidget);
+    _handleWidgetUpdate(oldWidget);
+  }
 
-    // 更新图片数量
+  /// 处理组件更新
+  void _handleWidgetUpdate(ImageCarousel oldWidget) {
+    _handleImagesUpdate(oldWidget);
+    _handleControllerUpdate(oldWidget);
+    _handleAutoPlayUpdate(oldWidget);
+  }
+
+  /// 处理图片列表更新
+  void _handleImagesUpdate(ImageCarousel oldWidget) {
     if (oldWidget.images.length != widget.images.length) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _controller.setTotalCount(widget.images.length);
-        // 重新初始化图片加载状态
-        _imageLoadStates.clear();
-        _retryCounts.clear();
-        for (int i = 0; i < widget.images.length; i++) {
-          _imageLoadStates[i] = false;
-          _retryCounts[i] = 0;
-        }
+        _errorManager.clearImageStates();
+        _errorManager.initializeImageStates(widget.images.length);
       });
     }
+  }
 
-    // 处理控制器变化
+  /// 处理控制器更新
+  void _handleControllerUpdate(ImageCarousel oldWidget) {
     if (oldWidget.controller != widget.controller) {
       if (widget.controller != null) {
-        // 如果有新的控制器，确保PageController设置正确的初始页面
-        final currentIndex = widget.controller!.currentIndex;
-        final targetPage = widget.infiniteScroll ? 5000 + currentIndex : currentIndex;
+        final int currentIndex = widget.controller!.currentIndex;
+        final int targetPage = widget.options.infiniteScroll ? 5000 + currentIndex : currentIndex;
 
         if (_pageController.hasClients) {
           _pageController.jumpToPage(targetPage);
         }
       }
     }
+  }
 
-    // 处理自动播放状态变化
-    if (widget.autoPlay != oldWidget.autoPlay) {
+  /// 处理自动播放更新
+  void _handleAutoPlayUpdate(ImageCarousel oldWidget) {
+    if (widget.options.autoPlay != oldWidget.options.autoPlay) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (widget.autoPlay) {
-          _controller.startAutoPlay(interval: widget.autoPlayInterval);
+        if (widget.options.autoPlay) {
+          _controller.startAutoPlay(interval: widget.options.autoPlayInterval);
         } else {
           _controller.stopAutoPlay();
         }
@@ -173,7 +291,6 @@ class _ImageCarouselState extends State<ImageCarousel> {
   void dispose() {
     _controller.removeListener(_onControllerChanged);
     _syncTimer?.cancel();
-    // 只有在我们创建的控制器时才销毁它
     if (widget.controller == null) {
       _controller.dispose();
     }
@@ -181,330 +298,126 @@ class _ImageCarouselState extends State<ImageCarousel> {
     super.dispose();
   }
 
+  /// 控制器变化回调
   void _onControllerChanged() {
-    // 取消之前的同步定时器
     _syncTimer?.cancel();
 
-    // 立即同步，避免延迟导致的状态不一致
-    if (_pageController.hasClients && !_isUpdatingFromController) {
-      if (widget.infiniteScroll) {
-        final currentPage = _pageController.page?.round() ?? 0;
-        final actualIndex = currentPage % widget.images.length;
+    if (!_pageController.hasClients || _isUpdatingFromController) return;
 
-        if (actualIndex != _controller.currentIndex) {
-          _isUpdatingFromController = true;
-
-          // 计算最短路径的目标页面索引
-          final currentActualIndex = actualIndex;
-          final targetActualIndex = _controller.currentIndex;
-
-          // 计算最短的跳跃距离
-          int shortestDistance = targetActualIndex - currentActualIndex;
-          if (shortestDistance.abs() > widget.images.length / 2) {
-            if (shortestDistance > 0) {
-              shortestDistance -= widget.images.length;
-            } else {
-              shortestDistance += widget.images.length;
-            }
-          }
-
-          final targetPage = currentPage + shortestDistance;
-
-          // 使用更快的动画，减少延迟
-          _pageController
-              .animateToPage(
-            targetPage,
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOut,
-          )
-              .then((_) {
-            _isUpdatingFromController = false;
-          });
-        }
-      } else {
-        // 普通模式
-        if (_pageController.page?.round() != _controller.currentIndex) {
-          _isUpdatingFromController = true;
-          _pageController
-              .animateToPage(
-            _controller.currentIndex,
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOut,
-          )
-              .then((_) {
-            _isUpdatingFromController = false;
-          });
-        }
-      }
+    if (widget.options.infiniteScroll) {
+      _handleInfiniteScrollUpdate();
+    } else {
+      _handleNormalScrollUpdate();
     }
   }
 
-  Widget _buildInfinitePageView() {
+  /// 处理无限滚动更新
+  void _handleInfiniteScrollUpdate() {
+    final int currentPage = _pageController.page?.round() ?? 0;
+    final int actualIndex = currentPage % widget.images.length;
+
+    if (actualIndex != _controller.currentIndex) {
+      _isUpdatingFromController = true;
+      final int targetPage = _calculateTargetPage(currentPage, actualIndex);
+
+      _pageController
+          .animateToPage(
+        targetPage,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+      )
+          .then((_) {
+        _isUpdatingFromController = false;
+      });
+    }
+  }
+
+  /// 处理普通滚动更新
+  void _handleNormalScrollUpdate() {
+    if (_pageController.page?.round() != _controller.currentIndex) {
+      _isUpdatingFromController = true;
+      _pageController
+          .animateToPage(
+        _controller.currentIndex,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+      )
+          .then((_) {
+        _isUpdatingFromController = false;
+      });
+    }
+  }
+
+  /// 计算目标页面
+  int _calculateTargetPage(int currentPage, int actualIndex) {
+    final int currentActualIndex = actualIndex;
+    final int targetActualIndex = _controller.currentIndex;
+
+    int shortestDistance = targetActualIndex - currentActualIndex;
+    if (shortestDistance.abs() > widget.images.length / 2) {
+      if (shortestDistance > 0) {
+        shortestDistance -= widget.images.length;
+      } else {
+        shortestDistance += widget.images.length;
+      }
+    }
+
+    return currentPage + shortestDistance;
+  }
+
+  /// 构建页面视图
+  Widget _buildPageView() {
+    if (widget.images.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     if (widget.images.length <= 1) {
-      return _buildSinglePageView();
+      return SinglePageBuilder(
+        image: widget.images[0],
+        options: widget.options,
+        placeholder: widget.placeholder,
+        errorWidget: widget.errorWidget,
+        onImageTap: widget.onImageTap,
+        imageBuilder: widget.imageBuilder,
+        errorManager: _errorManager,
+      );
     }
 
-    if (widget.infiniteScroll) {
-      // 无限滚动模式
-      return PageView.builder(
+    if (widget.options.infiniteScroll) {
+      return InfinitePageViewBuilder(
         controller: _pageController,
-        onPageChanged: (index) {
-          // 计算实际的图片索引
-          final actualIndex = index % widget.images.length;
-
-          if (!_isUpdatingFromController) {
-            // 立即更新控制器状态，不使用延迟
-            _controller.updateCurrentIndex(actualIndex);
-          }
-
-          // 预加载逻辑
-          if (widget.enablePreload) {
-            _preloadImages(actualIndex);
-          }
-        },
-        itemCount: 10000, // 使用一个很大的数字来实现无限滚动
-        itemBuilder: (context, index) {
-          // 计算实际的图片索引
-          final actualIndex = index % widget.images.length;
-          return _buildPageItem(widget.images[actualIndex], actualIndex);
-        },
+        images: widget.images,
+        onPageChanged: _handlePageChanged,
+        options: widget.options,
+        placeholder: widget.placeholder,
+        errorWidget: widget.errorWidget,
+        onImageTap: widget.onImageTap,
+        imageBuilder: widget.imageBuilder,
+        errorManager: _errorManager,
       );
     } else {
-      // 普通模式
-      return PageView.builder(
+      return NormalPageViewBuilder(
         controller: _pageController,
-        onPageChanged: (index) {
-          if (!_isUpdatingFromController) {
-            // 立即更新控制器状态，不使用延迟
-            _controller.updateCurrentIndex(index);
-          }
-
-          // 预加载逻辑
-          if (widget.enablePreload) {
-            _preloadImages(index);
-          }
-        },
-        itemCount: widget.images.length,
-        itemBuilder: (context, index) {
-          return _buildPageItem(widget.images[index], index);
-        },
+        images: widget.images,
+        onPageChanged: _handlePageChanged,
+        options: widget.options,
+        placeholder: widget.placeholder,
+        errorWidget: widget.errorWidget,
+        onImageTap: widget.onImageTap,
+        imageBuilder: widget.imageBuilder,
+        errorManager: _errorManager,
       );
     }
   }
 
-  void _preloadImages(int currentIndex) {
-    // 预加载当前图片前后的图片
-    for (int i = 1; i <= widget.preloadCount; i++) {
-      final nextIndex = (currentIndex + i) % widget.images.length;
-      final prevIndex = (currentIndex - i + widget.images.length) % widget.images.length;
-
-      // 预加载下一张图片
-      _preloadImage(nextIndex);
-      // 预加载上一张图片
-      _preloadImage(prevIndex);
-    }
-  }
-
-  void _preloadImage(int index) {
-    if (index >= 0 && index < widget.images.length) {
-      if (widget.enableCache) {
-        // 使用 CachedNetworkImageProvider 进行预加载
-        final imageProvider = CachedNetworkImageProvider(
-          widget.images[index],
-          cacheKey: 'carousel_$index',
-        );
-        precacheImage(imageProvider, context);
-      } else {
-        // 使用 NetworkImage 进行预加载
-        precacheImage(NetworkImage(widget.images[index]), context);
-      }
-    }
-  }
-
-  Widget _buildSinglePageView() {
-    return _buildPageItem(widget.images[0], 0);
-  }
-
-  Widget _buildPageItem(String image, int index) {
-    // 使用自定义图片构建器或默认构建器
-    if (widget.imageBuilder != null) {
-      final customWidget = widget.imageBuilder!(image, index);
-      if (customWidget != null) {
-        return _buildGestureWrapper(customWidget, image, index);
-      }
+  /// 处理页面变化
+  void _handlePageChanged(int index) {
+    if (!_isUpdatingFromController) {
+      _controller.updateCurrentIndex(index);
     }
 
-    // 默认图片构建器
-    return _buildGestureWrapper(_buildDefaultImage(image, index), image, index);
-  }
-
-  Widget _buildGestureWrapper(Widget child, String image, int index) {
-    Widget wrappedChild = child;
-
-    // 添加缩放功能
-    if (widget.enableZoom) {
-      wrappedChild = InteractiveViewer(
-        minScale: widget.minScale,
-        maxScale: widget.maxScale,
-        constrained: true, // 添加约束
-        child: wrappedChild,
-      );
-    }
-
-    // 添加手势控制
-    if (widget.enableGestureControl) {
-      wrappedChild = GestureDetector(
-        onTap: () => widget.onImageTap?.call(image, index),
-        onDoubleTap: widget.enableZoom
-            ? () {
-                // 双击缩放逻辑可以在这里添加
-              }
-            : null,
-        child: wrappedChild,
-      );
-    } else {
-      wrappedChild = GestureDetector(
-        onTap: () => widget.onImageTap?.call(image, index),
-        child: wrappedChild,
-      );
-    }
-
-    return wrappedChild;
-  }
-
-  Widget _buildDefaultImage(String image, int index) {
-    // 如果启用Hero动画，则包装Hero组件
-    if (widget.enableHeroAnimation) {
-      final heroTag = widget.heroTagPrefix != null ? '${widget.heroTagPrefix}_$index' : 'carousel_image_$index';
-
-      return Hero(
-        tag: heroTag,
-        child: _buildImageWidget(image, index),
-      );
-    }
-
-    return _buildImageWidget(image, index);
-  }
-
-  Widget _buildImageWidget(String image, int index) {
-    if (widget.enableCache) {
-      return CachedNetworkImage(
-        imageUrl: image,
-        fit: widget.fit,
-        placeholder: (context, url) {
-          return _buildLoadingWidget(null);
-        },
-        errorWidget: (context, url, error) {
-          return _buildErrorWidget(index, error);
-        },
-        imageBuilder: (context, imageProvider) {
-          _imageLoadStates[index] = true;
-          return Image(image: imageProvider, fit: widget.fit);
-        },
-      );
-    } else {
-      // 不使用缓存，回退到原始 Image.network
-      return Image.network(
-        image,
-        fit: widget.fit,
-        errorBuilder: (context, error, stackTrace) {
-          return _buildErrorWidget(index, error);
-        },
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) {
-            _imageLoadStates[index] = true;
-            return child;
-          }
-          return _buildLoadingWidget(loadingProgress);
-        },
-      );
-    }
-  }
-
-  Widget _buildErrorWidget(int index, Object error) {
-    if (widget.errorWidget != null) {
-      return widget.errorWidget!;
-    }
-
-    return Container(
-      color: Colors.grey[300],
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min, // 添加这个约束
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.error,
-              color: Colors.grey,
-              size: 50,
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              '图片加载失败',
-              style: TextStyle(
-                color: Colors.grey,
-                fontSize: 14,
-              ),
-            ),
-            if (widget.enableErrorRetry && _retryCounts[index]! < widget.maxRetryCount)
-              TextButton(
-                onPressed: () => _retryLoadImage(index),
-                child: const Text('重试'),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLoadingWidget([ImageChunkEvent? loadingProgress]) {
-    if (widget.placeholder != null) {
-      return widget.placeholder!;
-    }
-
-    return Container(
-      color: Colors.grey[200],
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min, // 添加这个约束
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(
-              value: loadingProgress?.expectedTotalBytes != null
-                  ? loadingProgress!.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                  : null,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              loadingProgress != null
-                  ? '加载中... ${((loadingProgress.cumulativeBytesLoaded / (loadingProgress.expectedTotalBytes ?? 1)) * 100).toStringAsFixed(0)}%'
-                  : '加载中...',
-              style: const TextStyle(
-                fontSize: 12,
-                color: Colors.grey,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _retryLoadImage(int index) {
-    if (_retryCounts[index]! < widget.maxRetryCount) {
-      _retryCounts[index] = _retryCounts[index]! + 1;
-      setState(() {
-        _imageLoadStates[index] = false;
-      });
-
-      // 延迟重试
-      Future.delayed(widget.retryDelay, () {
-        if (mounted) {
-          setState(() {
-            // 触发重新加载
-          });
-        }
-      });
+    if (widget.options.enablePreload) {
+      _preloadManager.preloadImages(index, context);
     }
   }
 
@@ -515,20 +428,17 @@ class _ImageCarouselState extends State<ImageCarousel> {
     }
 
     return Container(
-      height: widget.height, // 提供默认高度
-      width: widget.width,
+      height: widget.options.height,
+      width: widget.options.width,
       decoration: BoxDecoration(
         borderRadius: widget.borderRadius,
       ),
       clipBehavior: widget.borderRadius != null ? Clip.antiAlias : Clip.none,
       child: Stack(
-        children: [
-          // 轮播图片区域
+        children: <Widget>[
           Positioned.fill(
-            child: _buildInfinitePageView(),
+            child: _buildPageView(),
           ),
-
-          // 覆盖层
           if (widget.overlaysBuilder != null) ...widget.overlaysBuilder!(_controller),
         ],
       ),

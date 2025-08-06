@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../demos/carousel_demo.dart';
-import '../demos/carousel_hero_demo.dart';
 import '../demos/progress_demo.dart';
 import '../demos/phone_input_demo.dart';
 import '../demos/shape_tab_demo.dart';
@@ -68,13 +67,6 @@ class HomePage extends StatelessWidget {
         icon: Icons.image,
         color: Colors.blue,
         demoPage: const CarouselDemo(),
-      ),
-      _ComponentItem(
-        title: '轮播图Hero动画',
-        description: '展示轮播图的Hero动画效果，点击图片时平滑过渡到全屏查看',
-        icon: Icons.animation,
-        color: Colors.purple,
-        demoPage: const CarouselHeroDemo(),
       ),
       _ComponentItem(
         title: '进度对话框',

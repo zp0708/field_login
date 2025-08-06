@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import '../widgets/image_carousel/image_carousel.dart';
 import '../widgets/image_carousel/image_carousel_controller.dart';
-import '../widgets/image_carousel/overlays/indicator_overlay.dart';
-import '../widgets/image_carousel/overlays/page_counter_overlay.dart';
-import '../widgets/image_carousel/overlays/control_buttons_overlay.dart';
-import '../widgets/image_carousel/overlays/carousel_indicator.dart';
 import '../widgets/image_carousel/image_viewer_dialog.dart';
+import '../widgets/image_carousel/models/carousel_options.dart';
 
 class CarouselDemo extends StatefulWidget {
   const CarouselDemo({super.key});
@@ -41,7 +38,7 @@ class _CarouselDemoState extends State<CarouselDemo> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('轮播图覆盖层演示'),
+        title: const Text('图片轮播器演示'),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
       ),
@@ -51,7 +48,7 @@ class _CarouselDemoState extends State<CarouselDemo> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              '覆盖层系统演示',
+              '图片轮播器功能演示',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -59,7 +56,7 @@ class _CarouselDemoState extends State<CarouselDemo> {
             ),
             const SizedBox(height: 8),
             const Text(
-              '展示如何使用不同的覆盖层来扩展轮播图功能',
+              '展示图片轮播器的各种功能和配置选项',
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey,
@@ -67,9 +64,9 @@ class _CarouselDemoState extends State<CarouselDemo> {
             ),
             const SizedBox(height: 24),
 
-            // 基础轮播图（无覆盖层）
+            // 基础轮播图
             const Text(
-              '基础轮播图（无覆盖层）',
+              '基础轮播图',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
@@ -80,15 +77,17 @@ class _CarouselDemoState extends State<CarouselDemo> {
               height: 200,
               child: ImageCarousel(
                 images: _images,
-                autoPlay: false,
+                options: const ImageCarouselOptions(
+                  autoPlay: false,
+                ),
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
             const SizedBox(height: 24),
 
-            // 带指示器覆盖层的轮播图
+            // 自动播放的轮播图
             const Text(
-              '带指示器覆盖层的轮播图',
+              '自动播放的轮播图',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
@@ -99,32 +98,48 @@ class _CarouselDemoState extends State<CarouselDemo> {
               height: 200,
               child: ImageCarousel(
                 images: _images,
-                autoPlay: false,
-                enableHeroAnimation: true,
+                options: const ImageCarouselOptions(
+                  autoPlay: true,
+                  autoPlayInterval: Duration(seconds: 3),
+                ),
                 borderRadius: BorderRadius.circular(12),
-                overlaysBuilder: (controller) => [
-                  IndicatorOverlay(
-                    controller: controller,
-                    type: CarouselIndicatorType.dots,
-                    activeColor: Colors.red,
-                    inactiveColor: Colors.grey,
-                  ),
-                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // 带点击事件的轮播图
+            const Text(
+              '带点击事件的轮播图',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 200,
+              child: ImageCarousel(
+                images: _images,
+                options: const ImageCarouselOptions(
+                  autoPlay: false,
+                ),
+                borderRadius: BorderRadius.circular(12),
                 onImageTap: (image, index) {
-                  ImageViewerDialog.show(
-                    context,
-                    images: _images,
-                    initialIndex: index,
-                    enableHeroAnimation: true,
+                  showDialog(
+                    context: context,
+                    builder: (context) => ImageViewerDialog(
+                      images: _images,
+                      initialIndex: index,
+                    ),
                   );
                 },
               ),
             ),
             const SizedBox(height: 24),
 
-            // 带页码显示覆盖层的轮播图
+            // 带缩放功能的轮播图
             const Text(
-              '带页码显示覆盖层的轮播图',
+              '带缩放功能的轮播图',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
@@ -135,26 +150,90 @@ class _CarouselDemoState extends State<CarouselDemo> {
               height: 200,
               child: ImageCarousel(
                 images: _images,
-                autoPlay: false,
+                options: const ImageCarouselOptions(
+                  autoPlay: false,
+                  enableZoom: true,
+                  minScale: 0.5,
+                  maxScale: 3.0,
+                ),
                 borderRadius: BorderRadius.circular(12),
-                overlaysBuilder: (controller) => [
-                  PageCounterOverlay(
-                    controller: controller,
-                    backgroundColor: Colors.black54,
-                    textStyle: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // 带Hero动画的轮播图
+            const Text(
+              '带Hero动画的轮播图',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 200,
+              child: ImageCarousel(
+                images: _images,
+                options: const ImageCarouselOptions(
+                  autoPlay: false,
+                  enableHeroAnimation: true,
+                  heroTagPrefix: 'carousel_demo',
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // 带自定义占位符的轮播图
+            const Text(
+              '带自定义占位符的轮播图',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 200,
+              child: ImageCarousel(
+                images: _images,
+                options: const ImageCarouselOptions(
+                  autoPlay: false,
+                ),
+                borderRadius: BorderRadius.circular(12),
+                placeholder: Container(
+                  color: Colors.grey[200],
+                  child: const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(height: 8),
+                        Text('加载中...'),
+                      ],
                     ),
                   ),
-                ],
+                ),
+                errorWidget: Container(
+                  color: Colors.red[100],
+                  child: const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.error_outline, size: 48, color: Colors.red),
+                        SizedBox(height: 8),
+                        Text('加载失败'),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 24),
 
-            // 带控制按钮覆盖层的轮播图
+            // 带自定义图片构建器的轮播图
             const Text(
-              '带控制按钮覆盖层的轮播图',
+              '带自定义图片构建器的轮播图',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
@@ -165,223 +244,85 @@ class _CarouselDemoState extends State<CarouselDemo> {
               height: 200,
               child: ImageCarousel(
                 images: _images,
-                autoPlay: false,
+                options: const ImageCarouselOptions(
+                  autoPlay: false,
+                ),
                 borderRadius: BorderRadius.circular(12),
-                overlaysBuilder: (controller) => [
-                  ControlButtonsOverlay(
-                    controller: controller,
-                    buttonSize: 40,
-                    backgroundColor: Colors.black54,
-                    buttonColor: Colors.white,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // 多覆盖层组合的轮播图
-            const Text(
-              '多覆盖层组合的轮播图',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 8),
-            SizedBox(
-              height: 200,
-              child: ImageCarousel(
-                images: _images,
-                autoPlay: false,
-                borderRadius: BorderRadius.circular(12),
-                overlaysBuilder: (controller) => [
-                  IndicatorOverlay(
-                    controller: controller,
-                    type: CarouselIndicatorType.progress,
-                    activeColor: Colors.blue,
-                    inactiveColor: Colors.grey,
-                    size: 8,
-                  ),
-                  PageCounterOverlay(
-                    controller: controller,
-                    backgroundColor: Colors.black54,
-                  ),
-                  ControlButtonsOverlay(
-                    controller: controller,
-                    buttonSize: 36,
-                    backgroundColor: Colors.black54,
-                    buttonColor: Colors.white,
-                  ),
-                ],
+                imageBuilder: (image, index) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.network(
+                        image,
+                        fit: BoxFit.cover,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                            color: Colors.grey[200],
+                            child: const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
             const SizedBox(height: 24),
 
             // 共享控制器的轮播图
             const Text(
-              '共享控制器的轮播图（覆盖层同步测试）',
+              '共享控制器的轮播图',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
-              '快速滑动任意一个轮播图，其他轮播图应该同步滑动相同的次数',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey,
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // 第一个共享控制器的轮播图
-            const Text(
-              '轮播图 1',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 8),
             SizedBox(
-              height: 150,
+              height: 200,
               child: ImageCarousel(
                 images: _images,
                 controller: _sharedController,
-                autoPlay: false,
+                options: const ImageCarouselOptions(
+                  autoPlay: false,
+                ),
                 borderRadius: BorderRadius.circular(12),
-                enableHeroAnimation: true,
-                heroTagPrefix: 'carousel_demo',
-                overlaysBuilder: (controller) => [
-                  IndicatorOverlay(
-                    controller: controller,
-                    type: CarouselIndicatorType.dots,
-                    activeColor: Colors.blue,
-                  ),
-                ],
-                onImageTap: (image, index) {
-                  ImageViewerDialog.show(
-                    context,
-                    images: _images,
-                    initialIndex: index,
-                    controller: _sharedController,
-                    enableHeroAnimation: true,
-                    heroTagPrefix: 'carousel_demo',
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // 第二个共享控制器的轮播图
-            const Text(
-              '轮播图 2',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
               ),
             ),
             const SizedBox(height: 8),
-            SizedBox(
-              height: 150,
-              child: ImageCarousel(
-                images: _images,
-                controller: _sharedController,
-                autoPlay: false,
-                borderRadius: BorderRadius.circular(12),
-                overlaysBuilder: (controller) => [
-                  PageCounterOverlay(
-                    controller: controller,
-                    backgroundColor: Colors.black54,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // 第三个共享控制器的轮播图
-            const Text(
-              '轮播图 3',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 8),
-            SizedBox(
-              height: 150,
-              child: ImageCarousel(
-                images: _images,
-                controller: _sharedController,
-                autoPlay: false,
-                borderRadius: BorderRadius.circular(12),
-                overlaysBuilder: (controller) => [
-                  ControlButtonsOverlay(
-                    controller: controller,
-                    buttonSize: 32,
-                    backgroundColor: Colors.black54,
-                    buttonColor: Colors.white,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // 控制按钮
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 ElevatedButton(
                   onPressed: () => _sharedController.previousPage(),
-                  child: const Text('上一页'),
+                  child: const Text('上一张'),
                 ),
                 ElevatedButton(
                   onPressed: () => _sharedController.nextPage(),
-                  child: const Text('下一页'),
+                  child: const Text('下一张'),
                 ),
                 ElevatedButton(
                   onPressed: () => _sharedController.jumpToPage(0),
-                  child: const Text('跳转到第一页'),
+                  child: const Text('第一张'),
                 ),
                 ElevatedButton(
                   onPressed: () => _sharedController.jumpToPage(_images.length - 1),
-                  child: const Text('跳转到最后一页'),
+                  child: const Text('最后一张'),
                 ),
               ],
-            ),
-            const SizedBox(height: 16),
-
-            // 状态显示
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: ListenableBuilder(
-                listenable: _sharedController,
-                builder: (context, child) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        '控制器状态:',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text('当前索引: ${_sharedController.currentIndex + 1}'),
-                      Text('总数量: ${_sharedController.totalCount}'),
-                      Text('自动播放: ${_sharedController.isAutoPlaying}'),
-                      Text('暂停状态: ${_sharedController.isPaused}'),
-                    ],
-                  );
-                },
-              ),
             ),
           ],
         ),
