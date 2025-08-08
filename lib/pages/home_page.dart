@@ -1,8 +1,11 @@
 import 'package:field_login/demos/carousel_demo.dart';
+import 'package:field_login/widgets/semi_circle_scroll/rotating_menu.dart';
 import 'package:flutter/material.dart';
 import '../demos/progress_demo.dart';
 import '../demos/phone_input_demo.dart';
 import '../demos/shape_tab_demo.dart';
+import 'webview_example_page.dart';
+import 'model_preview_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -89,10 +92,39 @@ class HomePage extends StatelessWidget {
         color: Colors.purple,
         demoPage: const ShapeTabDemo(),
       ),
+      _ComponentItem(
+        title: '模型预览',
+        description: '查看 3d 模块预览',
+        icon: Icons.web_asset,
+        color: Colors.blue,
+        builder: (ctx) => const ModelPreviewPage(),
+      ),
+      _ComponentItem(
+        title: 'WebView 交互示例',
+        description: '封装的 WebView 交互组件，提供外界调用接口和回调机制',
+        icon: Icons.web_asset,
+        color: Colors.blue,
+        builder: (ctx) => const WebViewExamplePage(),
+      ),
+      _ComponentItem(
+        title: '右侧半透明半圆',
+        description: '放在屏幕右侧中央的半透明半圆组件，支持自定义样式和内容',
+        icon: Icons.circle,
+        color: Colors.teal,
+        demoPage: const LeftSemiCircleMenuDemo(),
+      ),
+      _ComponentItem(
+        title: '圆形菜单组件',
+        description: '按钮均匀分布在圆内的圆形菜单组件',
+        icon: Icons.menu,
+        color: Colors.pink,
+        demoPage: const LeftSemiCircleMenuDemo(),
+      ),
     ];
 
     return Column(
       children: components.map((component) {
+        final hasRoute = component.demoPage != null || component.builder != null;
         return Card(
           margin: const EdgeInsets.only(bottom: 16),
           child: ListTile(
@@ -113,7 +145,7 @@ class HomePage extends StatelessWidget {
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             subtitle: Text(component.description),
-            trailing: component.demoPage != null
+            trailing: hasRoute
                 ? Icon(Icons.arrow_forward_ios, color: component.color)
                 : Container(
                     padding: const EdgeInsets.symmetric(
@@ -121,7 +153,7 @@ class HomePage extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: Color.fromRGBO(158, 158, 158, 0.2),
+                      color: const Color.fromRGBO(158, 158, 158, 0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Text(
@@ -129,11 +161,12 @@ class HomePage extends StatelessWidget {
                       style: TextStyle(fontSize: 12),
                     ),
                   ),
-            onTap: component.demoPage != null
+            onTap: hasRoute
                 ? () => Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => component.demoPage!,
+                        builder: (context) =>
+                            component.builder != null ? component.builder!(context) : component.demoPage!,
                       ),
                     )
                 : null,
@@ -150,6 +183,7 @@ class _ComponentItem {
   final IconData icon;
   final Color color;
   final Widget? demoPage;
+  final WidgetBuilder? builder;
 
   _ComponentItem({
     required this.title,
@@ -157,5 +191,6 @@ class _ComponentItem {
     required this.icon,
     required this.color,
     this.demoPage,
+    this.builder,
   });
 }

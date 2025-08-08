@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>测试页面</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 30px;
+      border-radius: 15px;
+      backdrop-filter: blur(10px);
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 2.5em;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    .status {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 15px;
+      border-radius: 10px;
+      margin: 20px 0;
+      border-left: 4px solid #4CAF50;
+    }
+    .button {
+      background: #4CAF50;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 10px;
+      font-size: 16px;
+      transition: all 0.3s ease;
+    }
+    .button:hover {
+      background: #45a049;
+      transform: translateY(-2px);
+    }
+    .log {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 20px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .log-item {
+      margin: 5px 0;
+      padding: 5px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Flutter WebView 交互测试</h1>
+
+    <div class="status">
+      <h3>当前状态</h3>
+      <p>WebView 已加载完成，等待 Flutter 交互...</p>
+    </div>
+
+    <div>
+      <button class="button" onclick="testFlutterCallback()">测试回调到 Flutter</button>
+      <button class="button" onclick="updateStatus('用户点击了网页按钮')">更新状态</button>
+      <button class="button" onclick="testDesignUpdate()">测试设计更新</button>
+      <button class="button" onclick="testSceneUpdate()">测试场景更新</button>
+    </div>
+
+    <div class="log" id="log">
+      <h3>交互日志</h3>
+    </div>
+  </div>
+
+  <script>
+    // 接收来自 Flutter 的消息
+    function receiveMessageFromFlutter(message) {
+      console.log('收到来自 Flutter 的消息:', message);
+      addLog('收到 Flutter 消息: ' + JSON.stringify(message));
+
+      // 根据消息类型执行不同操作
+      switch(message.type) {
+        case 'updateDesign':
+          updateStatus('更新设计: ' + message.data);
+          break;
+        case 'updateControl':
+          updateStatus('更新控制: ' + message.data);
+          break;
+        case 'updateScene':
+          updateStatus('更新场景: ' + message.data);
+          break;
+        case 'changeScene':
+          updateStatus('切换场景: ' + message.data);
+          break;
+        case 'changeSkin':
+          updateStatus('切换肤色: ' + message.data);
+          break;
+        case 'changePose':
+          updateStatus('切换手势: ' + message.data);
+          break;
+        default:
+          updateStatus('未知操作: ' + message.data);
+      }
+    }
+
+    // 测试回调到 Flutter（通过 flutter_inappwebview.callHandler）
+    function testFlutterCallback() {
+      addLog('准备回调到 Flutter...');
+      try {
+        window.flutter_inappwebview.callHandler('AppBridge', {
+          type: 'test',
+          data: '来自网页的测试消息',
+          timestamp: new Date().toISOString()
+        });
+      } catch (e) {
+        addLog('AppBridge 不可用: ' + e.message);
+      }
+    }
+
+    // 测试设计更新
+    function testDesignUpdate() {
+      addLog('测试设计更新...');
+      if (typeof window.updateDesign === 'function') {
+        window.updateDesign('测试设计 - ' + new Date().toLocaleTimeString());
+      } else {
+        addLog('updateDesign 函数不可用');
+      }
+    }
+
+    // 测试场景更新
+    function testSceneUpdate() {
+      addLog('测试场景更新...');
+      if (typeof window.updateScene === 'function') {
+        window.updateScene('测试场景 - ' + new Date().toLocaleTimeString());
+      } else {
+        addLog('updateScene 函数不可用');
+      }
+    }
+
+    // 更新状态显示
+    function updateStatus(message) {
+      addLog(message);
+    }
+
+    // 添加日志
+    function addLog(message) {
+      const log = document.getElementById('log');
+      const item = document.createElement('div');
+      item.className = 'log-item';
+      item.innerHTML = '<strong>' + new Date().toLocaleTimeString() + '</strong>: ' + message;
+      log.appendChild(item);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    // 页面加载完成
+    window.onload = function() {
+      addLog('页面加载完成');
+      updateStatus('WebView 已准备就绪，可以接收 Flutter 消息');
+    };
+
+    // 暴露给 Flutter 调用的方法
+    window.updateDesign = function(designData) {
+      receiveMessageFromFlutter({
+        type: 'updateDesign',
+        data: designData
+      });
+    };
+
+    window.updateControl = function(controlData) {
+      receiveMessageFromFlutter({
+        type: 'updateControl',
+        data: controlData
+      });
+    };
+
+    window.updateScene = function(sceneData) {
+      receiveMessageFromFlutter({
+        type: 'updateScene',
+        data: sceneData
+      });
+    };
+
+    window.changeScene = function(sceneData) {
+      receiveMessageFromFlutter({
+        type: 'changeScene',
+        data: sceneData
+      });
+    };
+
+    window.changeSkin = function(skinData) {
+      receiveMessageFromFlutter({
+        type: 'changeSkin',
+        data: skinData
+      });
+    };
+
+    window.changePose = function(poseData) {
+      receiveMessageFromFlutter({
+        type: 'changePose',
+        data: poseData
+      });
+    };
+  </script>
+</body>
+</html>
