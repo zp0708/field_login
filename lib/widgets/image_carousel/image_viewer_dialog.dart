@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'image_carousel.dart';
 import 'image_carousel_controller.dart';
-import 'models/carousel_options.dart';
 
 class ImageViewerDialog extends StatefulWidget {
   final List<String> images;
