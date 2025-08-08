@@ -61,7 +61,8 @@ class InteractionWebViewController {
   }
 
   /// 调用 WebView 中的特定函数
-  Future<void> callFunction(String functionName, List<dynamic> arguments) async {
+  Future<void> callFunction(
+      String functionName, List<dynamic> arguments) async {
     if (!_isWebViewReady || _webViewController == null) {
       print('WebView 未准备就绪');
       return;
@@ -143,7 +144,8 @@ class _InteractionWebViewPageState extends State<InteractionWebViewPage> {
   }
 
   void _injectJavaScript() {
-    widget.controller.sendMessage('init', {'timestamp': DateTime.now().toIso8601String()});
+    widget.controller
+        .sendMessage('init', {'timestamp': DateTime.now().toIso8601String()});
   }
 
   void _handleJsMessage(String type, dynamic data) {
@@ -183,91 +185,63 @@ class _InteractionWebViewPageState extends State<InteractionWebViewPage> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        FutureBuilder<String>(
-          future: rootBundle.loadString(widget.htmlAssetPath),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (snapshot.hasError) {
-              print('HTML 文件加载错误: ${snapshot.error}');
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.error_outline, size: 48, color: Colors.red),
-                    const SizedBox(height: 16),
-                    Text('加载失败: ${snapshot.error}', style: const TextStyle(color: Colors.red)),
-                    const SizedBox(height: 16),
-                    Text('文件路径: ${widget.htmlAssetPath}', style: const TextStyle(fontSize: 12)),
-                  ],
-                ),
-              );
-            }
-            print('HTML 文件加载成功，长度: ${snapshot.data?.length}');
-            return InAppWebView(
-              initialData: InAppWebViewInitialData(
-                data: snapshot.data!,
-                mimeType: 'text/html',
-                encoding: 'UTF-8',
-              ),
-              initialSettings: InAppWebViewSettings(
-                javaScriptEnabled: true,
-                allowsInlineMediaPlayback: true,
-                mediaPlaybackRequiresUserGesture: false,
-                useShouldOverrideUrlLoading: true,
-                useOnLoadResource: true,
-              ),
-              onWebViewCreated: (controller) {
-                print('WebView 控制器创建成功');
-                widget.controller.setController(controller);
+        Positioned.fill(
+          child: InAppWebView(
+            initialFile: 'assets/webview/test_page.html',
+            // initialUrlRequest: URLRequest(url: WebUri('https://flutter.dev')),
+            initialSettings: InAppWebViewSettings(
+              javaScriptEnabled: true,
+              allowsInlineMediaPlayback: true,
+              mediaPlaybackRequiresUserGesture: false,
+            ),
+            onWebViewCreated: (controller) {
+              widget.controller.setController(controller);
 
-                // 添加 JavaScript 处理器
-                controller.addJavaScriptHandler(
-                  handlerName: 'AppBridge',
-                  callback: (args) {
-                    print('收到 JavaScript 回调: ${args[0]}');
-                    try {
-                      final Map<String, dynamic> data = jsonDecode(args[0]);
-                      final type = data['type'];
-                      final payload = data['data'];
-                      _handleJsMessage(type, payload);
-                    } catch (_) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('收到JS消息: ${args[0]}')),
-                        );
-                      }
+              // 添加 JavaScript 处理器
+              controller.addJavaScriptHandler(
+                handlerName: 'AppBridge',
+                callback: (args) {
+                  print('收到 JavaScript 回调: ${args[0]}');
+                  try {
+                    final Map<String, dynamic> data = jsonDecode(args[0]);
+                    final type = data['type'];
+                    final payload = data['data'];
+                    _handleJsMessage(type, payload);
+                  } catch (_) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('收到JS消息: ${args[0]}')),
+                      );
                     }
-                  },
-                );
-              },
-              onLoadStart: (controller, url) {
-                print('WebView 开始加载: $url');
-                _updateLoadingState(true);
-                _errorMessage = null;
-              },
-              onLoadStop: (controller, url) {
-                print('WebView 加载完成: $url');
-                // 添加延迟确保内容完全加载
-                Future.delayed(const Duration(milliseconds: 500), () {
-                  _updateLoadingState(false);
-                  _handleReady();
-                });
-              },
-              onReceivedError: (controller, url, WebResourceError error) {
-                print('WebView 加载错误: ${error.toString()}');
+                  }
+                },
+              );
+            },
+            onLoadStart: (controller, url) {
+              print('WebView 开始加载: $url');
+              _updateLoadingState(true);
+              _errorMessage = null;
+            },
+            onLoadStop: (controller, url) {
+              print('WebView 加载完成: $url');
+              // 添加延迟确保内容完全加载
+              Future.delayed(const Duration(milliseconds: 500), () {
                 _updateLoadingState(false);
-                _handleError('加载失败: ${error.toString()}');
-              },
-              onConsoleMessage: (controller, consoleMessage) {
-                print('WebView Console: ${consoleMessage.message}');
-              },
-              onLoadResource: (controller, resource) {
-                print('WebView 加载资源: ${resource.url}');
-              },
-            );
-          },
+                _handleReady();
+              });
+            },
+            onReceivedError: (controller, url, WebResourceError error) {
+              print('WebView 加载错误: ${error.toString()}');
+              _updateLoadingState(false);
+              _handleError('加载失败: ${error.toString()}');
+            },
+            onConsoleMessage: (controller, consoleMessage) {
+              print('WebView Console: ${consoleMessage.message}');
+            },
+            onLoadResource: (controller, resource) {
+              print('WebView 加载资源: ${resource.url}');
+            },
+          ),
         ),
         if (_isLoading)
           const Center(
@@ -289,7 +263,8 @@ class _InteractionWebViewPageState extends State<InteractionWebViewPage> {
                 children: [
                   Icon(Icons.error_outline, size: 48, color: Colors.red),
                   const SizedBox(height: 16),
-                  Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
+                  Text(_errorMessage!,
+                      style: const TextStyle(color: Colors.red)),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () {

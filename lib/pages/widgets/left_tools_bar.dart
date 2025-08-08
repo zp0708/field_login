@@ -51,6 +51,7 @@ class _LeftToolsBarState extends State<LeftToolsBar> with SingleTickerProviderSt
       child: Row(
         children: [
           ClipPath(
+            clipBehavior: Clip.hardEdge,
             clipper: WaveClipper(),
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 20.dp, sigmaY: 20.dp),
@@ -64,7 +65,7 @@ class _LeftToolsBarState extends State<LeftToolsBar> with SingleTickerProviderSt
                   children: [
                     Expanded(
                       child: AnimatedOpacity(
-                        duration: const Duration(milliseconds: 400),
+                        duration: const Duration(milliseconds: 350),
                         opacity: isExpanded ? 1.0 : 0.0,
                         child: ListView.builder(
                           padding: const EdgeInsets.all(12),
