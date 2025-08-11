@@ -17,23 +17,28 @@ class ToolsBackgroundClipper extends CustomClipper<Path> {
     // 右箭头部分宽度
     final arrowWidth = this.arrowWidth.dp;
     final arrowHeight = 80.dp;
-    final centerY = size.height * 0.5;
 
     // 起点左上角
     path.moveTo(0, 0);
     path.lineTo(size.width - arrowWidth - radius1, 0);
 
     path.quadraticBezierTo(size.width - arrowWidth, 0, size.width - arrowWidth, radius1);
-    path.lineTo(size.width - arrowWidth, centerY - arrowHeight * 0.5);
-    path.lineTo(size.width - radius2, centerY - arrowHeight * 0.5);
 
-    path.quadraticBezierTo(size.width, centerY - arrowHeight * 0.5, size.width, centerY - arrowHeight * 0.5 + radius2);
+    // 右侧凸起开始 Y
+    final startY = (size.height - arrowHeight) * 0.5;
+    // 右侧凸起结束时的 Y
+    final endY = (size.height + arrowHeight) * 0.5;
 
-    path.lineTo(size.width, centerY + arrowHeight * 0.5 - radius2);
+    path.lineTo(size.width - arrowWidth, startY);
+    path.lineTo(size.width - radius2, startY);
 
-    path.quadraticBezierTo(size.width, centerY + arrowHeight * 0.5, size.width - radius2, centerY + arrowHeight * 0.5);
+    path.quadraticBezierTo(size.width, startY, size.width, startY + radius2);
 
-    path.lineTo(size.width - arrowWidth, centerY + arrowHeight * 0.5);
+    path.lineTo(size.width, endY - radius2);
+
+    path.quadraticBezierTo(size.width, endY, size.width - radius2, endY);
+
+    path.lineTo(size.width - arrowWidth, endY);
 
     path.lineTo(size.width - arrowWidth, size.height - radius1);
 
