@@ -1,6 +1,4 @@
-import 'dart:ui';
-
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:field_login/pages/widgets/toolbar_item.dart';
 import 'package:field_login/pages/widgets/left_tools_bar.dart';
 import 'package:field_login/widgets/interaction_webview/interaction_webview.dart';
 import 'package:flutter/material.dart';
@@ -22,13 +20,13 @@ class _ModelPreviewPageState extends State<ModelPreviewPage> {
   }
 
   // 左侧工具栏数据
-  final List<Map<String, dynamic>> _leftToolbarItems = [
-    {'id': '1', 'name': '红色+条纹格', 'selected': true, 'color': const Color(0xFFE53935)},
-    {'id': '2', 'name': '蓝色+粗猫眼', 'selected': false, 'color': const Color(0xFF1E88E5)},
-    {'id': '3', 'name': '紫色+磨砂', 'selected': false, 'color': const Color(0xFF8E24AA)},
-    {'id': '4', 'name': '彩色+粗猫眼', 'selected': false, 'color': const Color(0xFF43A047)},
-    {'id': '5', 'name': '粉色+亮片', 'selected': false, 'color': const Color(0xFFF06292)},
-    {'id': '6', 'name': '黑色+金属', 'selected': false, 'color': const Color(0xFF424242)},
+  final List<ToolbarItem> _leftToolbarItems = [
+    ToolbarItem(id: '1', name: '红色+条纹格', selected: true, url: 'https://picsum.photos/280/280?random=1'),
+    ToolbarItem(id: '2', name: '蓝色+粗猫眼', selected: false, url: 'https://picsum.photos/280/280?random=2'),
+    ToolbarItem(id: '3', name: '紫色+磨砂', selected: false, url: 'https://picsum.photos/280/280?random=3'),
+    // ToolbarItem(id: '4', name: '彩色+粗猫眼', selected: false, url: 'https://picsum.photos/280/280?random=4'),
+    // ToolbarItem(id: '5', name: '粉色+亮片', selected: false, url: 'https://picsum.photos/280/280?random=5'),
+    // ToolbarItem(id: '6', name: '黑色+金属', selected: false, url: 'https://picsum.photos/280/280?random=6'),
   ];
 
   @override
@@ -50,41 +48,10 @@ class _ModelPreviewPageState extends State<ModelPreviewPage> {
             controller: _webViewController,
           ),
           LeftToolsBar(
-            leftToolbarItems: _leftToolbarItems,
+            items: _leftToolbarItems,
             onItemTap: (item) {
-              _webViewController.sendMessage('updateDesign', item['name']);
+              _webViewController.sendMessage('updateDesign', item.name);
             },
-          ),
-          Positioned(
-            left: 300,
-            top: 100,
-            width: 200,
-            height: 200,
-            child: Container(
-              width: 200,
-              height: 200,
-              decoration: BoxDecoration(
-                // color: Colors.white.withAlpha(100),
-                borderRadius: BorderRadius.circular(30),
-              ),
-              child: ClipRect(
-                child: BackdropFilter(
-                  blendMode: BlendMode.src,
-                  filter: ImageFilter.dilate(radiusX: 20, radiusY: 20),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(30),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                      child: Container(
-                        width: 200,
-                        height: 200,
-                        color: Colors.white.withAlpha(100),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
           ),
         ],
       ),

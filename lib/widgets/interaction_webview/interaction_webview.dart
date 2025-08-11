@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'dart:convert';
-import 'package:flutter/services.dart' show rootBundle;
 
 /// WebView 交互回调接口
 class WebViewInteractionCallback {
@@ -46,7 +45,6 @@ class InteractionWebViewController {
   /// 向 WebView 发送消息
   Future<void> sendMessage(String type, dynamic data) async {
     if (!_isWebViewReady || _webViewController == null) {
-      print('WebView 未准备就绪');
       return;
     }
 
@@ -63,7 +61,6 @@ class InteractionWebViewController {
   /// 调用 WebView 中的特定函数
   Future<void> callFunction(String functionName, List<dynamic> arguments) async {
     if (!_isWebViewReady || _webViewController == null) {
-      print('WebView 未准备就绪');
       return;
     }
 
@@ -134,7 +131,6 @@ class _InteractionWebViewPageState extends State<InteractionWebViewPage> {
     // 添加超时机制，防止无限加载
     Future.delayed(const Duration(seconds: 10), () {
       if (_isLoading && mounted) {
-        print('WebView 加载超时，强制设置为完成状态');
         _updateLoadingState(false);
       }
     });
@@ -161,7 +157,6 @@ class _InteractionWebViewPageState extends State<InteractionWebViewPage> {
   }
 
   void _updateLoadingState(bool isLoading) {
-    print('更新加载状态: $isLoading');
     setState(() {
       _isLoading = isLoading;
     });
@@ -197,14 +192,12 @@ class _InteractionWebViewPageState extends State<InteractionWebViewPage> {
               mediaPlaybackRequiresUserGesture: false,
             ),
             onWebViewCreated: (controller) {
-              print('WebView 控制器创建成功');
               widget.controller.setController(controller);
 
               // 添加 JavaScript 处理器
               controller.addJavaScriptHandler(
                 handlerName: 'AppBridge',
                 callback: (args) {
-                  print('收到 JavaScript 回调: ${args[0]}');
                   try {
                     final Map<String, dynamic> data = jsonDecode(args[0]);
                     final type = data['type'];
@@ -221,12 +214,10 @@ class _InteractionWebViewPageState extends State<InteractionWebViewPage> {
               );
             },
             onLoadStart: (controller, url) {
-              print('WebView 开始加载: $url');
               _updateLoadingState(true);
               _errorMessage = null;
             },
             onLoadStop: (controller, url) {
-              print('WebView 加载完成: $url');
               // 添加延迟确保内容完全加载
               Future.delayed(const Duration(milliseconds: 500), () {
                 _updateLoadingState(false);
@@ -234,16 +225,13 @@ class _InteractionWebViewPageState extends State<InteractionWebViewPage> {
               });
             },
             onReceivedError: (controller, url, WebResourceError error) {
-              print('WebView 加载错误: ${error.toString()}');
               _updateLoadingState(false);
               _handleError('加载失败: ${error.toString()}');
             },
             onConsoleMessage: (controller, consoleMessage) {
               print('WebView Console: ${consoleMessage.message}');
             },
-            onLoadResource: (controller, resource) {
-              print('WebView 加载资源: ${resource.url}');
-            },
+            onLoadResource: (controller, resource) {},
           ),
         ),
         if (_isLoading)
