@@ -61,8 +61,7 @@ class InteractionWebViewController {
   }
 
   /// 调用 WebView 中的特定函数
-  Future<void> callFunction(
-      String functionName, List<dynamic> arguments) async {
+  Future<void> callFunction(String functionName, List<dynamic> arguments) async {
     if (!_isWebViewReady || _webViewController == null) {
       print('WebView 未准备就绪');
       return;
@@ -106,14 +105,16 @@ class InteractionWebViewController {
 class InteractionWebViewPage extends StatefulWidget {
   final InteractionWebViewController controller;
   final WebViewInteractionCallback? callback;
-  final String htmlAssetPath;
+  final String? file;
+  final String? url;
   final Map<String, dynamic>? initialSettings;
 
   const InteractionWebViewPage({
     super.key,
     required this.controller,
     this.callback,
-    this.htmlAssetPath = 'assets/webview/test_page.html',
+    this.url,
+    this.file,
     this.initialSettings,
   });
 
@@ -144,8 +145,7 @@ class _InteractionWebViewPageState extends State<InteractionWebViewPage> {
   }
 
   void _injectJavaScript() {
-    widget.controller
-        .sendMessage('init', {'timestamp': DateTime.now().toIso8601String()});
+    widget.controller.sendMessage('init', {'timestamp': DateTime.now().toIso8601String()});
   }
 
   void _handleJsMessage(String type, dynamic data) {
@@ -187,14 +187,17 @@ class _InteractionWebViewPageState extends State<InteractionWebViewPage> {
       children: [
         Positioned.fill(
           child: InAppWebView(
-            initialFile: 'assets/webview/test_page.html',
-            // initialUrlRequest: URLRequest(url: WebUri('https://flutter.dev')),
+            initialUrlRequest: URLRequest(
+              url: widget.url != null ? WebUri(widget.url!) : null,
+            ),
+            initialFile: widget.file,
             initialSettings: InAppWebViewSettings(
               javaScriptEnabled: true,
               allowsInlineMediaPlayback: true,
               mediaPlaybackRequiresUserGesture: false,
             ),
             onWebViewCreated: (controller) {
+              print('WebView 控制器创建成功');
               widget.controller.setController(controller);
 
               // 添加 JavaScript 处理器
@@ -263,8 +266,7 @@ class _InteractionWebViewPageState extends State<InteractionWebViewPage> {
                 children: [
                   Icon(Icons.error_outline, size: 48, color: Colors.red),
                   const SizedBox(height: 16),
-                  Text(_errorMessage!,
-                      style: const TextStyle(color: Colors.red)),
+                  Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () {

@@ -1,3 +1,6 @@
+import 'dart:ui';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:field_login/pages/widgets/left_tools_bar.dart';
 import 'package:field_login/widgets/interaction_webview/interaction_webview.dart';
 import 'package:flutter/material.dart';
@@ -31,10 +34,6 @@ class _ModelPreviewPageState extends State<ModelPreviewPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('3D 模型预览'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      ),
       body: Stack(
         children: [
           Positioned(
@@ -42,16 +41,50 @@ class _ModelPreviewPageState extends State<ModelPreviewPage> {
             top: 0,
             bottom: 0,
             right: 0,
-            child: InteractionWebViewPage(
-              htmlAssetPath: 'assets/webview/test_page.html',
-              controller: _webViewController,
+            child: Container(
+              color: Colors.transparent,
             ),
+          ),
+          InteractionWebViewPage(
+            file: 'assets/webview/test_page.html',
+            controller: _webViewController,
           ),
           LeftToolsBar(
             leftToolbarItems: _leftToolbarItems,
             onItemTap: (item) {
               _webViewController.sendMessage('updateDesign', item['name']);
             },
+          ),
+          Positioned(
+            left: 300,
+            top: 100,
+            width: 200,
+            height: 200,
+            child: Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                // color: Colors.white.withAlpha(100),
+                borderRadius: BorderRadius.circular(30),
+              ),
+              child: ClipRect(
+                child: BackdropFilter(
+                  blendMode: BlendMode.src,
+                  filter: ImageFilter.dilate(radiusX: 20, radiusY: 20),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(30),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                      child: Container(
+                        width: 200,
+                        height: 200,
+                        color: Colors.white.withAlpha(100),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),

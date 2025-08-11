@@ -174,7 +174,7 @@ class _WebViewExamplePageState extends State<WebViewExamplePage> {
           Expanded(
             child: InteractionWebViewPage(
               controller: _webViewController,
-              htmlAssetPath: 'assets/webview/test_page.html',
+              file: 'assets/webview/test_page.html',
               callback: WebViewInteractionCallback(
                 onJsMessage: (type, data) {
                   setState(() {
