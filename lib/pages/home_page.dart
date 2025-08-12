@@ -5,8 +5,9 @@ import 'package:flutter/material.dart';
 import '../demos/progress_demo.dart';
 import '../demos/phone_input_demo.dart';
 import '../demos/shape_tab_demo.dart';
-import 'webview_example_page.dart';
-import 'model_preview_page.dart';
+import '../widgets/model_preview/webview_example_page.dart';
+import '../widgets/model_preview/model_preview_page.dart';
+import '../demos/progress_timeline_demo.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -85,6 +86,13 @@ class HomePage extends StatelessWidget {
         icon: Icons.phone,
         color: Colors.orange,
         demoPage: const PhoneInputDemo(),
+      ),
+      _ComponentItem(
+        title: '进度时间线',
+        description: '展示进度和时间线的组件',
+        icon: Icons.timeline,
+        color: Colors.indigo,
+        demoPage: const ProgressTimelineDemo(),
       ),
       _ComponentItem(
         title: '形状标签组件',

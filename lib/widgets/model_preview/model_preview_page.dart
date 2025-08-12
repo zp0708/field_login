@@ -1,6 +1,6 @@
-import 'package:field_login/pages/widgets/toolbar_item.dart';
-import 'package:field_login/pages/widgets/left_tools_bar.dart';
-import 'package:field_login/widgets/interaction_webview/interaction_webview.dart';
+import 'package:field_login/widgets/model_preview/widgets/toolbar_item.dart';
+import 'package:field_login/widgets/model_preview/widgets/left_tools_bar.dart';
+import 'package:field_login/widgets/interaction_webview.dart';
 import 'package:flutter/material.dart';
 
 class ModelPreviewPage extends StatefulWidget {

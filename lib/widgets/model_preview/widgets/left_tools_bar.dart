@@ -1,8 +1,8 @@
 import 'dart:math';
 
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:field_login/pages/widgets/background_clipper.dart';
-import 'package:field_login/pages/widgets/toolbar_item.dart';
+import 'package:field_login/widgets/model_preview/widgets/background_clipper.dart';
+import 'package:field_login/widgets/model_preview/widgets/toolbar_item.dart';
 import 'package:field_login/style/adapt.dart';
 import 'package:flutter/material.dart';
 

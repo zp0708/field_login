@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../widgets/interaction_webview/interaction_webview.dart';
+import '../interaction_webview.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
 /// WebView 交互示例页面
