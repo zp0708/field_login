@@ -54,7 +54,7 @@ class ProgressStage {
       undoImage: undoImage,
       status: status ?? this.status,
       timestamp: timestamp ?? this.timestamp,
-      options: options,
+      options: options ?? this.options,
     );
   }
 
