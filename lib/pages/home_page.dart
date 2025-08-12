@@ -1,4 +1,5 @@
 import 'package:field_login/demos/carousel_demo.dart';
+import 'package:field_login/demos/websocket_demo.dart';
 import 'package:field_login/widgets/semi_circle_scroll/rotating_menu.dart';
 import 'package:flutter/material.dart';
 import '../demos/progress_demo.dart';
@@ -119,6 +120,13 @@ class HomePage extends StatelessWidget {
         icon: Icons.menu,
         color: Colors.pink,
         demoPage: const LeftSemiCircleMenuDemo(),
+      ),
+      _ComponentItem(
+        title: 'Websocket',
+        description: '按钮均匀分布在圆内的圆形菜单组件',
+        icon: Icons.menu,
+        color: Colors.pink,
+        demoPage: const WebsocketDemo(),
       ),
     ];
 
