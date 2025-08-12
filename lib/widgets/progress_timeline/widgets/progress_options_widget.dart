@@ -4,21 +4,21 @@ import 'package:field_login/widgets/progress_timeline/widgets/shape_background_c
 import 'package:field_login/widgets/progress_timeline/widgets/stage_item.dart';
 import 'package:flutter/material.dart';
 
-class ShapeBackgroundButtons extends StatefulWidget {
+class ProgressOptionsWidget extends StatefulWidget {
   final List<ProgressStageOption> options;
   final ValueChanged<ProgressStageOption>? onOptionSelected;
 
-  const ShapeBackgroundButtons({
+  const ProgressOptionsWidget({
     super.key,
     required this.options,
     this.onOptionSelected,
   });
 
   @override
-  State<ShapeBackgroundButtons> createState() => _ShapeBackgroundButtonsState();
+  State<ProgressOptionsWidget> createState() => _ShapeBackgroundButtonsState();
 }
 
-class _ShapeBackgroundButtonsState extends State<ShapeBackgroundButtons> {
+class _ShapeBackgroundButtonsState extends State<ProgressOptionsWidget> {
   int _selectedIndex = 0;
 
   @override
@@ -39,7 +39,7 @@ class _ShapeBackgroundButtonsState extends State<ShapeBackgroundButtons> {
                 widget.options.length,
                 (index) {
                   final option = widget.options[index];
-                  return ShapeBackgroundButton(
+                  return ProgressOptionWidget(
                     title: option.title,
                     icon: option.image,
                     highlight: index == _selectedIndex,
@@ -58,13 +58,13 @@ class _ShapeBackgroundButtonsState extends State<ShapeBackgroundButtons> {
   }
 }
 
-class ShapeBackgroundButton extends StatelessWidget {
+class ProgressOptionWidget extends StatelessWidget {
   final String title;
   final String icon;
   final VoidCallback? onTap;
   final bool highlight;
 
-  const ShapeBackgroundButton({
+  const ProgressOptionWidget({
     super.key,
     required this.title,
     required this.icon,

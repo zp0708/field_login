@@ -1,6 +1,6 @@
 import 'package:field_login/widgets/progress_timeline/widgets/dash_line_painter.dart';
 import 'package:field_login/widgets/progress_timeline/widgets/progress_stage_widget.dart';
-import 'package:field_login/widgets/progress_timeline/widgets/shape_background_buttons.dart';
+import 'package:field_login/widgets/progress_timeline/widgets/progress_options_widget.dart';
 import 'package:field_login/widgets/progress_timeline/widgets/stage_item.dart';
 import 'package:flutter/material.dart';
 
@@ -37,50 +37,52 @@ class _ProgressTimelineState extends State<ProgressTimeline> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
       ),
-      child: LayoutBuilder(builder: (context, constraints) {
-        final length = widget.stages.length;
-        return Stack(
-          children: [
-            Positioned.fill(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(
-                  widget.stages.length,
-                  (index) {
-                    final stage = widget.stages[index];
-                    return ProgressStageWidget(stage: stage);
-                  },
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final length = widget.stages.length;
+          return Stack(
+            children: [
+              Positioned.fill(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: List.generate(
+                    widget.stages.length,
+                    (index) {
+                      final stage = widget.stages[index];
+                      return ProgressStageWidget(stage: stage);
+                    },
+                  ),
                 ),
               ),
-            ),
-            ...List.generate(
-              length - 1,
-              (index) {
-                final stage = widget.stages[index];
-                final centerX = _calculateStageCenterPosition(constraints.maxWidth, index);
-                final width = _calculateStageWidth(constraints.maxWidth, index);
-                return Positioned(
-                  left: centerX + _stageSpace,
-                  top: _top,
-                  child: _buildConnectionLine(stage, width),
-                );
-              },
-            ),
-            if (optionIndex != -1)
-              Positioned(
-                left: _calculateStageCenterPosition(constraints.maxWidth, optionIndex) - 87,
-                top: 0,
-                child: ShapeBackgroundButtons(
-                  options: widget.stages[optionIndex].options!,
-                  onOptionSelected: (option) {
-                    widget.onOptionSelected?.call(widget.stages[optionIndex], option);
-                  },
-                ),
+              ...List.generate(
+                length - 1,
+                (index) {
+                  final stage = widget.stages[index];
+                  final centerX = _calculateStageCenterPosition(constraints.maxWidth, index);
+                  final width = _calculateStageWidth(constraints.maxWidth, index);
+                  return Positioned(
+                    left: centerX + _stageSpace,
+                    top: _top,
+                    child: _buildConnectionLine(stage, width),
+                  );
+                },
               ),
-          ],
-        );
-      }),
+              if (optionIndex != -1)
+                Positioned(
+                  left: _calculateStageCenterPosition(constraints.maxWidth, optionIndex) - 87,
+                  top: 0,
+                  child: ProgressOptionsWidget(
+                    options: widget.stages[optionIndex].options!,
+                    onOptionSelected: (option) {
+                      widget.onOptionSelected?.call(widget.stages[optionIndex], option);
+                    },
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
     );
   }
 
