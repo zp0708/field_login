@@ -14,7 +14,7 @@ class ShareBackgroundClipper extends CustomClipper<Path> {
     final left = centerX - bumpWidth / 2;
     final right = centerX + bumpWidth / 2;
 
-    final top = 10.0.dp;
+    final top = 8.0.dp;
     final cornerRadius = 10.0.dp;
 
     // 构建背景

@@ -1,3 +1,4 @@
+import 'package:field_login/widgets/progress_timeline/widgets/stage_item.dart';
 import 'package:flutter/material.dart';
 import '../widgets/progress_timeline/progress_timeline.dart';
 
@@ -22,40 +23,46 @@ class _ProgressTimelineDemoState extends State<ProgressTimelineDemo> {
       ProgressStage(
         id: '1',
         title: '修剪本甲',
-        icon: Icons.content_cut,
+        doingImage: 'assets/icons/icon_clip_nail_doing.png',
+        doneImage: 'assets/icons/icon_clip_nail_done.png',
+        undoImage: 'assets/icons/icon_clip_nail_undo.png',
         status: ProgressStatus.completed,
         timestamp: '今天 09:03',
       ),
       ProgressStage(
         id: '2',
         title: '美甲定制',
-        icon: Icons.brush,
+        doingImage: 'assets/icons/icon_design_nail_doing.png',
+        doneImage: 'assets/icons/icon_design_nail_done.png',
+        undoImage: 'assets/icons/icon_design_nail_undo.png',
         status: ProgressStatus.completed,
         timestamp: '今天 09:28',
       ),
       ProgressStage(
         id: '3',
         title: '选择美甲工艺',
-        icon: Icons.construction,
+        doingImage: 'assets/icons/icon_make_nail_doing.png',
+        doneImage: 'assets/icons/icon_make_nail_done.png',
+        undoImage: 'assets/icons/icon_make_nail_undo.png',
         status: ProgressStatus.inProgress,
         timestamp: '今天 09:45',
-        options: {
-          'manual': {
-            'text': '人工美甲',
-            'icon': Icons.person,
-            'selected': true,
-          },
-          'smart': {
-            'text': '智能美甲',
-            'icon': Icons.smart_toy,
-            'selected': false,
-          },
-        },
+        options: [
+          ProgressStageOption(
+            title: '人工美甲',
+            image: 'assets/icons/icon_process_manual.png',
+          ),
+          ProgressStageOption(
+            title: '智能美甲',
+            image: 'assets/icons/icon_process_smart.png',
+          ),
+        ],
       ),
       ProgressStage(
         id: '4',
         title: '保湿护理',
-        icon: Icons.water_drop,
+        doingImage: 'assets/icons/icon_nurse_nail_doing.png',
+        doneImage: 'assets/icons/icon_nurse_nail_done.png',
+        undoImage: 'assets/icons/icon_nurse_nail_undo.png',
         status: ProgressStatus.waiting,
       ),
     ];
@@ -152,11 +159,8 @@ class _ProgressTimelineDemoState extends State<ProgressTimelineDemo> {
               ProgressTimeline(
                 stages: _stages,
                 height: 300,
-                onStageTap: (stage) {
-                  _showStageInfo(stage);
-                },
-                onOptionSelected: (stage) {
-                  _showOptionInfo(stage);
+                onOptionSelected: (stage, option) {
+                  print(option.title);
                 },
               ),
 
@@ -283,62 +287,6 @@ class _ProgressTimelineDemoState extends State<ProgressTimelineDemo> {
           backgroundColor: Colors.orange,
         ),
       );
-    }
-  }
-
-  void _showStageInfo(ProgressStage stage) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(stage.title),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('状态: ${_getStatusText(stage.status)}'),
-            if (stage.timestamp != null) Text('时间: ${stage.timestamp}'),
-            if (stage.options != null) ...[
-              const SizedBox(height: 8),
-              const Text('选项:'),
-              ...stage.options!.entries.map((entry) {
-                final option = entry.value;
-                return Text('  • ${option['text']}');
-              }),
-            ],
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('确定'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showOptionInfo(ProgressStage stage) {
-    final selectedOption =
-        stage.options?.entries.firstWhere((entry) => entry.value['selected'] == true, orElse: () => MapEntry('', {}));
-
-    if (selectedOption != null && selectedOption.key.isNotEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('已选择：${selectedOption.value['text']}'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    }
-  }
-
-  String _getStatusText(ProgressStatus status) {
-    switch (status) {
-      case ProgressStatus.waiting:
-        return '等待';
-      case ProgressStatus.inProgress:
-        return '进行中';
-      case ProgressStatus.completed:
-        return '完成';
     }
   }
 
