@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:easy_refresh/easy_refresh.dart';
 
@@ -12,8 +14,8 @@ class SliverGridEasyRefreshScrollDemo extends StatefulWidget {
 class _SliverGridEasyRefreshScrollDemoState
     extends State<SliverGridEasyRefreshScrollDemo> {
   final ScrollController scrollController = ScrollController();
-  final EasyRefreshController easyRefreshController =
-      EasyRefreshController(controlFinishRefresh: true,controlFinishLoad: true);
+  final EasyRefreshController easyRefreshController = EasyRefreshController(
+      controlFinishRefresh: true, controlFinishLoad: true);
 
   final List<int> items = List.generate(30, (i) => i);
 
@@ -24,8 +26,8 @@ class _SliverGridEasyRefreshScrollDemoState
   final double itemHeight = 220;
 
   /// Header 参数
-  final double minHeaderHeight = 44;
-  final double maxHeaderHeight = 88;
+  final double _remainHeight = 44;
+  final double _headerHeight = 188;
 
   /// 刷新
   Future<void> _onRefresh() async {
@@ -55,10 +57,17 @@ class _SliverGridEasyRefreshScrollDemoState
     final rowHeight = itemHeight + mainAxisSpacing;
 
     // header 收起后的高度差
-    final shrinkAmount = maxHeaderHeight - minHeaderHeight;
+    final shrinkAmount = _headerHeight - _remainHeight;
 
+    // 计算目标滚动位置
     // 目标 offset = 收缩量 + 行高 * 行数
     final targetOffset = shrinkAmount + rowIndex * rowHeight;
+
+    print('滚动到索引 $index:');
+    print('  - 行索引: $rowIndex');
+    print('  - 行高度: $rowHeight');
+    print('  - Header收缩量: $shrinkAmount');
+    print('  - 目标偏移: $targetOffset');
 
     scrollController.animateTo(
       targetOffset,
@@ -87,8 +96,8 @@ class _SliverGridEasyRefreshScrollDemoState
             SliverPersistentHeader(
               pinned: true,
               delegate: _CustomHeaderDelegate(
-                minExtentHeight: minHeaderHeight,
-                maxExtentHeight: maxHeaderHeight,
+                height: _headerHeight,
+                remainHeight: _remainHeight,
               ),
             ),
             const HeaderLocator.sliver(),
@@ -109,8 +118,8 @@ class _SliverGridEasyRefreshScrollDemoState
                       alignment: Alignment.center,
                       child: Text(
                         'Item ${items[index]}',
-                        style: const TextStyle(
-                            color: Colors.white, fontSize: 18),
+                        style:
+                            const TextStyle(color: Colors.white, fontSize: 18),
                       ),
                     );
                   },
@@ -132,29 +141,43 @@ class _SliverGridEasyRefreshScrollDemoState
 }
 
 class _CustomHeaderDelegate extends SliverPersistentHeaderDelegate {
-  final double minExtentHeight;
-  final double maxExtentHeight;
+  final double height;
+  final double remainHeight;
 
   _CustomHeaderDelegate({
-    required this.minExtentHeight,
-    required this.maxExtentHeight,
+    required this.height,
+    required this.remainHeight,
   });
 
   @override
-  double get minExtent => minExtentHeight;
+  double get minExtent => height;
 
   @override
-  double get maxExtent => maxExtentHeight;
+  double get maxExtent => height;
 
   @override
   Widget build(
       BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(
-      color: Colors.orange,
-      alignment: Alignment.center,
-      child: Text(
-        'Header (收起: ${shrinkOffset.toStringAsFixed(1)} px)',
-        style: const TextStyle(fontSize: 20, color: Colors.white),
+    double offsetY = min(height - remainHeight, shrinkOffset);
+    return Transform.translate(
+      offset: Offset(0, -offsetY),
+      child: Container(
+        // 根据开关决定是否保持固定高度
+        color: Colors.orange,
+        alignment: Alignment.center,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Header (收起: ${shrinkOffset.toStringAsFixed(1)} px)',
+              style: const TextStyle(fontSize: 20, color: Colors.white),
+            ),
+            Text(
+              '保留: $remainHeight px',
+              style: const TextStyle(fontSize: 16, color: Colors.white70),
+            ),
+          ],
+        ),
       ),
     );
   }
