@@ -1,6 +1,7 @@
 import 'package:field_login/demos/carousel_demo.dart';
 import 'package:field_login/demos/websocket_demo.dart';
 import 'package:field_login/demos/double_tap_zoom_demo.dart';
+import 'package:field_login/pages/scroll_to_index.dart';
 import 'package:field_login/widgets/semi_circle_scroll/rotating_menu.dart';
 import 'package:flutter/material.dart';
 import '../demos/progress_demo.dart';
@@ -9,7 +10,6 @@ import '../demos/shape_tab_demo.dart';
 import '../widgets/model_preview/webview_example_page.dart';
 import '../widgets/model_preview/model_preview_page.dart';
 import '../demos/progress_timeline_demo.dart';
-import 'scrollable_list_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -80,7 +80,7 @@ class HomePage extends StatelessWidget {
         description: '具有特殊滚动行为的列表页面，工具条跟随滚动，支持滚动到指定位置',
         icon: Icons.list,
         color: Colors.blue,
-        demoPage: const ScrollableListPage(),
+        demoPage: const SliverGridEasyRefreshScrollDemo(),
       ),
       _ComponentItem(
         title: '双击缩放演示',
