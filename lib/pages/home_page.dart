@@ -1,5 +1,6 @@
 import 'package:field_login/demos/carousel_demo.dart';
 import 'package:field_login/demos/websocket_demo.dart';
+import 'package:field_login/demos/double_tap_zoom_demo.dart';
 import 'package:field_login/widgets/semi_circle_scroll/rotating_menu.dart';
 import 'package:flutter/material.dart';
 import '../demos/progress_demo.dart';
@@ -72,6 +73,13 @@ class HomePage extends StatelessWidget {
         icon: Icons.image,
         color: Colors.blue,
         demoPage: const CarouselDemo(),
+      ),
+      _ComponentItem(
+        title: '双击缩放演示',
+        description: '专门演示图片轮播器双击缩放功能的页面，包含详细的功能说明和配置选项',
+        icon: Icons.zoom_in,
+        color: Colors.indigo,
+        demoPage: const DoubleTapZoomDemo(),
       ),
       _ComponentItem(
         title: '进度对话框',

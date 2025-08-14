@@ -349,14 +349,60 @@ class _CarouselDemoState extends State<CarouselDemo> {
           options: const ImageCarouselOptions(
             autoPlay: false,
             enableZoom: true,
+            enableDoubleTapZoom: true,
+            doubleTapScale: 2.5,
+            doubleTapZoomDuration: Duration(milliseconds: 400),
+            doubleTapZoomCurve: Curves.easeOutBack,
             minScale: 0.5,
-            maxScale: 3.0,
+            maxScale: 4.0,
             height: 200,
           ),
           borderRadius: BorderRadius.circular(12),
           onImageTap: (controller, image, index) {
             _showSnackBar('支持双指缩放，点击查看大图');
           },
+        ),
+        
+        const SizedBox(height: 12),
+        
+        // 双击缩放说明
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.orange.shade50,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.orange.shade200),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.touch_app, color: Colors.orange.shade600),
+                  const SizedBox(width: 8),
+                  Text(
+                    '双击缩放功能',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.orange.shade700,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '• 双击图片可以放大到 2.5 倍\n'
+                '• 再次双击可以恢复到原始大小\n'
+                '• 支持拖拽和手势缩放\n'
+                '• 缩放范围：0.5x - 4.0x\n'
+                '• 动画时长：400ms，使用 easeOutBack 曲线',
+                style: TextStyle(
+                  color: Colors.orange.shade600,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );

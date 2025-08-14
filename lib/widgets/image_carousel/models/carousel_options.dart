@@ -37,6 +37,18 @@ class ImageCarouselOptions {
   /// 最大缩放比例
   final double maxScale;
 
+  /// 是否启用双击缩放
+  final bool enableDoubleTapZoom;
+
+  /// 双击缩放比例
+  final double? doubleTapScale;
+
+  /// 双击缩放动画时长
+  final Duration doubleTapZoomDuration;
+
+  /// 双击缩放动画曲线
+  final Curve doubleTapZoomCurve;
+
   // 新增配置选项
   /// 是否自动播放
   final bool autoPlay;
@@ -72,6 +84,10 @@ class ImageCarouselOptions {
   /// [enableZoom] 是否启用缩放
   /// [minScale] 最小缩放比例
   /// [maxScale] 最大缩放比例
+  /// [enableDoubleTapZoom] 是否启用双击缩放
+  /// [doubleTapScale] 双击缩放比例
+  /// [doubleTapZoomDuration] 双击缩放动画时长
+  /// [doubleTapZoomCurve] 双击缩放动画曲线
   /// [autoPlay] 是否自动播放
   /// [autoPlayInterval] 自动播放间隔
   /// [infiniteScroll] 是否启用无限滚动
@@ -91,6 +107,10 @@ class ImageCarouselOptions {
     this.enableZoom = false,
     this.minScale = 0.5,
     this.maxScale = 3.0,
+    this.enableDoubleTapZoom = true,
+    this.doubleTapScale,
+    this.doubleTapZoomDuration = const Duration(milliseconds: 300),
+    this.doubleTapZoomCurve = Curves.easeInOut,
     this.autoPlay = false,
     this.autoPlayInterval = const Duration(seconds: 3),
     this.infiniteScroll = true,
@@ -115,6 +135,10 @@ class ImageCarouselOptions {
         enableZoom = false,
         minScale = 0.5,
         maxScale = 3.0,
+        enableDoubleTapZoom = true,
+        doubleTapScale = null,
+        doubleTapZoomDuration = const Duration(milliseconds: 300),
+        doubleTapZoomCurve = Curves.easeInOut,
         autoPlay = false,
         autoPlayInterval = const Duration(seconds: 3),
         infiniteScroll = true,
@@ -136,6 +160,10 @@ class ImageCarouselOptions {
   /// [enableZoom] 是否启用缩放
   /// [minScale] 最小缩放比例
   /// [maxScale] 最大缩放比例
+  /// [enableDoubleTapZoom] 是否启用双击缩放
+  /// [doubleTapScale] 双击缩放比例
+  /// [doubleTapZoomDuration] 双击缩放动画时长
+  /// [doubleTapZoomCurve] 双击缩放动画曲线
   /// [autoPlay] 是否自动播放
   /// [autoPlayInterval] 自动播放间隔
   /// [infiniteScroll] 是否启用无限滚动
@@ -155,6 +183,10 @@ class ImageCarouselOptions {
     bool? enableZoom,
     double? minScale,
     double? maxScale,
+    bool? enableDoubleTapZoom,
+    double? doubleTapScale,
+    Duration? doubleTapZoomDuration,
+    Curve? doubleTapZoomCurve,
     bool? autoPlay,
     Duration? autoPlayInterval,
     bool? infiniteScroll,
@@ -175,6 +207,10 @@ class ImageCarouselOptions {
       enableZoom: enableZoom ?? this.enableZoom,
       minScale: minScale ?? this.minScale,
       maxScale: maxScale ?? this.maxScale,
+      enableDoubleTapZoom: enableDoubleTapZoom ?? this.enableDoubleTapZoom,
+      doubleTapScale: doubleTapScale ?? this.doubleTapScale,
+      doubleTapZoomDuration: doubleTapZoomDuration ?? this.doubleTapZoomDuration,
+      doubleTapZoomCurve: doubleTapZoomCurve ?? this.doubleTapZoomCurve,
       autoPlay: autoPlay ?? this.autoPlay,
       autoPlayInterval: autoPlayInterval ?? this.autoPlayInterval,
       infiniteScroll: infiniteScroll ?? this.infiniteScroll,
@@ -247,6 +283,10 @@ class ImageCarouselOptions {
         'enableZoom: $enableZoom, '
         'minScale: $minScale, '
         'maxScale: $maxScale, '
+        'enableDoubleTapZoom: $enableDoubleTapZoom, '
+        'doubleTapScale: $doubleTapScale, '
+        'doubleTapZoomDuration: $doubleTapZoomDuration, '
+        'doubleTapZoomCurve: $doubleTapZoomCurve, '
         'autoPlay: $autoPlay, '
         'autoPlayInterval: $autoPlayInterval, '
         'infiniteScroll: $infiniteScroll, '
