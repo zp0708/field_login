@@ -9,6 +9,7 @@ import '../demos/shape_tab_demo.dart';
 import '../widgets/model_preview/webview_example_page.dart';
 import '../widgets/model_preview/model_preview_page.dart';
 import '../demos/progress_timeline_demo.dart';
+import 'scrollable_list_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -73,6 +74,13 @@ class HomePage extends StatelessWidget {
         icon: Icons.image,
         color: Colors.blue,
         demoPage: const CarouselDemo(),
+      ),
+      _ComponentItem(
+        title: '滚动列表页面',
+        description: '具有特殊滚动行为的列表页面，工具条跟随滚动，支持滚动到指定位置',
+        icon: Icons.list,
+        color: Colors.blue,
+        demoPage: const ScrollableListPage(),
       ),
       _ComponentItem(
         title: '双击缩放演示',

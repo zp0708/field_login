@@ -1,0 +1,438 @@
+{
+  "status_code": 0,
+  "status_msg": "成功",
+  "product_list": [
+    {
+      "product_id": 1047,
+      "product_type": 1,
+      "store_id": 10001,
+      "name": "测试商品",
+      "image": "https://macbrush-shop-image.oss-cn-shanghai.aliyuncs.com/product/1755151982629_c6r1uv.jpg",
+      "status": 1,
+      "tag_list": [
+        "甜美",
+        "新款",
+        "最热",
+        "可爱"
+      ],
+      "default_query": [
+        101,
+        109
+      ]
+    },
+    {
+      "product_id": 1047,
+      "product_type": 1,
+      "store_id": 10001,
+      "name": "测试商品",
+      "image": "https://macbrush-shop-image.oss-cn-shanghai.aliyuncs.com/product/1755151982629_c6r1uv.jpg",
+      "status": 1,
+      "tag_list": [
+        "甜美",
+        "新款",
+        "最热",
+        "可爱"
+      ],
+      "default_query": [
+        101,
+        109
+      ]
+    },
+    {
+      "product_id": 1047,
+      "product_type": 1,
+      "store_id": 10001,
+      "name": "测试商品",
+      "image": "https://macbrush-shop-image.oss-cn-shanghai.aliyuncs.com/product/1755151982629_c6r1uv.jpg",
+      "status": 1,
+      "tag_list": [
+        "甜美",
+        "新款",
+        "最热",
+        "可爱"
+      ],
+      "default_query": [
+        101,
+        109
+      ]
+    },
+    {
+      "product_id": 1047,
+      "product_type": 1,
+      "store_id": 10001,
+      "name": "测试商品",
+      "image": "https://macbrush-shop-image.oss-cn-shanghai.aliyuncs.com/product/1755151982629_c6r1uv.jpg",
+      "status": 1,
+      "tag_list": [
+        "甜美",
+        "新款",
+        "最热",
+        "可爱"
+      ],
+      "default_query": [
+        101,
+        109
+      ]
+    },
+    {
+      "product_id": 1047,
+      "product_type": 1,
+      "store_id": 10001,
+      "name": "测试商品",
+      "image": "https://macbrush-shop-image.oss-cn-shanghai.aliyuncs.com/product/1755151982629_c6r1uv.jpg",
+      "status": 1,
+      "tag_list": [
+        "甜美",
+        "新款",
+        "最热",
+        "可爱"
+      ],
+      "default_query": [
+        101,
+        109
+      ]
+    },
+    {
+      "product_id": 1047,
+      "product_type": 1,
+      "store_id": 10001,
+      "name": "测试商品",
+      "image": "https://macbrush-shop-image.oss-cn-shanghai.aliyuncs.com/product/1755151982629_c6r1uv.jpg",
+      "status": 1,
+      "tag_list": [
+        "甜美",
+        "新款",
+        "最热",
+        "可爱"
+      ],
+      "default_query": [
+        101,
+        109
+      ]
+    },
+    {
+      "product_id": 1047,
+      "product_type": 1,
+      "store_id": 10001,
+      "name": "测试商品",
+      "image": "https://macbrush-shop-image.oss-cn-shanghai.aliyuncs.com/product/1755151982629_c6r1uv.jpg",
+      "status": 1,
+      "tag_list": [
+        "甜美",
+        "新款",
+        "最热",
+        "可爱"
+      ],
+      "default_query": [
+        101,
+        109
+      ]
+    },
+    {
+      "product_id": 1047,
+      "product_type": 1,
+      "store_id": 10001,
+      "name": "测试商品",
+      "image": "https://macbrush-shop-image.oss-cn-shanghai.aliyuncs.com/product/1755151982629_c6r1uv.jpg",
+      "status": 1,
+      "tag_list": [
+        "甜美",
+        "新款",
+        "最热",
+        "可爱"
+      ],
+      "default_query": [
+        101,
+        109
+      ]
+    },
+    {
+      "product_id": 1047,
+      "product_type": 1,
+      "store_id": 10001,
+      "name": "测试商品",
+      "image": "https://macbrush-shop-image.oss-cn-shanghai.aliyuncs.com/product/1755151982629_c6r1uv.jpg",
+      "status": 1,
+      "tag_list": [
+        "甜美",
+        "新款",
+        "最热",
+        "可爱"
+      ],
+      "default_query": [
+        101,
+        109
+      ]
+    },
+    {
+      "product_id": 1047,
+      "product_type": 1,
+      "store_id": 10001,
+      "name": "测试商品",
+      "image": "https://macbrush-shop-image.oss-cn-shanghai.aliyuncs.com/product/1755151982629_c6r1uv.jpg",
+      "status": 1,
+      "tag_list": [
+        "甜美",
+        "新款",
+        "最热",
+        "可爱"
+      ],
+      "default_query": [
+        101,
+        109
+      ]
+    },
+    {
+      "product_id": 1047,
+      "product_type": 1,
+      "store_id": 10001,
+      "name": "测试商品",
+      "image": "https://macbrush-shop-image.oss-cn-shanghai.aliyuncs.com/product/1755151982629_c6r1uv.jpg",
+      "status": 1,
+      "tag_list": [
+        "甜美",
+        "新款",
+        "最热",
+        "可爱"
+      ],
+      "default_query": [
+        101,
+        109
+      ]
+    },
+    {
+      "product_id": 1047,
+      "product_type": 1,
+      "store_id": 10001,
+      "name": "测试商品",
+      "image": "https://macbrush-shop-image.oss-cn-shanghai.aliyuncs.com/product/1755151982629_c6r1uv.jpg",
+      "status": 1,
+      "tag_list": [
+        "甜美",
+        "新款",
+        "最热",
+        "可爱"
+      ],
+      "default_query": [
+        101,
+        109
+      ]
+    },
+    {
+      "product_id": 1047,
+      "product_type": 1,
+      "store_id": 10001,
+      "name": "测试商品",
+      "image": "https://macbrush-shop-image.oss-cn-shanghai.aliyuncs.com/product/1755151982629_c6r1uv.jpg",
+      "status": 1,
+      "tag_list": [
+        "甜美",
+        "新款",
+        "最热",
+        "可爱"
+      ],
+      "default_query": [
+        101,
+        109
+      ]
+    },
+    {
+      "product_id": 1047,
+      "product_type": 1,
+      "store_id": 10001,
+      "name": "测试商品",
+      "image": "https://macbrush-shop-image.oss-cn-shanghai.aliyuncs.com/product/1755151982629_c6r1uv.jpg",
+      "status": 1,
+      "tag_list": [
+        "甜美",
+        "新款",
+        "最热",
+        "可爱"
+      ],
+      "default_query": [
+        101,
+        109
+      ]
+    },
+    {
+      "product_id": 1047,
+      "product_type": 1,
+      "store_id": 10001,
+      "name": "测试商品",
+      "image": "https://macbrush-shop-image.oss-cn-shanghai.aliyuncs.com/product/1755151982629_c6r1uv.jpg",
+      "status": 1,
+      "tag_list": [
+        "甜美",
+        "新款",
+        "最热",
+        "可爱"
+      ],
+      "default_query": [
+        101,
+        109
+      ]
+    },
+    {
+      "product_id": 1047,
+      "product_type": 1,
+      "store_id": 10001,
+      "name": "测试商品",
+      "image": "https://macbrush-shop-image.oss-cn-shanghai.aliyuncs.com/product/1755151982629_c6r1uv.jpg",
+      "status": 1,
+      "tag_list": [
+        "甜美",
+        "新款",
+        "最热",
+        "可爱"
+      ],
+      "default_query": [
+        101,
+        109
+      ]
+    },
+    {
+      "product_id": 1047,
+      "product_type": 1,
+      "store_id": 10001,
+      "name": "测试商品",
+      "image": "https://macbrush-shop-image.oss-cn-shanghai.aliyuncs.com/product/1755151982629_c6r1uv.jpg",
+      "status": 1,
+      "tag_list": [
+        "甜美",
+        "新款",
+        "最热",
+        "可爱"
+      ],
+      "default_query": [
+        101,
+        109
+      ]
+    },
+    {
+      "product_id": 1047,
+      "product_type": 1,
+      "store_id": 10001,
+      "name": "测试商品",
+      "image": "https://macbrush-shop-image.oss-cn-shanghai.aliyuncs.com/product/1755151982629_c6r1uv.jpg",
+      "status": 1,
+      "tag_list": [
+        "甜美",
+        "新款",
+        "最热",
+        "可爱"
+      ],
+      "default_query": [
+        101,
+        109
+      ]
+    },
+    {
+      "product_id": 1047,
+      "product_type": 1,
+      "store_id": 10001,
+      "name": "测试商品",
+      "image": "https://macbrush-shop-image.oss-cn-shanghai.aliyuncs.com/product/1755151982629_c6r1uv.jpg",
+      "status": 1,
+      "tag_list": [
+        "甜美",
+        "新款",
+        "最热",
+        "可爱"
+      ],
+      "default_query": [
+        101,
+        109
+      ]
+    },
+    {
+      "product_id": 1047,
+      "product_type": 1,
+      "store_id": 10001,
+      "name": "测试商品",
+      "image": "https://macbrush-shop-image.oss-cn-shanghai.aliyuncs.com/product/1755151982629_c6r1uv.jpg",
+      "status": 1,
+      "tag_list": [
+        "甜美",
+        "新款",
+        "最热",
+        "可爱"
+      ],
+      "default_query": [
+        101,
+        109
+      ]
+    },
+    {
+      "product_id": 1047,
+      "product_type": 1,
+      "store_id": 10001,
+      "name": "测试商品",
+      "image": "https://macbrush-shop-image.oss-cn-shanghai.aliyuncs.com/product/1755151982629_c6r1uv.jpg",
+      "status": 1,
+      "tag_list": [
+        "甜美",
+        "新款",
+        "最热",
+        "可爱"
+      ],
+      "default_query": [
+        101,
+        109
+      ]
+    },
+    {
+      "product_id": 1047,
+      "product_type": 1,
+      "store_id": 10001,
+      "name": "测试商品",
+      "image": "https://macbrush-shop-image.oss-cn-shanghai.aliyuncs.com/product/1755151982629_c6r1uv.jpg",
+      "status": 1,
+      "tag_list": [
+        "甜美",
+        "新款",
+        "最热",
+        "可爱"
+      ],
+      "default_query": [
+        101,
+        109
+      ]
+    },
+    {
+      "product_id": 1047,
+      "product_type": 1,
+      "store_id": 10001,
+      "name": "测试商品",
+      "image": "https://macbrush-shop-image.oss-cn-shanghai.aliyuncs.com/product/1755151982629_c6r1uv.jpg",
+      "status": 1,
+      "tag_list": [
+        "甜美",
+        "新款",
+        "最热",
+        "可爱"
+      ],
+      "default_query": [
+        101,
+        109
+      ]
+    },
+    {
+      "product_id": 1048,
+      "product_type": 1,
+      "store_id": 10001,
+      "name": "测试商品",
+      "image": "https://macbrush-shop-image.oss-cn-shanghai.aliyuncs.com/product/1755151982629_c6r1uv.jpg",
+      "status": 1,
+      "tag_list": [
+        "甜美",
+        "新款",
+        "最热",
+        "可爱"
+      ],
+      "default_query": [
+        101,
+        109
+      ]
+    }
+  ]
+}
