@@ -65,7 +65,7 @@ class _HttpDumpListPageState extends State<HttpDumpListPage> {
             child: _list.isEmpty
                 ? _buildEmptyState()
                 : ListView.builder(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(10),
                     itemBuilder: (_, int index) => _buildItem(index),
                     itemCount: _list.length,
                   ),
@@ -79,7 +79,8 @@ class _HttpDumpListPageState extends State<HttpDumpListPage> {
     final HttpDumpRecord record = _list[index];
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -91,74 +92,67 @@ class _HttpDumpListPageState extends State<HttpDumpListPage> {
           ),
         ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: () => _onTapItem(index),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                // URI 部分
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        record.uri,
-                        maxLines: 2,
-                        style: const TextStyle(
-                          color: Colors.black87,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          height: 1.3,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => _onTapItem(index),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            // URI 部分
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    record.uri,
+                    maxLines: 2,
+                    style: const TextStyle(
+                      color: Colors.black87,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      height: 1.3,
                     ),
-                    const SizedBox(width: 8),
-                    _buildStatusChip(record.dumpStatus, record.getStatusText()),
-                  ],
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
+                const SizedBox(width: 8),
+                _buildStatusChip(record.dumpStatus, record.getStatusText()),
+              ],
+            ),
 
-                const SizedBox(height: 12),
+            const SizedBox(height: 12),
 
-                // 请求信息行
-                Row(
-                  children: [
-                    _buildInfoChip(
-                      icon: Icons.schedule,
-                      text: _formatTime(record.requestTime),
-                      color: Colors.blue.shade100,
-                      textColor: Colors.blue.shade700,
-                    ),
-                    const SizedBox(width: 8),
-                    _buildInfoChip(
-                      icon: Icons.timer,
-                      text: '${record.getCostTime()}ms',
-                      color: Colors.orange.shade100,
-                      textColor: Colors.orange.shade700,
-                    ),
-                    const SizedBox(width: 8),
-                    _buildInfoChip(
-                      icon: Icons.http,
-                      text: record.method,
-                      color: Colors.green.shade100,
-                      textColor: Colors.green.shade700,
-                    ),
-                    const SizedBox(width: 8),
-                    _buildInfoChip(
-                      icon: Icons.tag,
-                      text: '${record.httpCode ?? "N/A"}',
-                      color: _getHttpCodeColor(record.httpCode ?? 0).withValues(alpha: 0.1),
-                      textColor: _getHttpCodeColor(record.httpCode ?? 0),
-                    ),
-                  ],
+            // 请求信息行
+            Wrap(
+              spacing: 5,
+              runSpacing: 5,
+              children: [
+                _buildInfoChip(
+                  icon: Icons.schedule,
+                  text: _formatTime(record.requestTime),
+                  color: Colors.blue.shade100,
+                  textColor: Colors.blue.shade700,
+                ),
+                _buildInfoChip(
+                  icon: Icons.timer,
+                  text: '${record.getCostTime()}ms',
+                  color: Colors.orange.shade100,
+                  textColor: Colors.orange.shade700,
+                ),
+                _buildInfoChip(
+                  icon: Icons.http,
+                  text: record.method,
+                  color: Colors.green.shade100,
+                  textColor: Colors.green.shade700,
+                ),
+                _buildInfoChip(
+                  icon: Icons.tag,
+                  text: '${record.httpCode ?? "N/A"}',
+                  color: _getHttpCodeColor(record.httpCode ?? 0).withValues(alpha: 0.1),
+                  textColor: _getHttpCodeColor(record.httpCode ?? 0),
                 ),
               ],
             ),
-          ),
+          ],
         ),
       ),
     );

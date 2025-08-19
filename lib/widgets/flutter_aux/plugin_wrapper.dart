@@ -106,7 +106,6 @@ class _PluginWrapperState extends State<PluginWrapper> {
       top: _position.dy,
       left: _position.dx,
       child: Material(
-        color: Colors.transparent,
         child: Container(
           width: _size.width,
           height: _size.height,

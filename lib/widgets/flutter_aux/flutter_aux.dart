@@ -14,13 +14,13 @@ class FlutterAux {
   static List<Pluggable> get plugins => _plugins;
 
   /// 显示 overlay
-  static void show(
-    BuildContext context, {List<Pluggable>? plugins, ValueChanged<String>? onMessage}) {
+  static void show(BuildContext context, {List<Pluggable>? plugins, ValueChanged<String>? onMessage}) {
     _onMessage = onMessage;
-    _plugins = plugins ?? [
-      ProxySettings(),
-      NetworkData(),
-    ];
+    _plugins = plugins ??
+        [
+          ProxySettings(),
+          NetworkData(),
+        ];
     // 显示入口
     showEntries(context);
   }
@@ -39,7 +39,7 @@ class FlutterAux {
     // 恢复保存的位置
     final position = await _getSavedPosition(plugin.name) ?? Offset(100, 100);
     // 恢复保存的大小
-    final size = plugin.size;
+    final size = await _getSavedSize(plugin.name) ?? plugin.size;
 
     // 异步恢复保存的位置和大小
     if (context.mounted) {

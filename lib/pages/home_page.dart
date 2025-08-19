@@ -2,7 +2,7 @@ import 'package:field_login/demos/carousel_demo.dart';
 import 'package:field_login/demos/websocket_demo.dart';
 import 'package:field_login/demos/double_tap_zoom_demo.dart';
 import 'package:field_login/pages/scroll_to_index.dart';
-import 'package:field_login/widgets/flutter_aux/overlay_demo.dart';
+import 'package:field_login/demos/overlay_demo.dart';
 import 'package:field_login/widgets/semi_circle_scroll/rotating_menu.dart';
 import 'package:flutter/material.dart';
 import '../demos/progress_demo.dart';
