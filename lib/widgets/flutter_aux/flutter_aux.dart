@@ -52,7 +52,7 @@ class OverlayManager {
           plugin: plugin,
           position: position,
           size: size,
-          onClose: () => plugin.name == 'entries' ? removeOverlay() : showEntries(context),
+          onClose: () => plugin is Entries ? removeOverlay() : showEntries(context),
           child: plugin.build(context),
         );
       },

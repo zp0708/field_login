@@ -13,11 +13,13 @@ class ProxySettings extends Pluggable {
   Size get size => const Size(400, 500);
 
   @override
-  Offset get position => const Offset(300, 300);
-
-  @override
   Widget build(BuildContext context) {
     return const ProxySettingsPage();
+  }
+
+  static Future<String?> getProxy() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('proxy_settings_current_proxy');
   }
 }
 
@@ -50,8 +52,8 @@ class _ProxySettingsPageState extends State<ProxySettingsPage> {
   Future<void> _loadProxySettings() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      _currentProxy = prefs.getString('current_proxy');
-      final historyJson = prefs.getStringList('proxy_history') ?? [];
+      _currentProxy = prefs.getString('proxy_settings_current_proxy');
+      final historyJson = prefs.getStringList('proxy_settings_proxy_history') ?? [];
       setState(() {
         _proxyHistory.clear();
         _proxyHistory.addAll(historyJson);
@@ -77,7 +79,7 @@ class _ProxySettingsPageState extends State<ProxySettingsPage> {
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('current_proxy', proxy);
+      await prefs.setString('proxy_settings_current_proxy', proxy);
 
       // 添加到历史记录（如果不存在）
       if (!_proxyHistory.contains(proxy)) {
@@ -86,7 +88,7 @@ class _ProxySettingsPageState extends State<ProxySettingsPage> {
         if (_proxyHistory.length > 20) {
           _proxyHistory.removeLast();
         }
-        await prefs.setStringList('proxy_history', _proxyHistory);
+        await prefs.setStringList('proxy_settings_proxy_history', _proxyHistory);
       }
 
       setState(() {
@@ -103,7 +105,7 @@ class _ProxySettingsPageState extends State<ProxySettingsPage> {
   Future<void> _clearProxy() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('current_proxy');
+      await prefs.remove('proxy_settings_current_proxy');
       setState(() {
         _currentProxy = null;
         _proxyController.clear();
@@ -119,7 +121,7 @@ class _ProxySettingsPageState extends State<ProxySettingsPage> {
     try {
       final prefs = await SharedPreferences.getInstance();
       _proxyHistory.remove(proxy);
-      await prefs.setStringList('proxy_history', _proxyHistory);
+      await prefs.setStringList('proxy_settings_proxy_history', _proxyHistory);
       setState(() {});
       _showSnackBar('历史记录已删除');
     } catch (e) {

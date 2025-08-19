@@ -36,7 +36,7 @@ class DumpManager {
 
   ///
   static void setObserver(VoidCallback? observer) {
-    _observer = _observer;
+    _observer = observer;
   }
 
   ///

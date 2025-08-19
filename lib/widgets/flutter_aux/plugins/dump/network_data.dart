@@ -13,9 +13,6 @@ class NetworkData extends Pluggable {
   Size get size => const Size(600, 600);
 
   @override
-  Offset get position => const Offset(300, 300);
-
-  @override
   Widget build(BuildContext context) {
     return Navigator(
       onGenerateRoute: (RouteSettings settings) {

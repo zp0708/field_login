@@ -13,9 +13,6 @@ class Entries extends Pluggable {
   Size get size => const Size(300, 300);
 
   @override
-  Offset get position => const Offset(100, 100);
-
-  @override
   Widget build(BuildContext context) {
     return FunctionGridOverlay(plugins: OverlayManager.plugins, plugin: this);
   }
