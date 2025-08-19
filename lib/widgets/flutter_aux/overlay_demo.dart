@@ -1,6 +1,11 @@
+import 'package:dio/dio.dart';
+import 'package:field_login/widgets/flutter_aux/plugins/dump/interceptor.dart';
+import 'package:field_login/widgets/flutter_aux/plugins/dump/network_data.dart';
 import 'package:field_login/widgets/flutter_aux/plugins/proxy_settings.dart';
 import 'package:flutter/material.dart';
 import 'flutter_aux.dart';
+
+final dio = Dio()..interceptors.add(DumpInterceptor());
 
 class OverlayDemo extends StatelessWidget {
   const OverlayDemo({super.key});
@@ -8,7 +13,25 @@ class OverlayDemo extends StatelessWidget {
   void _showFunctionGrid(BuildContext context) {
     OverlayManager.showOverlay(context, plugins: [
       ProxySettings(),
+      NetworkData(),
     ]);
+  }
+
+  void _performNetworkData(BuildContext context) {
+    dio.post(
+      'http://shop.moonbii.net/shop/order/get_sku_info/',
+      data: {
+        'product_id': 1053,
+        'params': [101, 104, 140]
+      },
+      options: Options(
+        headers: {
+          'Content-Type': 'application/json',
+          'token':
+              'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTYxNzQ0MzMsIm9yaWdfaWF0IjoxNzU1NTY5NjMzLCJ1c2VyX2luZm8iOiJ7XCJVc2VySWRcIjoxMDAwMDAyLFwiUm9sZVwiOjEsXCJTdG9yZUlkXCI6MTAwMDF9In0.fXL1pGTbp9XBCZ9tNzpMZfL6-EF-hyfOkQS2zH0hqBk'
+        },
+      ),
+    );
   }
 
   @override
@@ -72,6 +95,11 @@ class OverlayDemo extends StatelessWidget {
                     ],
                   ),
                 ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () => _performNetworkData(context),
+                child: const Text('抓包测试'),
               ),
               const SizedBox(height: 24),
               // 说明文字

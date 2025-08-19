@@ -47,6 +47,8 @@ dependencies:
   easy_refresh: ^3.3.2
   # 本地存储
   shared_preferences: ^2.2.2
+  # 网络请求
+  dio: ^5.7.0                         
 
 dev_dependencies:
   flutter_test:
