@@ -49,7 +49,9 @@ dependencies:
   shared_preferences: ^2.2.2
   # 网络请求
   dio: ^5.7.0                         
-
+  system_info2: ^2.0.0
+  device_info: ^2.0.2
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter

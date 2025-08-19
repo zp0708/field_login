@@ -1,6 +1,7 @@
+import 'package:field_login/widgets/flutter_aux/plugins/cpu_info.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'pluggable.dart';
+import 'plugins/pluggable.dart';
 import 'plugins/entries.dart';
 import 'plugins/proxy_settings.dart';
 import 'plugins/dump/network_data.dart';
@@ -20,6 +21,7 @@ class FlutterAux {
         [
           ProxySettings(),
           NetworkData(),
+          CpuInfoPlugin(),
         ];
     // 显示入口
     showEntries(context);

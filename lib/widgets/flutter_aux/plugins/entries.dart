@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../pluggable.dart';
+import 'pluggable.dart';
 import '../flutter_aux.dart';
 
 class Entries extends Pluggable {

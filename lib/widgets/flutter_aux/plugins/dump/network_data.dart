@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../pluggable.dart';
+import '../pluggable.dart';
 import 'page/dump_list_page.dart';
 
 class NetworkData extends Pluggable {

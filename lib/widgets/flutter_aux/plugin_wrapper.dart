@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'pluggable.dart';
+import 'plugins/pluggable.dart';
 import 'flutter_aux.dart';
 
 /// 功能入口网格组件
