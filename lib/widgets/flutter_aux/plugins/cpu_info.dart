@@ -22,7 +22,7 @@ class CpuInfoPlugin extends Pluggable {
 }
 
 class _CpuInfoPage extends StatefulWidget {
-  const _CpuInfoPage({super.key});
+  const _CpuInfoPage();
 
   @override
   _CpuInfoPageState createState() => _CpuInfoPageState();

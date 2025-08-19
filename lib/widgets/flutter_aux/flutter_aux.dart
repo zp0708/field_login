@@ -1,4 +1,6 @@
+import 'package:field_login/widgets/flutter_aux/plugins/console/console_plugin.dart';
 import 'package:field_login/widgets/flutter_aux/plugins/cpu_info.dart';
+import 'package:field_login/widgets/flutter_aux/plugins/device_info.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'plugins/pluggable.dart';
@@ -22,6 +24,8 @@ class FlutterAux {
           ProxySettings(),
           NetworkData(),
           CpuInfoPlugin(),
+          DeviceInfo(),
+          ConsolePlugin(),
         ];
     // 显示入口
     showEntries(context);

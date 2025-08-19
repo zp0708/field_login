@@ -56,6 +56,11 @@ class _OverlayDemoState extends State<OverlayDemo> {
               ),
               SizedBox(height: 20),
               Text(_proxy),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () => debugPrint('测试控制台'),
+                child: Text('控制台打印'),
+              ),
             ],
           ),
         ),

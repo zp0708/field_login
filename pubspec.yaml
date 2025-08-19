@@ -50,8 +50,8 @@ dependencies:
   # 网络请求
   dio: ^5.7.0                         
   system_info2: ^2.0.0
-  device_info: ^2.0.2
-  
+  device_info_plus:
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
