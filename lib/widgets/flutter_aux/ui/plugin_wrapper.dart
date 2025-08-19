@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 /// 功能入口网格组件
 class PluginWrapper extends StatefulWidget {
   final Pluggable plugin;
+  final Offset position;
   final VoidCallback? onClose;
   final Widget child;
 
@@ -12,6 +13,7 @@ class PluginWrapper extends StatefulWidget {
     super.key,
     required this.child,
     required this.plugin,
+    required this.position,
     this.onClose,
   });
 
@@ -27,7 +29,7 @@ class _PluginWrapperState extends State<PluginWrapper> {
 
   @override
   void initState() {
-    _position = widget.plugin.position;
+    _position = widget.position;
     super.initState();
   }
 
@@ -56,6 +58,9 @@ class _PluginWrapperState extends State<PluginWrapper> {
       _dragStartPosition = null;
       _overlayStartPosition = null;
     });
+
+    // 拖拽结束时保存位置
+    OverlayManager.saveCurrentPosition();
   }
 
   @override
@@ -68,7 +73,7 @@ class _PluginWrapperState extends State<PluginWrapper> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(_isDragging ? 0.4 : 0.2),
+            color: Colors.black.withValues(alpha: _isDragging ? 0.4 : 0.2),
             blurRadius: _isDragging ? 15 : 10,
             offset: const Offset(0, 5),
           ),

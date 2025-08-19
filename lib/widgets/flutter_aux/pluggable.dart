@@ -7,7 +7,5 @@ abstract class Pluggable {
 
   Size get size;
 
-  Offset get position;
-
   Widget build(BuildContext context);
 }
