@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import '../store_mixin.dart';
+import '../../utils/store_mixin.dart';
 import '../pluggable.dart';
 import './console_manager.dart';
 import './show_date_time_style.dart';
@@ -127,24 +127,27 @@ class _ConsolePageState extends State<_ConsolePage> with WidgetsBindingObserver,
               return Padding(
                 padding: const EdgeInsets.only(left: 8, right: 8, top: 3, bottom: 3),
                 child: RichText(
-                  text: TextSpan(children: [
-                    TextSpan(
-                        text: _dateTimeString(index),
-                        style: TextStyle(
-                          color: Colors.white60,
-                          fontFamily: 'Courier',
-                          fontSize: 16,
-                          fontWeight: FontWeight.w400,
-                        )),
-                    TextSpan(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                          text: _dateTimeString(index),
+                          style: TextStyle(
+                            color: Colors.white60,
+                            fontFamily: 'Courier',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                          )),
+                      TextSpan(
                         text: _logList[_logList.length - index - 1].message,
                         style: TextStyle(
                           color: Colors.white,
                           fontFamily: 'Courier',
                           fontSize: 16,
                           fontWeight: FontWeight.w400,
-                        )),
-                  ]),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             },

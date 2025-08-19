@@ -1,6 +1,7 @@
 import 'package:field_login/widgets/flutter_aux/plugins/console/console_plugin.dart';
 import 'package:field_login/widgets/flutter_aux/plugins/cpu_info.dart';
 import 'package:field_login/widgets/flutter_aux/plugins/device_info.dart';
+import 'package:field_login/widgets/flutter_aux/plugins/widget_detail_inspector/widget_detail_inspector.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'plugins/pluggable.dart';
@@ -26,6 +27,7 @@ class FlutterAux {
           CpuInfoPlugin(),
           DeviceInfo(),
           ConsolePlugin(),
+          WidgetDetailInspector(),
         ];
     // 显示入口
     showEntries(context);
