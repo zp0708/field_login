@@ -7,7 +7,7 @@ class NetworkData extends Pluggable {
   String get name => 'network_data';
 
   @override
-  Widget get display => const Text('抓包');
+  String get display => '抓包';
 
   @override
   Size get size => const Size(600, 600);

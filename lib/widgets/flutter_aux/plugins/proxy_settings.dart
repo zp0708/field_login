@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:manicure/third/flutter_aux/flutter_aux.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../pluggable.dart';
 
@@ -7,7 +8,7 @@ class ProxySettings extends Pluggable {
   String get name => 'proxy_settings';
 
   @override
-  Widget get display => const Text('代理设置');
+  String get display => '代理设置';
 
   @override
   Size get size => const Size(400, 500);
@@ -137,9 +138,7 @@ class _ProxySettingsPageState extends State<ProxySettingsPage> {
   }
 
   void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    FlutterAux.onMessage(message);
   }
 
   @override

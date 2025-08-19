@@ -44,10 +44,7 @@ class _HttpDumpListPageState extends State<HttpDumpListPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                IconButton(
-                  icon: Icon(Icons.arrow_back, color: Colors.white),
-                  onPressed: () => Navigator.pop(context),
-                ),
+                SizedBox(width: 50),
                 Text('自定义 AppBar', style: TextStyle(color: Colors.white)),
                 ElevatedButton(
                   onPressed: _clear,

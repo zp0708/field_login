@@ -2,21 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'pluggable.dart';
 import 'plugins/entries.dart';
-import 'ui/plugin_wrapper.dart';
+import 'plugins/proxy_settings.dart';
+import 'plugins/dump/network_data.dart';
+import 'plugin_wrapper.dart';
 
 /// Overlay 管理器，负责管理 overlay 的弹出和移除
-class OverlayManager {
+class FlutterAux {
   static OverlayEntry? _currentOverlay;
   static List<Pluggable> _plugins = [];
-
+  static ValueChanged<String>? _onMessage;
   static List<Pluggable> get plugins => _plugins;
 
   /// 显示 overlay
-  static void showOverlay(
-    BuildContext context, {
-    required List<Pluggable> plugins,
-  }) {
-    _plugins = plugins;
+  static void show(
+    BuildContext context, {List<Pluggable>? plugins, ValueChanged<String>? onMessage}) {
+    _onMessage = onMessage;
+    _plugins = plugins ?? [
+      ProxySettings(),
+      NetworkData(),
+    ];
     // 显示入口
     showEntries(context);
   }
@@ -35,7 +39,7 @@ class OverlayManager {
     // 恢复保存的位置
     final position = await _getSavedPosition(plugin.name) ?? Offset(100, 100);
     // 恢复保存的大小
-    final size = await _getSavedSize(plugin.name) ?? plugin.size;
+    final size = plugin.size;
 
     // 异步恢复保存的位置和大小
     if (context.mounted) {
@@ -118,5 +122,9 @@ class OverlayManager {
     } catch (e) {
       // 忽略错误
     }
+  }
+
+  static void onMessage(String message) {
+    _onMessage?.call(message);
   }
 }

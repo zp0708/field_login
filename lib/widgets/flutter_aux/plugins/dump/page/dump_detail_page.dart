@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../model.dart';
+import '../../../flutter_aux.dart';
 
 ///
 class HttpDumpDetailPage extends StatefulWidget {
@@ -255,21 +256,12 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
           const SizedBox(height: 8),
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: Colors.grey.shade50,
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: Colors.grey.shade200),
             ),
-            child: SelectableText(
-              title == '响应体' ? _formatJson(data) : data,
-              style: const TextStyle(
-                fontSize: 13,
-                color: Colors.black87,
-                fontFamily: 'monospace',
-                height: 1.4,
-              ),
-            ),
+            child: _buildCodeViewer(title, data),
           ),
         ],
       ),
@@ -291,5 +283,98 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
 
   void _copyLink() {
     Clipboard.setData(ClipboardData(text: _record.uri));
+  }
+
+  Widget _buildCodeViewer(String title, String data) {
+    // 判断是否为 JSON 数据
+    final bool isJson = title == '响应体' || _isValidJson(data);
+    final String displayData = isJson ? _formatJson(data) : data;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 代码显示区域
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          child: SelectableText(
+            displayData,
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.black87,
+              fontFamily: 'monospace',
+              height: 1.4,
+              backgroundColor: isJson ? Colors.blue.shade50 : Colors.transparent,
+            ),
+          ),
+        ),
+        // 操作按钮栏
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade100,
+            borderRadius: const BorderRadius.only(
+              bottomLeft: Radius.circular(8),
+              bottomRight: Radius.circular(8),
+            ),
+          ),
+          child: Row(
+            children: [
+              // 复制按钮
+              GestureDetector(
+                onTap: () => _copyData(data),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.copy, size: 16, color: Colors.grey.shade600),
+                    const SizedBox(width: 4),
+                    Text(
+                      '复制',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Spacer(),
+              // 数据类型标识
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: isJson ? Colors.blue.shade100 : Colors.grey.shade200,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  isJson ? 'JSON' : 'TEXT',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: isJson ? Colors.blue.shade700 : Colors.grey.shade600,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // 检查是否为有效的 JSON
+  bool _isValidJson(String text) {
+    try {
+      jsonDecode(text);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // 复制数据到剪贴板
+  void _copyData(String data) {
+    Clipboard.setData(ClipboardData(text: data));
+    FlutterAux.onMessage('数据已复制到剪贴板');
   }
 }

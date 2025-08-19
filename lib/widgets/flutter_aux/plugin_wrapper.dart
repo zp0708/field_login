@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../pluggable.dart';
-import '../flutter_aux.dart';
+import 'pluggable.dart';
+import 'flutter_aux.dart';
 
 /// 功能入口网格组件
 class PluginWrapper extends StatefulWidget {
@@ -64,7 +64,7 @@ class _PluginWrapperState extends State<PluginWrapper> {
     });
 
     // 拖拽结束时保存位置
-    OverlayManager.savePosition(widget.plugin.name, _position);
+    FlutterAux.savePosition(widget.plugin.name, _position);
   }
 
   // 大小调整相关方法
@@ -82,8 +82,8 @@ class _PluginWrapperState extends State<PluginWrapper> {
 
       setState(() {
         // 计算新的大小，设置最小和最大限制
-        final newWidth = (_resizeStartSize!.width + delta.dx).clamp(200.0, 800.0);
-        final newHeight = (_resizeStartSize!.height + delta.dy).clamp(150.0, 600.0);
+        final newWidth = (_resizeStartSize!.width + delta.dx).clamp(200.0, 1000.0);
+        final newHeight = (_resizeStartSize!.height + delta.dy).clamp(200.0, 1000.0);
         _size = Size(newWidth, newHeight);
       });
     }
@@ -97,7 +97,7 @@ class _PluginWrapperState extends State<PluginWrapper> {
     });
 
     // 大小调整结束时保存大小
-    OverlayManager.saveSize(widget.plugin.name, _size);
+    FlutterAux.saveSize(widget.plugin.name, _size);
   }
 
   @override
@@ -110,6 +110,7 @@ class _PluginWrapperState extends State<PluginWrapper> {
         child: Container(
           width: _size.width,
           height: _size.height,
+          clipBehavior: Clip.hardEdge,
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
@@ -130,23 +131,20 @@ class _PluginWrapperState extends State<PluginWrapper> {
                 onPanUpdate: _onPanUpdate,
                 onPanEnd: _onPanEnd,
                 child: Container(
-                  padding: const EdgeInsets.all(16),
+                  height: 56,
                   decoration: BoxDecoration(
                     color: Colors.blue.shade50,
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(12),
-                      topRight: Radius.circular(12),
-                    ),
                   ),
                   child: Row(
                     children: [
+                      SizedBox(width: 10),
                       Icon(
                         _isDragging ? Icons.drag_handle : Icons.grid_view,
                         color: Colors.blue.shade700,
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        widget.plugin.name,
+                        widget.plugin.display,
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -154,12 +152,15 @@ class _PluginWrapperState extends State<PluginWrapper> {
                         ),
                       ),
                       const Spacer(),
-                      GestureDetector(
+                      InkWell(
                         onTap: widget.onClose,
-                        child: Icon(
-                          Icons.close,
-                          color: Colors.blue.shade700,
-                          size: 20,
+                        child: Padding(
+                          padding: const EdgeInsets.all(18.0),
+                          child: Icon(
+                            Icons.close,
+                            color: Colors.blue.shade700,
+                            size: 20,
+                          ),
                         ),
                       ),
                     ],

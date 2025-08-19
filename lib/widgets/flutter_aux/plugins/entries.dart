@@ -7,14 +7,14 @@ class Entries extends Pluggable {
   String get name => 'entries';
 
   @override
-  Widget get display => const Text('entries');
+  String get display => '工具入口';
 
   @override
-  Size get size => const Size(300, 300);
+  Size get size => const Size(230, 200);
 
   @override
   Widget build(BuildContext context) {
-    return FunctionGridOverlay(plugins: OverlayManager.plugins, plugin: this);
+    return FunctionGridOverlay(plugins: FlutterAux.plugins, plugin: this);
   }
 }
 
@@ -31,36 +31,37 @@ class FunctionGridOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      shrinkWrap: true,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 1.2,
-      ),
-      itemCount: plugins.length,
-      itemBuilder: (context, index) {
-        final entry = plugins[index];
-        return GestureDetector(
-          onTap: () {
-            OverlayManager.showPlugin(context, entry);
-          },
-          child: Container(
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: Colors.blue.withAlpha(50),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: Colors.yellow.withAlpha(50),
-                width: 1,
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(10),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: List.generate(
+          plugins.length,
+          (idx) {
+            final entry = plugins[idx];
+            return GestureDetector(
+              onTap: () {
+                FlutterAux.showPlugin(context, entry);
+              },
+              child: Container(
+                width: 100,
+                height: 80,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: Colors.blue.withAlpha(50),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Colors.yellow.withAlpha(50),
+                    width: 1,
+                  ),
+                ),
+                child: Text(entry.display),
               ),
-            ),
-            child: entry.display,
-          ),
-        );
-      },
+            );
+          },
+        ),
+      ),
     );
   }
 }

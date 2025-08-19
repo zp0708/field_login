@@ -3,7 +3,7 @@ import 'package:flutter/widgets.dart';
 abstract class Pluggable {
   String get name;
 
-  Widget get display;
+  String get display;
 
   Size get size;
 
