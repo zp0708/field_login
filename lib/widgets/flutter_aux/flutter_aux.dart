@@ -7,9 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Overlay 管理器，负责管理 overlay 的弹出和移除
 class OverlayManager {
   static OverlayEntry? _currentOverlay;
-  static Offset _currentPosition = const Offset(100, 100); // 默认位置
   static List<Pluggable> _plugins = [];
-  static String? _currentPluginName;
 
   static List<Pluggable> get plugins => _plugins;
 
@@ -30,70 +28,41 @@ class OverlayManager {
     showPlugin(context, Entries());
   }
 
-  static void showPlugin(BuildContext context, Pluggable plugin) {
+  static void showPlugin(BuildContext context, Pluggable plugin) async {
     // 移除当前 overlay
     removeOverlay();
 
-    // 设置当前插件名称
-    _currentPluginName = plugin.name;
+    // 恢复保存的位置
+    final position = await _getSavedPosition(plugin.name) ?? Offset(100, 100);
+    // 恢复保存的大小
+    final size = await _getSavedSize(plugin.name) ?? plugin.size;
 
-    // 先使用默认位置显示，然后异步恢复保存的位置
-    _currentPosition = Offset(100, 100);
-
-    final overlay = Overlay.of(context);
-    _currentOverlay = getOverlay(context, plugin);
-    overlay.insert(_currentOverlay!);
-
-    // 异步恢复保存的位置
-    _restoreSavedPosition(plugin.name, context);
-  }
-
-  static void _restoreSavedPosition(String pluginName, BuildContext context) async {
-    try {
-      final savedPosition = await _getSavedPosition(pluginName);
-      if (savedPosition != null && _currentOverlay != null) {
-        _currentPosition = savedPosition;
-        _currentOverlay!.markNeedsBuild();
-      }
-    } catch (e) {
-      // 忽略错误
+    // 异步恢复保存的位置和大小
+    if (context.mounted) {
+      final overlay = Overlay.of(context);
+      _currentOverlay = getOverlay(context, plugin, position, size);
+      overlay.insert(_currentOverlay!);
     }
   }
 
-  static OverlayEntry getOverlay(BuildContext context, Pluggable plugin) {
+  static OverlayEntry getOverlay(BuildContext context, Pluggable plugin, Offset position, Size size) {
     return OverlayEntry(
       builder: (context) {
-        return Positioned(
-          top: _currentPosition.dy,
-          left: _currentPosition.dx,
-          child: Material(
-            color: Colors.transparent,
-            child: PluginWrapper(
-              plugin: plugin,
-              position: _currentPosition,
-              onClose: () => plugin.name == 'entries' ? removeOverlay() : showEntries(context),
-              child: plugin.build(context),
-            ),
-          ),
+        return PluginWrapper(
+          plugin: plugin,
+          position: position,
+          size: size,
+          onClose: () => plugin.name == 'entries' ? removeOverlay() : showEntries(context),
+          child: plugin.build(context),
         );
       },
     );
   }
 
-  /// 更新 overlay 位置
-  static void updatePosition(Offset newPosition) {
-    _currentPosition = newPosition;
-    _currentOverlay?.markNeedsBuild();
-  }
-
   /// 移除当前 overlay
   static void removeOverlay() {
-    // 保存当前位置
-    saveCurrentPosition();
-
     _currentOverlay?.remove();
     _currentOverlay = null;
-    _currentPluginName = null;
   }
 
   /// 检查是否有 overlay 正在显示
@@ -115,7 +84,7 @@ class OverlayManager {
   }
 
   /// 保存当前位置
-  static Future<void> _savePosition(String pluginName, Offset position) async {
+  static Future<void> savePosition(String pluginName, Offset position) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setDouble('overlay_position_${pluginName}_x', position.dx);
@@ -125,10 +94,29 @@ class OverlayManager {
     }
   }
 
-  /// 保存当前插件的位置
-  static Future<void> saveCurrentPosition() async {
-    if (_currentPluginName != null) {
-      await _savePosition(_currentPluginName!, _currentPosition);
+  /// 获取保存的大小
+  static Future<Size?> _getSavedSize(String pluginName) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final width = prefs.getDouble('overlay_size_${pluginName}_width');
+      final height = prefs.getDouble('overlay_size_${pluginName}_height');
+      if (width != null && height != null) {
+        return Size(width, height);
+      }
+    } catch (e) {
+      // 忽略错误，返回 null
+    }
+    return null;
+  }
+
+  /// 保存大小
+  static Future<void> saveSize(String pluginName, Size size) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setDouble('overlay_size_${pluginName}_width', size.width);
+      await prefs.setDouble('overlay_size_${pluginName}_height', size.height);
+    } catch (e) {
+      // 忽略错误
     }
   }
 }
