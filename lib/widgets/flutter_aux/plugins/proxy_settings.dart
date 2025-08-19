@@ -1,6 +1,6 @@
-import 'package:field_login/widgets/flutter_aux/pluggable.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../pluggable.dart';
 
 class ProxySettings extends Pluggable {
   @override

@@ -1,8 +1,8 @@
-import 'package:field_login/widgets/flutter_aux/pluggable.dart';
-import 'package:field_login/widgets/flutter_aux/plugins/entries.dart';
-import 'package:field_login/widgets/flutter_aux/ui/plugin_wrapper.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'pluggable.dart';
+import 'plugins/entries.dart';
+import 'ui/plugin_wrapper.dart';
 
 /// Overlay 管理器，负责管理 overlay 的弹出和移除
 class OverlayManager {

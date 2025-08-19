@@ -1,9 +1,9 @@
 import 'package:dio/dio.dart';
-import 'package:field_login/widgets/flutter_aux/plugins/dump/interceptor.dart';
-import 'package:field_login/widgets/flutter_aux/plugins/dump/network_data.dart';
-import 'package:field_login/widgets/flutter_aux/plugins/proxy_settings.dart';
 import 'package:flutter/material.dart';
 import 'flutter_aux.dart';
+import 'plugins/proxy_settings.dart';
+import 'plugins/dump/interceptor.dart';
+import 'plugins/dump/network_data.dart';
 
 final dio = Dio()..interceptors.add(DumpInterceptor());
 

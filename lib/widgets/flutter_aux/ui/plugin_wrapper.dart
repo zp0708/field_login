@@ -1,6 +1,6 @@
-import 'package:field_login/widgets/flutter_aux/flutter_aux.dart';
-import 'package:field_login/widgets/flutter_aux/pluggable.dart';
 import 'package:flutter/material.dart';
+import '../pluggable.dart';
+import '../flutter_aux.dart';
 
 /// 功能入口网格组件
 class PluginWrapper extends StatefulWidget {
