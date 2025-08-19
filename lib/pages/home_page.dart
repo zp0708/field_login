@@ -2,6 +2,7 @@ import 'package:field_login/demos/carousel_demo.dart';
 import 'package:field_login/demos/websocket_demo.dart';
 import 'package:field_login/demos/double_tap_zoom_demo.dart';
 import 'package:field_login/pages/scroll_to_index.dart';
+import 'package:field_login/widgets/flutter_aux/overlay_demo.dart';
 import 'package:field_login/widgets/semi_circle_scroll/rotating_menu.dart';
 import 'package:flutter/material.dart';
 import '../demos/progress_demo.dart';
@@ -74,6 +75,13 @@ class HomePage extends StatelessWidget {
         icon: Icons.image,
         color: Colors.blue,
         demoPage: const CarouselDemo(),
+      ),
+      _ComponentItem(
+        title: '开发工具浮窗',
+        description: '开发工具浮窗，支持拖动和关闭',
+        icon: Icons.toll_outlined,
+        color: Colors.blue,
+        demoPage: OverlayDemo(),
       ),
       _ComponentItem(
         title: '滚动列表页面',
