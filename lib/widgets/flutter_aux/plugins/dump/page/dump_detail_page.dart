@@ -117,7 +117,7 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
       icon: Icons.download,
       color: Colors.orange,
       children: [
-        _buildDataSection('响应体', _record.responseBody, Icons.download_done),
+        _buildDataSection('响应体', _record.responseBody, Icons.download_done, true),
       ],
     );
   }
@@ -181,48 +181,7 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
     );
   }
 
-  Widget _buildInfoRow(String label, String value, IconData icon) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: Colors.grey.shade100,
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: Icon(icon, size: 16, color: Colors.grey.shade600),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey.shade600,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                value.isEmpty ? '无' : value,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.black87,
-                  height: 1.4,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDataSection(String title, String? data, IconData icon) {
+  Widget _buildDataSection(String title, String? data, IconData icon, [bool showCopy = false]) {
     if (data == null || data.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -242,6 +201,26 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
                 fontWeight: FontWeight.w600,
               ),
             ),
+            Spacer(),
+            if (showCopy)
+              // 复制按钮
+              GestureDetector(
+                onTap: () => _copyData(data),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.copy, size: 16, color: Colors.grey.shade600),
+                    const SizedBox(width: 4),
+                    Text(
+                      '复制',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
         const SizedBox(height: 8),
