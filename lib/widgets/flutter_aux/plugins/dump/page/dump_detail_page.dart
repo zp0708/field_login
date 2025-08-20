@@ -1,9 +1,11 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../model.dart';
 import '../../../flutter_aux.dart';
+import 'dump_item.dart';
 
 ///
 class HttpDumpDetailPage extends StatefulWidget {
@@ -92,14 +94,7 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
       title: '基本信息',
       icon: Icons.info_outline,
       color: Colors.blue,
-      children: [
-        _buildInfoRow('请求地址', _record.uri, Icons.link),
-        _buildInfoRow('请求状态', _record.getStatusText(), Icons.info),
-        _buildInfoRow('开始时间', _formatTime(_record.requestTime), Icons.schedule),
-        if (_record.finishTime != null) _buildInfoRow('结束时间', _formatTime(_record.finishTime!), Icons.schedule),
-        if (_record.dumpStatus == HttpDumpStatus.success)
-          _buildInfoRow('请求耗时', '${_record.getCostTime()}ms', Icons.timer),
-      ],
+      children: [DumpItemWidget(_record)],
     );
   }
 
@@ -177,6 +172,7 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
           Padding(
             padding: const EdgeInsets.all(10),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: children,
             ),
           ),
@@ -262,11 +258,6 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
     );
   }
 
-  String _formatTime(DateTime time) {
-    final String text = time.toString();
-    return text.substring(text.indexOf(' ') + 1, text.indexOf('.'));
-  }
-
   String _formatJson(String? jsonText) {
     if (jsonText == null) {
       return '';
@@ -276,12 +267,36 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
   }
 
   void _copyLink() {
-    Clipboard.setData(ClipboardData(text: _record.uri));
+    _copyData(_toCurlCommand());
+  }
+
+  String _toCurlCommand() {
+    final StringBuffer cmd = StringBuffer('curl');
+
+    // Method
+    cmd.write(' -X ${_record.method}');
+
+    // URL
+    cmd.write(' ${_record.uri}');
+
+    // Headers
+    cmd.write(' ${_record.cURLHeader}');
+
+    // Data (body)
+    if (_record.requestBody != null) {
+      String data = _record.requestBody ?? '';
+      if (data is Map) {
+        data = data.toString();
+      }
+      cmd.write(' -d \'$data\'');
+    }
+
+    return cmd.toString();
   }
 
   Widget _buildCodeViewer(String title, String data) {
     // 判断是否为 JSON 数据
-    final bool isJson = title == '响应体' || _isValidJson(data);
+    final bool isJson = _isValidJson(data);
     final String displayData = isJson ? _formatJson(data) : data;
 
     return Column(
@@ -368,6 +383,8 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
   // 复制数据到剪贴板
   void _copyData(String data) {
     Clipboard.setData(ClipboardData(text: data));
-    FlutterAux.onMessage('数据已复制到剪贴板');
+    if (Platform.isIOS) {
+      FlutterAux.onMessage('数据已复制到剪贴板');
+    }
   }
 }

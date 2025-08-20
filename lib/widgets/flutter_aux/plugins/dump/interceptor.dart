@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'model.dart';
 
@@ -18,7 +20,8 @@ class DumpInterceptor extends Interceptor {
 
       record.requestHeader = _formatMap(options.headers);
       record.requestQuery = _formatMap(options.queryParameters);
-      record.requestBody = '${options.data}';
+      record.cURLHeader = _formatCURLMap(options.headers);
+      record.requestBody = json.encode(options.data);
 
       DumpManager.add(record);
     } catch (e) {
@@ -32,6 +35,14 @@ class DumpInterceptor extends Interceptor {
     map.forEach((dynamic key, dynamic value) {
       sb.write('$key=$value');
       sb.write('\n');
+    });
+    return sb.toString().trim();
+  }
+
+  static String _formatCURLMap(Map<dynamic, dynamic> map) {
+    final StringBuffer sb = StringBuffer();
+    map.forEach((dynamic key, dynamic value) {
+      sb.write(' -H \'$key: $value\'');
     });
     return sb.toString().trim();
   }

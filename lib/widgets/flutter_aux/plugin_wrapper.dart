@@ -106,6 +106,7 @@ class _PluginWrapperState extends State<PluginWrapper> {
       top: _position.dy,
       left: _position.dx,
       child: Material(
+        color: Colors.transparent,
         child: Container(
           width: _size.width,
           height: _size.height,
@@ -186,6 +187,7 @@ class _PluginWrapperState extends State<PluginWrapper> {
                             color: Colors.blue.shade300,
                             borderRadius: const BorderRadius.only(
                               bottomRight: Radius.circular(12),
+                              topLeft: Radius.circular(12),
                             ),
                           ),
                           child: Icon(

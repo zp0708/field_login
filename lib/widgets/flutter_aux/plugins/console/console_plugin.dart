@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import '../../utils/store_mixin.dart';
 import '../pluggable.dart';
 import './console_manager.dart';
 import './show_date_time_style.dart';
@@ -33,12 +32,12 @@ class _ConsolePage extends StatefulWidget {
   State<_ConsolePage> createState() => _ConsolePageState();
 }
 
-class _ConsolePageState extends State<_ConsolePage> with WidgetsBindingObserver, StoreMixin {
+class _ConsolePageState extends State<_ConsolePage> with WidgetsBindingObserver {
   List<ConsoleItem> _logList = <ConsoleItem>[];
   StreamSubscription? _subscription;
   ScrollController? _controller;
   ShowDateTimeStyle? _showDateTimeStyle;
-  bool _showFilter = false;
+  bool _top = false;
   RegExp? _filterExp;
 
   @override
@@ -47,7 +46,6 @@ class _ConsolePageState extends State<_ConsolePage> with WidgetsBindingObserver,
     _subscription = null;
     _controller = null;
     _showDateTimeStyle = ShowDateTimeStyle.datetime;
-    _showFilter = false;
     super.dispose();
   }
 
@@ -55,15 +53,6 @@ class _ConsolePageState extends State<_ConsolePage> with WidgetsBindingObserver,
   void initState() {
     super.initState();
     _showDateTimeStyle = ShowDateTimeStyle.none;
-    fetchWithKey('console_panel_datetime_style').then((value) async {
-      if (value != null && value is int) {
-        _showDateTimeStyle = styleById(value);
-      } else {
-        _showDateTimeStyle = ShowDateTimeStyle.datetime;
-        await storeWithKey('console_panel_datetime_style', idByStyle(_showDateTimeStyle!));
-      }
-      setState(() {});
-    });
     _controller = ScrollController();
     _logList = ConsoleManager.logData.toList();
     _subscription = ConsoleManager.streamController!.stream.listen((onData) {
@@ -90,6 +79,7 @@ class _ConsolePageState extends State<_ConsolePage> with WidgetsBindingObserver,
     } else {
       _logList = ConsoleManager.logData.toList();
     }
+    setState(() {});
   }
 
   String _dateTimeString(int logIndex) {
@@ -113,82 +103,103 @@ class _ConsolePageState extends State<_ConsolePage> with WidgetsBindingObserver,
     return result;
   }
 
+  void _topOrBottom() {
+    _top = !_top;
+    if (_top) {
+      _controller!.jumpTo(0);
+    } else {
+      _controller!.jumpTo(_controller!.position.maxScrollExtent);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
       color: Colors.black,
-      child: Stack(
+      child: Column(
         children: [
-          ListView.builder(
-            padding: EdgeInsets.zero,
-            controller: _controller,
-            itemCount: _logList.length,
-            itemBuilder: (BuildContext context, int index) {
-              return Padding(
-                padding: const EdgeInsets.only(left: 8, right: 8, top: 3, bottom: 3),
-                child: RichText(
-                  text: TextSpan(
-                    children: [
-                      TextSpan(
+          Container(
+            padding: EdgeInsets.all(5),
+            height: 45,
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    onChanged: (value) {
+                      if (value.isNotEmpty) {
+                        _filterExp = RegExp(value);
+                      } else {
+                        _filterExp = null;
+                      }
+                      _refreshConsole();
+                    },
+                    style: TextStyle(
+                      fontSize: 16,
+                    ),
+                    decoration: InputDecoration(
+                      fillColor: Colors.white,
+                      filled: true,
+                      hintText: 'RegExp',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(
+                          Radius.circular(50),
+                        ),
+                      ),
+                      contentPadding: EdgeInsets.only(
+                        top: 0,
+                        bottom: 0,
+                      ),
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 5),
+                ElevatedButton(
+                  onPressed: _topOrBottom,
+                  child: Text(
+                    'top/bottom',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                )
+              ],
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              padding: EdgeInsets.zero,
+              controller: _controller,
+              itemCount: _logList.length,
+              itemBuilder: (BuildContext context, int index) {
+                return Padding(
+                  padding: const EdgeInsets.only(left: 8, right: 8, top: 3, bottom: 3),
+                  child: RichText(
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
                           text: _dateTimeString(index),
                           style: TextStyle(
                             color: Colors.white60,
                             fontFamily: 'Courier',
                             fontSize: 16,
                             fontWeight: FontWeight.w400,
-                          )),
-                      TextSpan(
-                        text: _logList[_logList.length - index - 1].message,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontFamily: 'Courier',
-                          fontSize: 16,
-                          fontWeight: FontWeight.w400,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-          if (_showFilter)
-            Positioned(
-              left: 0,
-              right: 0,
-              top: 0,
-              child: SizedBox(
-                child: TextField(
-                  onChanged: (value) {
-                    if (value.isNotEmpty) {
-                      _filterExp = RegExp(value);
-                    } else {
-                      _filterExp = null;
-                    }
-                    setState(() {});
-                    _refreshConsole();
-                  },
-                  style: TextStyle(
-                    fontSize: 16,
-                  ),
-                  decoration: InputDecoration(
-                    fillColor: Colors.white,
-                    filled: true,
-                    hintText: 'RegExp',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(
-                        Radius.circular(50),
-                      ),
+                        TextSpan(
+                          text: _logList[_logList.length - index - 1].message,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'Courier',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ],
                     ),
-                    contentPadding: EdgeInsets.only(
-                      top: 0,
-                      bottom: 0,
-                    ),
-                    prefixIcon: Icon(Icons.search),
                   ),
-                ),
-              ),
+                );
+              },
             ),
+          ),
         ],
       ),
     );

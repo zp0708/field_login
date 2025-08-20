@@ -7,7 +7,7 @@ class Entries extends Pluggable {
   String get name => 'entries';
 
   @override
-  String get display => '工具入口';
+  String get display => '辅助工具';
 
   @override
   Size get size => const Size(230, 200);

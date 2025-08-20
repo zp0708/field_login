@@ -4,7 +4,7 @@ import 'package:flutter/material.dart' hide SearchBar;
 import 'hit_test.dart';
 import '../pluggable.dart';
 import '../../utils/binding_ambiguate.dart';
-import '../../service/inspector/inspector_overlay.dart';
+import 'inspector_overlay.dart';
 
 // There was a conflict between the naming of material.SearchBar and ume's SearchBar.
 import 'search_bar.dart' as search_bar;

@@ -36,6 +36,8 @@ class HttpDumpRecord {
   ///
   String? requestHeader;
 
+  String? cURLHeader;
+
   ///
   String? requestQuery;
 
