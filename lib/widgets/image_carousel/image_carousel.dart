@@ -212,17 +212,29 @@ class _ImageCarouselState extends State<ImageCarousel> {
   int _calculateInitialPage() {
     if (widget.controller != null) {
       final int controllerIndex = widget.controller!.currentIndex;
-      return widget.options.infiniteScroll ? controllerIndex : controllerIndex;
+      if (widget.options.infiniteScroll) {
+        // 对于无限滚动，从一个大的中间值开始，确保可以向左和向右滚动
+        return 10000 + controllerIndex;
+      }
+      return controllerIndex;
     }
-    // 对于无限滚动，直接使用0作为初始页面
-    // 因为 itemCount 为 null，PageView 可以无限滚动
-    return 0;
+    // 对于无限滚动，从一个大的中间值开始，确保可以向左和向右滚动
+    return widget.options.infiniteScroll ? 10000 : 0;
   }
 
   /// 同步初始索引
   void _syncInitialIndex() {
     final int initialIndex = widget.controller?.currentIndex ?? 0;
     _controller.updateCurrentIndex(initialIndex);
+
+    // 对于无限滚动，确保 PageController 处于正确的初始位置
+    if (widget.options.infiniteScroll && _pageController.hasClients) {
+      final int currentPage = _pageController.page?.round() ?? 0;
+      final int expectedPage = currentPage - _positiveModulo(currentPage, widget.images.length) + initialIndex;
+      if (currentPage != expectedPage) {
+        _pageController.jumpToPage(expectedPage);
+      }
+    }
   }
 
   /// 初始化自动播放
@@ -265,7 +277,14 @@ class _ImageCarouselState extends State<ImageCarousel> {
         final int currentIndex = widget.controller!.currentIndex;
 
         if (_pageController.hasClients) {
-          _pageController.jumpToPage(currentIndex);
+          if (widget.options.infiniteScroll) {
+            // 对于无限滚动，从当前页面计算正确的目标页面
+            final int currentPage = _pageController.page?.round() ?? 0;
+            final int targetPage = currentPage - _positiveModulo(currentPage, widget.images.length) + currentIndex;
+            _pageController.jumpToPage(targetPage);
+          } else {
+            _pageController.jumpToPage(currentIndex);
+          }
         }
       }
     }
@@ -308,10 +327,15 @@ class _ImageCarouselState extends State<ImageCarousel> {
     }
   }
 
+  /// 正确的模运算，确保结果始终为正数
+  int _positiveModulo(int value, int divisor) {
+    return ((value % divisor) + divisor) % divisor;
+  }
+
   /// 处理无限滚动更新
   void _handleInfiniteScrollUpdate() {
     final int currentPage = _pageController.page?.round() ?? 0;
-    final int actualIndex = currentPage % widget.images.length;
+    final int actualIndex = _positiveModulo(currentPage, widget.images.length);
 
     if (actualIndex != _controller.currentIndex) {
       _isUpdatingFromController = true;
@@ -420,12 +444,12 @@ class _ImageCarouselState extends State<ImageCarousel> {
   void _handlePageChanged(int index) {
     if (!_isUpdatingFromController) {
       // 对于无限滚动，需要计算实际的图片索引
-      final int actualIndex = widget.options.infiniteScroll ? index % widget.images.length : index;
+      final int actualIndex = widget.options.infiniteScroll ? _positiveModulo(index, widget.images.length) : index;
       _controller.updateCurrentIndex(actualIndex);
     }
 
     if (widget.options.enablePreload) {
-      final int actualIndex = widget.options.infiniteScroll ? index % widget.images.length : index;
+      final int actualIndex = widget.options.infiniteScroll ? _positiveModulo(index, widget.images.length) : index;
       _preloadManager.preloadImages(actualIndex, context);
     }
   }
