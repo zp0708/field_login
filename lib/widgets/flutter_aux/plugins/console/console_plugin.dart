@@ -110,6 +110,7 @@ class _ConsolePageState extends State<_ConsolePage> with WidgetsBindingObserver 
     } else {
       _controller!.jumpTo(_controller!.position.maxScrollExtent);
     }
+    setState(() {});
   }
 
   @override
@@ -157,7 +158,7 @@ class _ConsolePageState extends State<_ConsolePage> with WidgetsBindingObserver 
                 ElevatedButton(
                   onPressed: _topOrBottom,
                   child: Text(
-                    'top/bottom',
+                    _top ? 'top' : 'bottom',
                     style: TextStyle(fontSize: 12),
                   ),
                 )

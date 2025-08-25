@@ -10,7 +10,7 @@ class Entries extends Pluggable {
   String get display => '辅助工具';
 
   @override
-  Size get size => const Size(230, 200);
+  Size get size => const Size(230, 260);
 
   @override
   Widget build(BuildContext context) {

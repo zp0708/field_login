@@ -122,9 +122,8 @@
       addLog('准备回调到 Flutter...');
       try {
         window.flutter_inappwebview.callHandler('AppBridge', {
-          type: 'test',
+          type: 'receiveUseInfo',
           data: '来自网页的测试消息',
-          timestamp: new Date().toISOString()
         });
       } catch (e) {
         addLog('AppBridge 不可用: ' + e.message);

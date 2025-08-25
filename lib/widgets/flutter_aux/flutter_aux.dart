@@ -1,7 +1,5 @@
 import 'plugins/console/console_plugin.dart';
-import 'plugins/cpu_info.dart';
 import 'plugins/device_info.dart';
-import 'plugins/widget_detail_inspector/widget_detail_inspector.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'plugins/pluggable.dart';
@@ -24,10 +22,8 @@ class FlutterAux {
         [
           ProxySettings(),
           NetworkData(),
-          CpuInfoPlugin(),
           DeviceInfo(),
           ConsolePlugin(),
-          WidgetDetailInspector(),
         ];
     // 显示入口
     showEntries(context);
@@ -58,13 +54,15 @@ class FlutterAux {
   }
 
   static OverlayEntry getOverlay(BuildContext context, Pluggable plugin, Offset position, Size size) {
+    final bool isEntries = plugin is Entries;
     return OverlayEntry(
       builder: (context) {
         return PluginWrapper(
           plugin: plugin,
           position: position,
           size: size,
-          onClose: () => plugin is Entries ? removeOverlay() : showEntries(context),
+          showReset: isEntries,
+          onClose: () => isEntries ? removeOverlay() : showEntries(context),
           child: plugin.build(context),
         );
       },
@@ -76,9 +74,6 @@ class FlutterAux {
     _currentOverlay?.remove();
     _currentOverlay = null;
   }
-
-  /// 检查是否有 overlay 正在显示
-  static bool get isOverlayVisible => _currentOverlay != null;
 
   /// 获取保存的位置
   static Future<Offset?> _getSavedPosition(String pluginName) async {
@@ -130,6 +125,27 @@ class FlutterAux {
     } catch (e) {
       // 忽略错误
     }
+  }
+
+  /// 保存当前位置
+  static Future<void> resetPlugins() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      for (Pluggable plugin in _plugins) {
+        _resetPlugin(prefs, plugin.name);
+      }
+      // 入口
+      _resetPlugin(prefs, Entries().name);
+    } catch (e) {
+      // 忽略错误
+    }
+  }
+
+  static void _resetPlugin(SharedPreferences prefs, String name) {
+    prefs.remove('overlay_position_${name}_x');
+    prefs.remove('overlay_position_${name}_y');
+    prefs.remove('overlay_size_${name}_width');
+    prefs.remove('overlay_size_${name}_height');
   }
 
   static void onMessage(String message) {

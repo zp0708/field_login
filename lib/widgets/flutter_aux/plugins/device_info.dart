@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../flutter_aux.dart';
 
 import 'pluggable.dart';
 
@@ -116,19 +118,42 @@ class _DeviceInfoPanelState extends State<_DeviceInfo> {
         children: <Widget>[
           Container(
             padding: const EdgeInsets.only(bottom: 8),
-            child: Text(
-              'Device Info',
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: Colors.red,
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Device Info',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.red,
+                  ),
+                ),
+                // 复制按钮
+                GestureDetector(
+                  onTap: () => _copyData(_content),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.copy, size: 16, color: Colors.white),
+                      const SizedBox(width: 4),
+                      Text(
+                        '复制',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
           Expanded(
             child: SingleChildScrollView(
               physics: BouncingScrollPhysics(),
-              child: Text(
+              child: SelectableText(
                 _content,
                 style: const TextStyle(
                   fontSize: 15,
@@ -142,5 +167,13 @@ class _DeviceInfoPanelState extends State<_DeviceInfo> {
         ],
       ),
     );
+  }
+
+  // 复制数据到剪贴板
+  void _copyData(String data) {
+    Clipboard.setData(ClipboardData(text: data));
+    if (Platform.isIOS) {
+      FlutterAux.onMessage('数据已复制到剪贴板');
+    }
   }
 }

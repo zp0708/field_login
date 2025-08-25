@@ -45,8 +45,8 @@ class _HttpDumpListPageState extends State<HttpDumpListPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                SizedBox(width: 50),
-                Text('自定义 AppBar', style: TextStyle(color: Colors.white)),
+                SizedBox(width: 30),
+                Text('接口列表', style: TextStyle(color: Colors.white)),
                 ElevatedButton(
                   onPressed: _clear,
                   style: ElevatedButton.styleFrom(
@@ -95,8 +95,7 @@ class _HttpDumpListPageState extends State<HttpDumpListPage> {
   }
 
   void _onTapItem(int index) {
-    Navigator.of(context).push<dynamic>(
-        MaterialPageRoute<dynamic>(builder: (_) => HttpDumpDetailPage(_list[index])));
+    Navigator.of(context).push<dynamic>(MaterialPageRoute<dynamic>(builder: (_) => HttpDumpDetailPage(_list[index])));
   }
 
   void _clear() {

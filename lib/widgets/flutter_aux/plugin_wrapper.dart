@@ -9,6 +9,7 @@ class PluginWrapper extends StatefulWidget {
   final Size size;
   final VoidCallback? onClose;
   final Widget child;
+  final bool showReset;
 
   const PluginWrapper({
     super.key,
@@ -17,6 +18,7 @@ class PluginWrapper extends StatefulWidget {
     required this.position,
     required this.size,
     this.onClose,
+    this.showReset = false,
   });
 
   @override
@@ -31,11 +33,15 @@ class _PluginWrapperState extends State<PluginWrapper> {
   Offset? _dragStartPosition;
   Offset? _overlayStartPosition;
   Size? _resizeStartSize;
+  Size _screenSize = Size.zero;
 
   @override
   void initState() {
     _position = widget.position;
     _size = widget.size;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _screenSize = MediaQuery.of(context).size;
+    });
     super.initState();
   }
 
@@ -52,6 +58,10 @@ class _PluginWrapperState extends State<PluginWrapper> {
       setState(() {
         // 计算手指移动的距离，直接应用到overlay位置
         _position = _overlayStartPosition! + (details.globalPosition - _dragStartPosition!);
+        // 确保 panel 可见
+        final dx = _position.dx.clamp(-_size.width + 20.0, _screenSize.width - 20.0);
+        final dy = _position.dy.clamp(0.0, _screenSize.height - 20.0);
+        _position = Offset(dx, dy);
       });
     }
   }
@@ -198,6 +208,36 @@ class _PluginWrapperState extends State<PluginWrapper> {
                         ),
                       ),
                     ),
+                    // reset 按钮
+                    if (widget.showReset)
+                      Positioned(
+                        left: 0,
+                        bottom: 0,
+                        child: GestureDetector(
+                          onTap: () {
+                            FlutterAux.resetPlugins();
+                            setState(() {
+                              _size = widget.plugin.size;
+                            });
+                          },
+                          child: Container(
+                            width: 20,
+                            height: 20,
+                            decoration: BoxDecoration(
+                              color: Colors.blue.shade300,
+                              borderRadius: const BorderRadius.only(
+                                bottomLeft: Radius.circular(12),
+                                topRight: Radius.circular(12),
+                              ),
+                            ),
+                            child: Icon(
+                              Icons.refresh,
+                              size: 12,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      )
                   ],
                 ),
               ),

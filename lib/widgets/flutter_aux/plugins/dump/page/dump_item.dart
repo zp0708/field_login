@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:manicure/third/flutter_aux/plugins/dump/model.dart';
+import '../model.dart';
 
 class DumpItemWidget extends StatelessWidget {
   final HttpDumpRecord record;
