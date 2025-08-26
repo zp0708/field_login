@@ -11,6 +11,7 @@ import '../demos/shape_tab_demo.dart';
 import '../widgets/model_preview/webview_example_page.dart';
 import '../widgets/model_preview/model_preview_page.dart';
 import '../demos/progress_timeline_demo.dart';
+import '../demos/product_detail_anchor_demo.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -159,6 +160,13 @@ class HomePage extends StatelessWidget {
         icon: Icons.menu,
         color: Colors.pink,
         demoPage: const WebsocketDemo(),
+      ),
+      _ComponentItem(
+        title: '商品详情锚点定位',
+        description: '商品详情页面的锚点定位功能，支持tab跳转和滚动高亮',
+        icon: Icons.anchor,
+        color: Colors.deepOrange,
+        demoPage: const ProductDetailAnchorDemo(),
       ),
     ];
 
