@@ -1,4 +1,5 @@
 import 'package:field_login/demos/carousel_demo.dart';
+import 'package:field_login/demos/page_view_demo.dart';
 import 'package:field_login/demos/websocket_demo.dart';
 import 'package:field_login/demos/double_tap_zoom_demo.dart';
 import 'package:field_login/pages/scroll_to_index.dart';
@@ -76,6 +77,13 @@ class HomePage extends StatelessWidget {
         icon: Icons.image,
         color: Colors.blue,
         demoPage: const CarouselDemo(),
+      ),
+      _ComponentItem(
+        title: '布局',
+        description: '支持自动播放、手动控制、多种指示器、缩放、预加载、错误重试等功能的图片轮播组件',
+        icon: Icons.image,
+        color: Colors.blue,
+        demoPage: const PageViewDemo(),
       ),
       _ComponentItem(
         title: '开发工具浮窗',
