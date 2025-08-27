@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'dart:ui' as ui;
 import 'dart:math' as math;
-import '../../utils/constants.dart';
+import '../utils/constants.dart';
 
 class InspectorOverlay extends LeafRenderObjectWidget {
   const InspectorOverlay({
@@ -21,8 +21,8 @@ class InspectorOverlay extends LeafRenderObjectWidget {
   final bool needEdges;
 
   @override
-  _RenderInspectorOverlay createRenderObject(BuildContext context) {
-    return _RenderInspectorOverlay(
+  RenderInspectorOverlay createRenderObject(BuildContext context) {
+    return RenderInspectorOverlay(
       selection: selection,
       needDescription: needDescription,
       needEdges: needEdges,
@@ -30,13 +30,13 @@ class InspectorOverlay extends LeafRenderObjectWidget {
   }
 
   @override
-  void updateRenderObject(BuildContext context, _RenderInspectorOverlay renderObject) {
+  void updateRenderObject(BuildContext context, RenderInspectorOverlay renderObject) {
     renderObject.selection = selection;
   }
 }
 
-class _RenderInspectorOverlay extends RenderBox {
-  _RenderInspectorOverlay({
+class RenderInspectorOverlay extends RenderBox {
+  RenderInspectorOverlay({
     required InspectorSelection selection,
     required this.needDescription,
     required this.needEdges,
@@ -287,10 +287,10 @@ class _InspectorOverlayRenderState {
   final _SelectionInfo selectionInfo;
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     if (other.runtimeType != runtimeType) return false;
 
-    final _InspectorOverlayRenderState typedOther = other;
+    final _InspectorOverlayRenderState typedOther = other as _InspectorOverlayRenderState;
     return overlayRect == typedOther.overlayRect &&
         selected == typedOther.selected &&
         listEquals<_TransformedRect>(candidates, typedOther.candidates);
@@ -309,9 +309,9 @@ class _TransformedRect {
   final Matrix4 transform;
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     if (other.runtimeType != runtimeType) return false;
-    final _TransformedRect typedOther = other;
+    final _TransformedRect typedOther = other as _TransformedRect;
     return rect == typedOther.rect && transform == typedOther.transform;
   }
 

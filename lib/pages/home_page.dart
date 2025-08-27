@@ -72,6 +72,13 @@ class HomePage extends StatelessWidget {
   Widget _buildComponentList(BuildContext context) {
     final components = [
       _ComponentItem(
+        title: '开发工具浮窗',
+        description: '开发工具浮窗，支持拖动和关闭',
+        icon: Icons.toll_outlined,
+        color: Colors.blue,
+        demoPage: OverlayDemo(),
+      ),
+      _ComponentItem(
         title: '图片轮播器',
         description: '支持自动播放、手动控制、多种指示器、缩放、预加载、错误重试等功能的图片轮播组件',
         icon: Icons.image,
@@ -84,13 +91,6 @@ class HomePage extends StatelessWidget {
         icon: Icons.image,
         color: Colors.blue,
         demoPage: const PageViewDemo(),
-      ),
-      _ComponentItem(
-        title: '开发工具浮窗',
-        description: '开发工具浮窗，支持拖动和关闭',
-        icon: Icons.toll_outlined,
-        color: Colors.blue,
-        demoPage: OverlayDemo(),
       ),
       _ComponentItem(
         title: '滚动列表页面',

@@ -1,28 +1,38 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart' hide SearchBar;
-import 'hit_test.dart';
+import '../../utils/hit_test.dart';
 import '../pluggable.dart';
 import '../../utils/binding_ambiguate.dart';
-import 'inspector_overlay.dart';
+import '../../widgets/inspector_overlay.dart';
 
 // There was a conflict between the naming of material.SearchBar and ume's SearchBar.
 import 'search_bar.dart' as search_bar;
 
 class WidgetDetailInspector extends Pluggable {
   @override
-  String get name => 'widget_info';
+  String get name => 'widget_detail';
 
   @override
-  String get display => '组件信息';
+  String get display => '组件详情';
 
   @override
   Size get size => const Size(400, 500);
 
   @override
   Widget build(BuildContext context) {
-    return _DetailPage();
+    return Navigator(
+      onGenerateInitialRoutes: (NavigatorState state, __) => [
+        MaterialPageRoute(builder: (_) => _DetailPage()),
+      ],
+    );
   }
+
+  @override
+  bool get isOverlay => true;
+
+  @override
+  String get tips => '点击组件查看组件详情';
 }
 
 class _DetailPage extends StatefulWidget {
@@ -42,7 +52,7 @@ class _DetailPageState extends State<_DetailPage> with WidgetsBindingObserver {
   final InspectorSelection selection;
 
   void _inspectAt(Offset? position) {
-    final List<RenderObject> selected = HitTest.hitTest(context, position);
+    final List<RenderObject> selected = HitTest.hitTest(position);
     setState(() {
       selection.candidates = selected;
     });
@@ -57,10 +67,20 @@ class _DetailPageState extends State<_DetailPage> with WidgetsBindingObserver {
     if (_lastPointerLocation != null) {
       _inspectAt(_lastPointerLocation);
     }
-    Future.delayed(Duration(milliseconds: 100), () {
-      Navigator.of(context).push(MaterialPageRoute(builder: (ctx) {
-        return _InfoPage(elements: selection.currentElement!.debugGetDiagnosticChain());
-      }));
+    Future.delayed(Duration(milliseconds: 100), () async {
+      if (context.mounted) {
+        setState(() {});
+        // ignore: use_build_context_synchronously
+        await Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (ctx) {
+              return _InfoPage(
+                elements: selection.currentElement!.debugGetDiagnosticChain(),
+              );
+            },
+          ),
+        );
+      }
     });
   }
 
@@ -78,24 +98,43 @@ class _DetailPageState extends State<_DetailPage> with WidgetsBindingObserver {
       onPanDown: _handlePanDown,
       behavior: HitTestBehavior.translucent,
       child: IgnorePointer(
-        child: SizedBox(width: MediaQuery.of(context).size.width, height: MediaQuery.of(context).size.height),
+        child: SizedBox(
+          width: MediaQuery.of(context).size.width,
+          height: MediaQuery.of(context).size.height,
+        ),
       ),
     );
     children.add(gesture);
-    children.add(InspectorOverlay(selection: selection, needDescription: false, needEdges: false));
-    return Stack(textDirection: TextDirection.ltr, children: children);
+    children.add(
+      InspectorOverlay(
+        selection: selection,
+        needDescription: false,
+        needEdges: false,
+      ),
+    );
+    return Material(
+      type: MaterialType.transparency,
+      child: Stack(
+        textDirection: TextDirection.ltr,
+        children: children,
+      ),
+    );
   }
 }
 
 class _DetailModel {
-  List<int> colors = [Random().nextInt(256), Random().nextInt(256), Random().nextInt(256)];
+  List<int> colors = [
+    Random().nextInt(256),
+    Random().nextInt(256),
+    Random().nextInt(256),
+  ];
   Element element;
 
   _DetailModel(this.element);
 }
 
 class _InfoPage extends StatefulWidget {
-  const _InfoPage({super.key, required this.elements});
+  const _InfoPage({required this.elements});
 
   final List<Element> elements;
 
@@ -117,7 +156,12 @@ class __InfoPageState extends State<_InfoPage> {
   }
 
   Widget _dot(List<int> colors) {
-    Color randomColor = Color.fromARGB(255, colors[0], colors[1], colors[2]);
+    Color randomColor = Color.fromARGB(
+      255,
+      colors[0],
+      colors[1],
+      colors[2],
+    );
     return Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
@@ -133,21 +177,36 @@ class __InfoPageState extends State<_InfoPage> {
       onTap: () {
         Navigator.of(context).push(MaterialPageRoute(builder: (ctx) {
           return Scaffold(
-              body: _DetailContent(element: model.element),
-              appBar: PreferredSize(
-                  preferredSize: Size.fromHeight(44), child: AppBar(elevation: 0.0, title: Text("widget_detail"))));
+            body: _DetailContent(element: model.element),
+            appBar: PreferredSize(
+              preferredSize: Size.fromHeight(44),
+              child: AppBar(
+                elevation: 0.0,
+                title: Text("widget_detail"),
+              ),
+            ),
+          );
         }));
       },
       child: Container(
-        margin: const EdgeInsets.only(top: 6, bottom: 6, left: 12, right: 12),
+        margin: const EdgeInsets.only(
+          top: 6,
+          bottom: 6,
+          left: 12,
+          right: 12,
+        ),
         child: Row(
           children: [
-            Padding(padding: const EdgeInsets.only(right: 12), child: _dot(model.colors)),
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: _dot(model.colors),
+            ),
             Expanded(
-                child: Text(
-              model.element.widget.toStringShort(),
-              style: TextStyle(fontSize: 15),
-            ))
+              child: Text(
+                model.element.widget.toStringShort(),
+                style: TextStyle(fontSize: 15),
+              ),
+            )
           ],
         ),
       ),
@@ -171,52 +230,67 @@ class __InfoPageState extends State<_InfoPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        resizeToAvoidBottomInset: false,
-        body: Container(
-          child: Column(
-            children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.only(left: 12, right: 12, top: 10, bottom: 10),
-                child: search_bar.SearchBar(placeHolder: '请输入要搜索的widget', onChangeHandle: _textChange),
+      resizeToAvoidBottomInset: false,
+      body: Column(
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.only(
+              left: 12,
+              right: 12,
+              top: 10,
+              bottom: 10,
+            ),
+            child: search_bar.SearchBar(
+              placeHolder: '请输入要搜索的widget',
+              onChangeHandle: _textChange,
+            ),
+          ),
+          Expanded(
+            child: GestureDetector(
+              onPanDown: (_) {
+                FocusScope.of(context).requestFocus(FocusNode());
+              },
+              child: ListView.builder(
+                physics: BouncingScrollPhysics(),
+                itemBuilder: (_, index) {
+                  _DetailModel model = _showList[index];
+                  return _cell(model, context);
+                },
+                itemCount: _showList.length,
               ),
-              Expanded(
-                child: GestureDetector(
-                  onPanDown: (_) {
-                    FocusScope.of(context).requestFocus(FocusNode());
-                  },
-                  child: ListView.builder(
-                      physics: BouncingScrollPhysics(),
-                      itemBuilder: (_, index) {
-                        _DetailModel model = _showList[index];
-                        return _cell(model, context);
-                      },
-                      itemCount: _showList.length),
+            ),
+          ),
+        ],
+      ),
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(44),
+        child: AppBar(
+          elevation: 0.0,
+          title: RichText(
+            text: TextSpan(
+              text: 'widget_build_chain',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 19,
+                fontWeight: FontWeight.w500,
+                fontFamily: "PingFang SC",
+              ),
+              children: <TextSpan>[
+                TextSpan(
+                  text: '  depth: ${widget.elements.length}',
+                  style: TextStyle(color: Colors.black, fontSize: 11),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
-        appBar: PreferredSize(
-            preferredSize: Size.fromHeight(44),
-            child: AppBar(
-                elevation: 0.0,
-                title: RichText(
-                  text: TextSpan(
-                    text: 'widget_build_chain',
-                    style: TextStyle(
-                        color: Colors.black, fontSize: 19, fontWeight: FontWeight.w500, fontFamily: "PingFang SC"),
-                    children: <TextSpan>[
-                      TextSpan(
-                          text: '  depth: ${widget.elements.length}',
-                          style: TextStyle(color: Colors.black, fontSize: 11)),
-                    ],
-                  ),
-                ))));
+      ),
+    );
   }
 }
 
 class _DetailContent extends StatelessWidget {
-  const _DetailContent({super.key, required this.element});
+  const _DetailContent({required this.element});
 
   final Element element;
 
@@ -241,38 +315,52 @@ class _DetailContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-        future: getInfo(),
-        builder: (_, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.red)));
-          } else if (snapshot.connectionState == ConnectionState.done) {
-            return Container(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _titleWidget("Widget Description"),
-                  Container(
-                      constraints: BoxConstraints(maxHeight: 200),
-                      padding: const EdgeInsets.only(top: 12, left: 12, right: 12),
-                      child: SingleChildScrollView(child: Text(element.widget.toStringDeep()))),
-                  _titleWidget("RenderObject Description"),
-                  Expanded(
-                      child: Padding(
-                          padding: const EdgeInsets.only(top: 12, right: 12, left: 12),
-                          child: ListView.builder(
-                              physics: BouncingScrollPhysics(),
-                              itemBuilder: (_, index) {
-                                return SingleChildScrollView(
-                                    scrollDirection: Axis.horizontal,
-                                    child: Text((snapshot.data as List<String>)[index]));
-                              },
-                              itemCount: (snapshot.data as List<String>).length))),
-                ],
+      future: getInfo(),
+      builder: (_, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
+            ),
+          );
+        } else if (snapshot.connectionState == ConnectionState.done) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _titleWidget("Widget Description"),
+              Container(
+                constraints: BoxConstraints(maxHeight: 200),
+                padding: const EdgeInsets.only(top: 12, left: 12, right: 12),
+                child: SingleChildScrollView(
+                  child: Text(
+                    element.widget.toStringDeep(),
+                  ),
+                ),
               ),
-            );
-          } else {
-            return Container();
-          }
-        });
+              _titleWidget("RenderObject Description"),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 12, right: 12, left: 12),
+                  child: ListView.builder(
+                    physics: BouncingScrollPhysics(),
+                    itemBuilder: (_, index) {
+                      return SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Text(
+                          (snapshot.data as List<String>)[index],
+                        ),
+                      );
+                    },
+                    itemCount: (snapshot.data as List<String>).length,
+                  ),
+                ),
+              ),
+            ],
+          );
+        } else {
+          return SizedBox.shrink();
+        }
+      },
+    );
   }
 }

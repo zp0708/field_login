@@ -1,12 +1,15 @@
+import 'package:field_login/widgets/flutter_aux/plugins/widget_detail_inspector/widget_detail_inspector.dart';
+
 import 'plugins/console/console_plugin.dart';
 import 'plugins/device_info.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'plugin_wrapper.dart';
 import 'plugins/pluggable.dart';
 import 'plugins/entries.dart';
 import 'plugins/proxy_settings.dart';
 import 'plugins/dump/network_data.dart';
-import 'plugin_wrapper.dart';
+import 'plugins/widget_info_inspector.dart';
 
 /// Overlay 管理器，负责管理 overlay 的弹出和移除
 class FlutterAux {
@@ -14,9 +17,17 @@ class FlutterAux {
   static List<Pluggable> _plugins = [];
   static ValueChanged<String>? _onMessage;
   static List<Pluggable> get plugins => _plugins;
+  static BuildContext? _context;
+
+  static BuildContext? get context => _context;
 
   /// 显示 overlay
-  static void show(BuildContext context, {List<Pluggable>? plugins, ValueChanged<String>? onMessage}) {
+  static void show(
+    BuildContext context, {
+    List<Pluggable>? plugins,
+    ValueChanged<String>? onMessage,
+  }) {
+    _context = context;
     _onMessage = onMessage;
     _plugins = plugins ??
         [
@@ -24,16 +35,18 @@ class FlutterAux {
           NetworkData(),
           DeviceInfo(),
           ConsolePlugin(),
+          WidgetInfoInspector(),
+          WidgetDetailInspector(),
         ];
     // 显示入口
-    showEntries(context);
+    showEntries();
   }
 
   /// 显示入口
-  static void showEntries(BuildContext context) {
+  static void showEntries() {
     _plugins = plugins;
     // 显示入口
-    showPlugin(context, Entries());
+    showPlugin(_context!, Entries());
   }
 
   static void showPlugin(BuildContext context, Pluggable plugin) async {
@@ -53,16 +66,27 @@ class FlutterAux {
     }
   }
 
-  static OverlayEntry getOverlay(BuildContext context, Pluggable plugin, Offset position, Size size) {
+  static OverlayEntry getOverlay(
+    BuildContext context,
+    Pluggable plugin,
+    Offset position,
+    Size size,
+  ) {
     final bool isEntries = plugin is Entries;
     return OverlayEntry(
       builder: (context) {
+        if (plugin.isOverlay) {
+          return PluginOverlayWrapper(
+            plugin: plugin,
+            child: plugin.build(context),
+          );
+        }
         return PluginWrapper(
           plugin: plugin,
           position: position,
           size: size,
           showReset: isEntries,
-          onClose: () => isEntries ? removeOverlay() : showEntries(context),
+          onClose: () => isEntries ? removeOverlay() : showEntries(),
           child: plugin.build(context),
         );
       },

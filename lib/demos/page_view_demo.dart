@@ -14,7 +14,48 @@ class _PageViewDemoState extends State<PageViewDemo> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Center(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Flexible(
+              child: Container(
+                color: Colors.amber,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(width: 10),
+                    Icon(Icons.arrow_left),
+                    SizedBox(width: 10),
+                    Container(
+                      alignment: Alignment.center,
+                      color: Colors.red,
+                      child: AspectRatio(
+                        aspectRatio: 1.0,
+                        child: PageView.builder(
+                          itemCount: 100,
+                          itemBuilder: (context, idx) {
+                            return PageViewItem(idx);
+                          },
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 10),
+                    Icon(Icons.arrow_right),
+                    SizedBox(width: 10),
+                  ],
+                ),
+              ),
+            ),
+            Icon(Icons.arrow_right),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/*
+Center(
           child: AspectRatio(
             aspectRatio: 1,
             child: Container(
@@ -54,11 +95,8 @@ class _PageViewDemoState extends State<PageViewDemo> {
               ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
+        )
+*/
 
 class PageViewItem extends StatelessWidget {
   final int index;
