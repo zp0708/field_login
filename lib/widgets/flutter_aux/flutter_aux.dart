@@ -10,9 +10,11 @@ import 'plugins/dump/network_data.dart';
 import 'plugins/widget_info_inspector.dart';
 import 'plugins/align_ruler.dart';
 import 'plugins/widget_detail_inspector/widget_detail_inspector.dart';
+import 'plugins/color_sucker.dart';
 
 /// Overlay 管理器，负责管理 overlay 的弹出和移除
 class FlutterAux {
+  static final rootKey = GlobalKey<OverlayState>();
   static OverlayEntry? _currentOverlay;
   static List<Pluggable> _plugins = [];
   static ValueChanged<String>? _onMessage;
@@ -38,6 +40,7 @@ class FlutterAux {
           WidgetInfoInspector(),
           WidgetDetailInspector(),
           AlignRulerPlugin(),
+          ColorSucker(),
         ];
     // 显示入口
     showEntries();
