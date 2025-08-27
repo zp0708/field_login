@@ -35,7 +35,6 @@ class _AlignRulerState extends State<_AlignRuler> {
   Size _windowSize = windowSize;
   final Size _dotSize = Size(60, 60);
   Offset _dotPosition = Offset.zero;
-  BorderRadius? _radius;
   late Offset _dotOffset;
   final TextStyle _fontStyle = TextStyle(
     color: Colors.white,
@@ -59,7 +58,6 @@ class _AlignRulerState extends State<_AlignRuler> {
   @override
   void initState() {
     _dotPosition = _windowSize.center(Offset.zero);
-    _radius = BorderRadius.circular(_dotSize.longestSide);
     _dotOffset = _dotSize.center(Offset.zero);
     super.initState();
     _textSize = _getTextSize();
@@ -209,16 +207,6 @@ class _AlignRulerState extends State<_AlignRuler> {
       _windowSize = MediaQuery.of(context).size;
       _dotPosition = _windowSize.center(Offset.zero);
     }
-    const TextStyle labelStyle = TextStyle(
-      fontSize: 11,
-      color: Color(0xFF666666),
-      fontWeight: FontWeight.w500,
-    );
-    const TextStyle valueStyle = TextStyle(
-      fontSize: 14,
-      color: Color(0xFF1A1A1A),
-      fontWeight: FontWeight.w600,
-    );
 
     Widget toolBar = Container(
       width: 320,
@@ -227,13 +215,13 @@ class _AlignRulerState extends State<_AlignRuler> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.15),
+            color: Colors.black.withValues(alpha: .15),
             blurRadius: 20,
             offset: Offset(0, 8),
             spreadRadius: 0,
           ),
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: .1),
             blurRadius: 4,
             offset: Offset(0, 2),
             spreadRadius: 0,

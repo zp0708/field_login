@@ -132,16 +132,34 @@ class _InspectorOverlayLayer extends Layer {
     final Canvas canvas = Canvas(recorder, state.overlayRect);
     final Size size = state.overlayRect.size;
 
+    // Enhanced fill paint with gradient
     final Paint fillPaint = Paint()
       ..style = PaintingStyle.fill
       ..color = kHighlightedRenderObjectFillColor;
 
+    // Enhanced border paint with glow effect
     final Paint borderPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0
+      ..strokeWidth = 2.0
       ..color = kHighlightedRenderObjectBorderColor;
 
+    // Glow effect paint
+    final Paint glowPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 6.0
+      ..color = kHighlightedRenderObjectBorderColor.withOpacity(0.3)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 4);
+
     final Rect selectedPaintRect = state.selected.rect.deflate(0.5);
+
+    // Draw glow effect
+    canvas
+      ..save()
+      ..transform(state.selected.transform.storage)
+      ..drawRect(selectedPaintRect.inflate(2), glowPaint)
+      ..restore();
+
+    // Draw selection
     canvas
       ..save()
       ..transform(state.selected.transform.storage)
@@ -149,18 +167,54 @@ class _InspectorOverlayLayer extends Layer {
       ..drawRect(selectedPaintRect, borderPaint)
       ..restore();
 
+    // Draw corner indicators
+    final Paint cornerPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..color = kHighlightedRenderObjectBorderColor;
+
+    canvas
+      ..save()
+      ..transform(state.selected.transform.storage);
+
+    const double cornerSize = 8.0;
+    final List<Offset> corners = [
+      selectedPaintRect.topLeft,
+      selectedPaintRect.topRight,
+      selectedPaintRect.bottomLeft,
+      selectedPaintRect.bottomRight,
+    ];
+
+    for (final corner in corners) {
+      canvas.drawCircle(corner, cornerSize / 2, cornerPaint);
+      canvas.drawCircle(
+          corner,
+          cornerSize / 2,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.0
+            ..color = Colors.white);
+    }
+
+    canvas.restore();
+
     if (needEdges) {
+      final Paint candidatePaint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.0
+        ..color = kHighlightedRenderObjectBorderColor.withOpacity(0.6);
+
       for (_TransformedRect transformedRect in state.candidates) {
         canvas
           ..save()
           ..transform(transformedRect.transform.storage)
-          ..drawRect(transformedRect.rect.deflate(0.5), borderPaint)
+          ..drawRect(transformedRect.rect.deflate(0.5), candidatePaint)
           ..restore();
       }
     }
+
     final Rect targetRect = MatrixUtils.transformRect(state.selected.transform, state.selected.rect);
     final Offset target = Offset(targetRect.left, targetRect.center.dy);
-    const double offsetFromWidget = 9.0;
+    const double offsetFromWidget = 12.0;
     final double verticalOffset = (targetRect.height) / 2 + offsetFromWidget;
 
     if (needDescription) {
@@ -187,12 +241,27 @@ class _InspectorOverlayLayer extends Layer {
       _textPainter = TextPainter()
         ..maxLines = kMaxTooltipLines
         ..ellipsis = '...'
-        ..text = TextSpan(style: TextStyle(color: kTipTextColor, fontSize: 12.0, height: 1.2), text: message)
+        ..text = TextSpan(
+          style: TextStyle(
+            color: kTipTextColor,
+            fontSize: 13.0,
+            height: 1.4,
+            fontWeight: FontWeight.w500,
+            shadows: [
+              Shadow(
+                offset: Offset(0, 1),
+                blurRadius: 2,
+                color: Colors.black26,
+              ),
+            ],
+          ),
+          text: message,
+        )
         ..textDirection = textDirection
         ..layout(maxWidth: maxWidth);
     }
 
-    final Size tooltipSize = _textPainter!.size + const Offset(kTooltipPadding * 2, kTooltipPadding * 2);
+    final Size tooltipSize = _textPainter!.size + const Offset(kTooltipPadding * 3, kTooltipPadding * 3);
     final Offset tipOffset = positionDependentBox(
       size: size,
       childSize: tooltipSize,
@@ -201,22 +270,56 @@ class _InspectorOverlayLayer extends Layer {
       preferBelow: false,
     );
 
-    final Paint tooltipBackground = Paint()
+    // Draw shadow
+    final Paint shadowPaint = Paint()
       ..style = PaintingStyle.fill
-      ..color = kTooltipBackgroundColor;
-    canvas.drawRect(
+      ..color = Colors.black.withOpacity(0.2)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 8);
+
+    final RRect shadowRRect = RRect.fromRectAndRadius(
+      Rect.fromPoints(
+        tipOffset.translate(2, 4),
+        tipOffset.translate(tooltipSize.width + 2, tooltipSize.height + 4),
+      ),
+      Radius.circular(12),
+    );
+    canvas.drawRRect(shadowRRect, shadowPaint);
+
+    // Draw tooltip background with gradient
+    final Paint tooltipBackground = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          kTooltipBackgroundColor,
+          kTooltipBackgroundColor.withOpacity(0.9),
+        ],
+      ).createShader(Rect.fromPoints(
+        tipOffset,
+        tipOffset.translate(tooltipSize.width, tooltipSize.height),
+      ));
+
+    final RRect backgroundRRect = RRect.fromRectAndRadius(
       Rect.fromPoints(
         tipOffset,
         tipOffset.translate(tooltipSize.width, tooltipSize.height),
       ),
-      tooltipBackground,
+      Radius.circular(12),
     );
+    canvas.drawRRect(backgroundRRect, tooltipBackground);
+
+    // Draw border
+    final Paint borderPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..color = Color(0xFF3498DB).withOpacity(0.6)
+      ..strokeWidth = 1;
+    canvas.drawRRect(backgroundRRect, borderPaint);
 
     double wedgeY = tipOffset.dy;
     final bool tooltipBelow = tipOffset.dy > target.dy;
     if (!tooltipBelow) wedgeY += tooltipSize.height;
 
-    const double wedgeSize = kTooltipPadding * 2;
+    const double wedgeSize = kTooltipPadding * 2.5;
     double wedgeX = math.max(tipOffset.dx, target.dx) + wedgeSize * 2;
     wedgeX = math.min(wedgeX, tipOffset.dx + tooltipSize.width - wedgeSize * 2);
     final List<Offset> wedge = <Offset>[
@@ -224,8 +327,16 @@ class _InspectorOverlayLayer extends Layer {
       Offset(wedgeX + wedgeSize, wedgeY),
       Offset(wedgeX, wedgeY + (tooltipBelow ? -wedgeSize : wedgeSize)),
     ];
-    canvas.drawPath(Path()..addPolygon(wedge, true), tooltipBackground);
-    _textPainter!.paint(canvas, tipOffset + const Offset(kTooltipPadding, kTooltipPadding));
+
+    // Draw wedge shadow
+    final List<Offset> shadowWedge = wedge.map((offset) => offset.translate(1, 2)).toList();
+    canvas.drawPath(Path()..addPolygon(shadowWedge, true), shadowPaint);
+
+    // Draw wedge
+    final Paint wedgePaint = Paint()..color = kTooltipBackgroundColor;
+    canvas.drawPath(Path()..addPolygon(wedge, true), wedgePaint);
+
+    _textPainter!.paint(canvas, tipOffset + const Offset(kTooltipPadding * 1.5, kTooltipPadding * 1.5));
     canvas.restore();
   }
 
@@ -267,7 +378,14 @@ class _SelectionInfo {
   }
 
   String get message {
-    return '''${element!.toStringShort()}\nsize: ${renderObject!.paintBounds.size}\nfilePath: $filePath\nline: $line''';
+    final widgetName = element?.toStringShort() ?? 'Unknown Widget';
+    final size = renderObject?.paintBounds.size ?? Size.zero;
+    final fileName = filePath?.split('/').last ?? 'unknown';
+
+    return '''📱 Widget: $widgetName
+📏 Size: ${size.width.toStringAsFixed(1)} × ${size.height.toStringAsFixed(1)}
+📁 File: $fileName
+📍 Line: ${line ?? 'unknown'}''';
   }
 }
 

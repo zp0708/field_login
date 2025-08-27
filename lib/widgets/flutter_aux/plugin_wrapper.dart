@@ -269,8 +269,8 @@ class PluginOverlayWrapper extends StatelessWidget {
               children: [
                 child,
                 Positioned(
-                  left: 20,
-                  bottom: 20,
+                  right: 40,
+                  top: 40,
                   child: Center(
                     child: IconButton(
                       style: IconButton.styleFrom(
