@@ -151,23 +151,6 @@ class __InfoPageState extends State<_InfoPage> {
     _originalList = _showList;
   }
 
-  Widget _dot(List<int> colors) {
-    Color randomColor = Color.fromARGB(
-      255,
-      colors[0],
-      colors[1],
-      colors[2],
-    );
-    return Container(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: randomColor,
-      ),
-      width: 10,
-      height: 10,
-    );
-  }
-
   Widget _buildWidgetCard(_DetailModel model, BuildContext context, int index) {
     final String widgetType = model.element.widget.toStringShort();
     final bool isTopLevel = index < 3;
@@ -755,10 +738,10 @@ class _OptimizedDetailContent extends StatelessWidget {
           constraints: const BoxConstraints(maxHeight: 600),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withValues(alpha: .3),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: Colors.white.withOpacity(0.1),
+              color: Colors.white.withValues(alpha: .1),
               width: 1,
             ),
           ),
