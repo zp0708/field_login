@@ -1,5 +1,3 @@
-import 'package:field_login/widgets/flutter_aux/plugins/widget_detail_inspector/widget_detail_inspector.dart';
-
 import 'plugins/console/console_plugin.dart';
 import 'plugins/device_info.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +8,8 @@ import 'plugins/entries.dart';
 import 'plugins/proxy_settings.dart';
 import 'plugins/dump/network_data.dart';
 import 'plugins/widget_info_inspector.dart';
+import 'plugins/align_ruler.dart';
+import 'plugins/widget_detail_inspector/widget_detail_inspector.dart';
 
 /// Overlay 管理器，负责管理 overlay 的弹出和移除
 class FlutterAux {
@@ -37,6 +37,7 @@ class FlutterAux {
           ConsolePlugin(),
           WidgetInfoInspector(),
           WidgetDetailInspector(),
+          AlignRulerPlugin(),
         ];
     // 显示入口
     showEntries();

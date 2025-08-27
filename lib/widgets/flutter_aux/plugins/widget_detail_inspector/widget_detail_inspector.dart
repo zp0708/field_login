@@ -21,11 +21,7 @@ class WidgetDetailInspector extends Pluggable {
 
   @override
   Widget build(BuildContext context) {
-    return Navigator(
-      onGenerateInitialRoutes: (NavigatorState state, __) => [
-        MaterialPageRoute(builder: (_) => _DetailPage()),
-      ],
-    );
+    return _DetailPage();
   }
 
   @override

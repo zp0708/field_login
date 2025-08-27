@@ -260,39 +260,45 @@ class PluginOverlayWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      type: MaterialType.transparency,
-      child: Stack(
-        children: [
-          child,
-          Positioned(
-            left: 20,
-            bottom: 20,
-            child: Center(
-              child: IconButton(
-                style: IconButton.styleFrom(
-                  backgroundColor: Colors.black.withValues(alpha: 0.3),
+    return Navigator(
+      onGenerateInitialRoutes: (NavigatorState state, __) => [
+        MaterialPageRoute(
+          builder: (_) => Material(
+            type: MaterialType.transparency,
+            child: Stack(
+              children: [
+                child,
+                Positioned(
+                  left: 20,
+                  bottom: 20,
+                  child: Center(
+                    child: IconButton(
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.black.withValues(alpha: 0.3),
+                      ),
+                      icon: Icon(Icons.close),
+                      onPressed: () => FlutterAux.showEntries(),
+                    ),
+                  ),
                 ),
-                icon: Icon(Icons.close),
-                onPressed: () => FlutterAux.showEntries(),
-              ),
+                if (plugin.tips.isNotEmpty)
+                  Positioned(
+                    top: 20,
+                    left: 0,
+                    right: 0,
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: Text(
+                        plugin.tips,
+                        style: TextStyle(fontSize: 14),
+                      ),
+                    ),
+                  )
+              ],
             ),
           ),
-          if (plugin.tips.isNotEmpty)
-            Positioned(
-              top: 20,
-              left: 0,
-              right: 0,
-              child: Align(
-                alignment: Alignment.topCenter,
-                child: Text(
-                  plugin.tips,
-                  style: TextStyle(fontSize: 14),
-                ),
-              ),
-            )
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

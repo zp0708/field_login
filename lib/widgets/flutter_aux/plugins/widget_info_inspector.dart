@@ -100,12 +100,9 @@ class _WidgetInfoInspectorState extends State<_WidgetInfoInspectorPage> with Wid
     );
     children.add(gesture);
     children.add(InspectorOverlay(selection: selection));
-    return Material(
-      type: MaterialType.transparency,
-      child: Stack(
-        textDirection: TextDirection.ltr,
-        children: children,
-      ),
+    return Stack(
+      textDirection: TextDirection.ltr,
+      children: children,
     );
   }
 }
