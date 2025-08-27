@@ -32,6 +32,8 @@ class _DeviceInfo extends StatefulWidget {
 
 class _DeviceInfoPanelState extends State<_DeviceInfo> {
   String _content = '';
+  bool _isLoading = true;
+  Map<String, dynamic> _deviceData = {};
 
   @override
   void initState() {
@@ -40,6 +42,10 @@ class _DeviceInfoPanelState extends State<_DeviceInfo> {
   }
 
   void _getDeviceInfo() async {
+    setState(() {
+      _isLoading = true;
+    });
+
     DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
     Map dataMap = {};
     if (Platform.isAndroid) {
@@ -49,12 +55,18 @@ class _DeviceInfoPanelState extends State<_DeviceInfo> {
       IosDeviceInfo iosDeviceInfo = await deviceInfo.iosInfo;
       dataMap = _readIosDeviceInfo(iosDeviceInfo);
     }
+
+    _deviceData = Map<String, dynamic>.from(dataMap);
+
     StringBuffer buffer = StringBuffer();
     dataMap.forEach((k, v) {
       buffer.write('$k:  $v\n');
     });
     _content = buffer.toString();
-    setState(() {});
+
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   Map<String, dynamic> _readAndroidBuildData(AndroidDeviceInfo build) {
@@ -107,61 +119,279 @@ class _DeviceInfoPanelState extends State<_DeviceInfo> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(left: 10, right: 10, top: 10, bottom: 20),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12.0),
-        color: Colors.black.withAlpha(150),
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF2C3E50),
+            const Color(0xFF34495E),
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+            spreadRadius: 0,
+          ),
+        ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
+        children: [
+          _buildHeader(),
+          Expanded(
+            child: _isLoading ? _buildLoadingState() : _buildContent(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      child: Row(
+        children: [
           Container(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFF3498DB).withOpacity(0.2),
+            ),
+            child: const Icon(
+              Icons.phone_android,
+              color: Color(0xFF3498DB),
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Device Info',
-                  style: const TextStyle(
+                const Text(
+                  '设备信息',
+                  style: TextStyle(
                     fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.red,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
                   ),
                 ),
-                // 复制按钮
-                GestureDetector(
-                  onTap: () => _copyData(_content),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.copy, size: 16, color: Colors.white),
-                      const SizedBox(width: 4),
-                      Text(
-                        '复制',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
+                const SizedBox(height: 4),
+                Text(
+                  Platform.isAndroid ? 'Android 设备' : 'iOS 设备',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.white.withOpacity(0.8),
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
             ),
           ),
+          _buildActionButtons(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButtons() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildActionButton(
+          icon: Icons.refresh,
+          label: '刷新',
+          onTap: _getDeviceInfo,
+        ),
+        const SizedBox(width: 8),
+        _buildActionButton(
+          icon: Icons.copy,
+          label: '复制',
+          onTap: () => _copyData(_content),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: Colors.white,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3498DB)),
+          ),
+          SizedBox(height: 16),
+          Text(
+            '正在获取设备信息...',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContent() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '设备信息',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 12),
           Expanded(
             child: SingleChildScrollView(
-              physics: BouncingScrollPhysics(),
-              child: SelectableText(
-                _content,
-                style: const TextStyle(
-                  fontSize: 15,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
-                ),
-                strutStyle: const StrutStyle(forceStrutHeight: true, height: 2),
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: _buildQuickInfo(),
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _buildQuickInfo() {
+    List<Map<String, String>> quickInfoItems = [];
+    List skipKeys = [];
+
+    if (Platform.isAndroid) {
+      skipKeys = ['model', 'brand', 'version.release', 'version.sdkInt'];
+      quickInfoItems = [
+        {'label': '设备型号', 'value': _deviceData['model'] ?? 'Unknown'},
+        {'label': '品牌', 'value': _deviceData['brand'] ?? 'Unknown'},
+        {'label': 'Android 版本', 'value': _deviceData['version.release'] ?? 'Unknown'},
+        {'label': 'SDK 版本', 'value': _deviceData['version.sdkInt']?.toString() ?? 'Unknown'},
+      ];
+    } else if (Platform.isIOS) {
+      skipKeys = ['name', 'model', 'systemVersion', 'systemName'];
+      quickInfoItems = [
+        {'label': '设备名称', 'value': _deviceData['name'] ?? 'Unknown'},
+        {'label': '设备型号', 'value': _deviceData['model'] ?? 'Unknown'},
+        {'label': '系统版本', 'value': _deviceData['systemVersion'] ?? 'Unknown'},
+        {'label': '系统名称', 'value': _deviceData['systemName'] ?? 'Unknown'},
+      ];
+    }
+
+    final widgets = quickInfoItems
+        .map((item) => _buildInfoCard(
+              label: item['label']!,
+              value: item['value']!,
+            ))
+        .toList();
+
+    _deviceData.forEach((key, value) {
+      if (!skipKeys.contains(key)) {
+        widgets.add(_buildInfoCard(
+          label: key,
+          value: value?.toString() ?? 'Unknown',
+        ));
+      }
+    });
+
+    return widgets;
+  }
+
+  Widget _buildInfoCard({required String label, required String value}) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 120),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.black.withAlpha(25),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.white.withAlpha(25),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.white.withAlpha(200),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 6),
+          SelectableText(
+            value,
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
