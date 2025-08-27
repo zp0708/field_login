@@ -269,28 +269,32 @@ class PluginOverlayWrapper extends StatelessWidget {
               children: [
                 child,
                 Positioned(
-                  right: 40,
-                  top: 40,
-                  child: Center(
-                    child: IconButton(
-                      style: IconButton.styleFrom(
-                        backgroundColor: Colors.black.withValues(alpha: 0.3),
+                  right: 10,
+                  top: 0,
+                  child: SafeArea(
+                    child: Center(
+                      child: IconButton(
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.black.withValues(alpha: 0.3),
+                        ),
+                        icon: Icon(Icons.close),
+                        onPressed: () => FlutterAux.showEntries(),
                       ),
-                      icon: Icon(Icons.close),
-                      onPressed: () => FlutterAux.showEntries(),
                     ),
                   ),
                 ),
                 if (plugin.tips.isNotEmpty)
                   Positioned(
-                    top: 20,
+                    top: 0,
                     left: 0,
                     right: 0,
-                    child: Align(
-                      alignment: Alignment.topCenter,
-                      child: Text(
-                        plugin.tips,
-                        style: TextStyle(fontSize: 14),
+                    child: SafeArea(
+                      child: Align(
+                        alignment: Alignment.topCenter,
+                        child: Text(
+                          plugin.tips,
+                          style: TextStyle(fontSize: 14),
+                        ),
                       ),
                     ),
                   )

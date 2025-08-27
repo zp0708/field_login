@@ -51,6 +51,9 @@ class _ColorSuckerState extends State<_ColorSucker> {
   bool _excuting = false;
   Uint8List? _imageData;
   bool _isActive = false;
+  bool _isDraggingPanel = false;
+  Offset _magnifierDragStart = Offset.zero;
+  Offset _magnifierStartPosition = Offset.zero;
 
   @override
   void initState() {
@@ -64,26 +67,43 @@ class _ColorSuckerState extends State<_ColorSucker> {
   }
 
   void _onPanUpdate(DragUpdateDetails dragDetails) {
-    _magnifierPosition = dragDetails.globalPosition - _magnifierSize.center(Offset.zero);
-    double newX = dragDetails.globalPosition.dx;
-    double newY = dragDetails.globalPosition.dy;
+    if (_isDraggingPanel) return; // Don't move magnifier if panel is being dragged
+
+    // Use delta-based movement to prevent jitter
+    final Offset delta = dragDetails.globalPosition - _magnifierDragStart;
+    _magnifierPosition = _magnifierStartPosition + delta;
+
+    // Keep magnifier within screen bounds
+    _magnifierPosition = Offset(
+      _magnifierPosition.dx.clamp(0, _windowSize.width - _magnifierSize.width),
+      _magnifierPosition.dy.clamp(0, _windowSize.height - _magnifierSize.height),
+    );
+
+    // Calculate the center position for the magnifier effect
+    final Offset centerPosition = _magnifierPosition + _magnifierSize.center(Offset.zero);
+
+    double newX = centerPosition.dx;
+    double newY = centerPosition.dy;
     final Matrix4 newMatrix = Matrix4.identity()
       ..translate(newX, newY)
       ..scale(_scale, _scale)
       ..translate(-newX, -newY);
     _matrix = newMatrix;
-    _searchPixel(dragDetails.globalPosition);
+    _searchPixel(centerPosition);
     setState(() {
       _isActive = true;
     });
   }
 
   void _toolBarPanStart(DragStartDetails details) {
+    _isDraggingPanel = true;
     _toolBarDragStart = details.globalPosition;
     _toolBarStartPosition = Offset(_toolBarX, _toolBarY);
   }
 
   void _toolBarPanUpdate(DragUpdateDetails dragDetails) {
+    if (!_isDraggingPanel) return; // Only move panel if it's being dragged
+
     final Offset delta = dragDetails.globalPosition - _toolBarDragStart;
     _toolBarX = _toolBarStartPosition.dx + delta.dx;
     _toolBarY = _toolBarStartPosition.dy + delta.dy;
@@ -95,7 +115,14 @@ class _ColorSuckerState extends State<_ColorSucker> {
     setState(() {});
   }
 
+  void _toolBarPanEnd(DragEndDetails details) {
+    _isDraggingPanel = false;
+  }
+
   void _onPanStart(DragStartDetails dragDetails) async {
+    _magnifierDragStart = dragDetails.globalPosition;
+    _magnifierStartPosition = _magnifierPosition;
+
     if (_imageData == null && _excuting == false) {
       _excuting = true;
       await _captureScreen();
@@ -182,8 +209,10 @@ class _ColorSuckerState extends State<_ColorSucker> {
       left: _toolBarX,
       top: _toolBarY,
       child: GestureDetector(
+        behavior: HitTestBehavior.translucent,
         onPanStart: _toolBarPanStart,
         onPanUpdate: _toolBarPanUpdate,
+        onPanEnd: _toolBarPanEnd,
         child: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(

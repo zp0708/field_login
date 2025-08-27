@@ -136,10 +136,10 @@ class _AlignRulerState extends State<_AlignRuler> {
 
   Widget _buildMetricCard(String label, String value, IconData icon, Color color) {
     return Container(
-      padding: EdgeInsets.all(12),
+      padding: EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: color.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: color.withOpacity(0.2),
           width: 1,
@@ -209,7 +209,7 @@ class _AlignRulerState extends State<_AlignRuler> {
     }
 
     Widget toolBar = Container(
-      width: 320,
+      width: 260,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -278,7 +278,7 @@ class _AlignRulerState extends State<_AlignRuler> {
           ),
           // Position Data
           Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(10),
             child: Column(
               children: [
                 Row(
@@ -291,7 +291,7 @@ class _AlignRulerState extends State<_AlignRuler> {
                         Color(0xFF4A90E2),
                       ),
                     ),
-                    SizedBox(width: 12),
+                    SizedBox(width: 10),
                     Expanded(
                       child: _buildMetricCard(
                         '上边距',
@@ -302,7 +302,7 @@ class _AlignRulerState extends State<_AlignRuler> {
                     ),
                   ],
                 ),
-                SizedBox(height: 12),
+                SizedBox(height: 10),
                 Row(
                   children: <Widget>[
                     Expanded(
@@ -313,7 +313,7 @@ class _AlignRulerState extends State<_AlignRuler> {
                         Color(0xFFFF6B6B),
                       ),
                     ),
-                    SizedBox(width: 12),
+                    SizedBox(width: 10),
                     Expanded(
                       child: _buildMetricCard(
                         '下边距',
@@ -324,10 +324,10 @@ class _AlignRulerState extends State<_AlignRuler> {
                     ),
                   ],
                 ),
-                SizedBox(height: 16),
+                SizedBox(height: 10),
                 // Switch section
                 Container(
-                  padding: EdgeInsets.all(16),
+                  padding: EdgeInsets.symmetric(horizontal: 5),
                   decoration: BoxDecoration(
                     color: Color(0xFFF8F9FA),
                     borderRadius: BorderRadius.circular(12),
