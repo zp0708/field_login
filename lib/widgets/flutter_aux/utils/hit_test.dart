@@ -1,6 +1,6 @@
-import 'package:field_login/widgets/flutter_aux/flutter_aux.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../flutter_aux.dart';
 
 class HitTest {
   // all of RenderObjects of current point

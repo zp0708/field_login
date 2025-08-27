@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
-import 'package:field_login/widgets/flutter_aux/flutter_aux.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import '../flutter_aux.dart';
 
 import 'pluggable.dart';
 

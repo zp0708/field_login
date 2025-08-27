@@ -1,4 +1,3 @@
-import 'package:field_login/widgets/flutter_aux/utils/hit_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import '../utils/binding_ambiguate.dart';
@@ -6,6 +5,7 @@ import '../widgets/inspector_overlay.dart';
 
 import 'pluggable.dart';
 import '../utils/constants.dart';
+import '../utils/hit_test.dart';
 
 class WidgetInfoInspector extends Pluggable {
   @override
