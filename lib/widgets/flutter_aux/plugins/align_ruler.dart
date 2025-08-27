@@ -33,13 +33,24 @@ class _AlignRuler extends StatefulWidget {
 
 class _AlignRulerState extends State<_AlignRuler> {
   Size _windowSize = windowSize;
-  final Size _dotSize = Size(80, 80);
+  final Size _dotSize = Size(60, 60);
   Offset _dotPosition = Offset.zero;
   BorderRadius? _radius;
   late Offset _dotOffset;
-  final TextStyle _fontStyle = TextStyle(color: Colors.red, fontSize: 15);
+  final TextStyle _fontStyle = TextStyle(
+    color: Colors.white,
+    fontSize: 12,
+    fontWeight: FontWeight.w600,
+    shadows: [
+      Shadow(
+        offset: Offset(1, 1),
+        blurRadius: 2,
+        color: Colors.black54,
+      ),
+    ],
+  );
   Size _textSize = Size.zero;
-  Offset _toolBarPosition = Offset(60, 60);
+  Offset _toolBarPosition = Offset(20, 60);
   Offset _dragStartPosition = Offset.zero;
   Offset _startPosition = Offset.zero;
   bool _switched = false;
@@ -108,12 +119,12 @@ class _AlignRulerState extends State<_AlignRuler> {
     final textPainter = TextPainter(
       textDirection: TextDirection.ltr,
       text: TextSpan(
-        text: 'for caculate size',
+        text: '999.9',
         style: _fontStyle,
       ),
     );
     textPainter.layout();
-    return Size(textPainter.width, textPainter.height);
+    return Size(textPainter.width + 8, textPainter.height + 4);
   }
 
   void _switchChanged(bool swi) {
@@ -125,60 +136,251 @@ class _AlignRulerState extends State<_AlignRuler> {
     });
   }
 
+  Widget _buildMetricCard(String label, String value, IconData icon, Color color) {
+    return Container(
+      padding: EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                icon,
+                size: 14,
+                color: color,
+              ),
+              SizedBox(width: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Color(0xFF666666),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 16,
+              color: color,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMeasurementLabel(String text) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: Color(0xFF4A90E2),
+        borderRadius: BorderRadius.circular(4),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Text(
+        text,
+        style: _fontStyle,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_windowSize.isEmpty) {
       _windowSize = MediaQuery.of(context).size;
       _dotPosition = _windowSize.center(Offset.zero);
     }
-    const TextStyle style = TextStyle(fontSize: 17, color: Colors.black);
+    const TextStyle labelStyle = TextStyle(
+      fontSize: 11,
+      color: Color(0xFF666666),
+      fontWeight: FontWeight.w500,
+    );
+    const TextStyle valueStyle = TextStyle(
+      fontSize: 14,
+      color: Color(0xFF1A1A1A),
+      fontWeight: FontWeight.w600,
+    );
+
     Widget toolBar = Container(
-      width: 300,
+      width: 320,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          const BoxShadow(
-            color: Colors.black26,
-            blurRadius: 6,
-            offset: Offset(2, 2),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.15),
+            blurRadius: 20,
+            offset: Offset(0, 8),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 4,
+            offset: Offset(0, 2),
+            spreadRadius: 0,
           ),
         ],
       ),
-      padding: const EdgeInsets.only(bottom: 16, top: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.only(left: 26, right: 26),
+          // Header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            decoration: BoxDecoration(
+              color: Color(0xFFF8F9FA),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+            ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: <Widget>[
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        'Left: ${_dotPosition.dx.toStringAsFixed(1)}',
-                        style: style,
-                      ),
-                      Padding(padding: const EdgeInsets.only(top: 8)),
-                      Text(
-                        'Right: ${(_windowSize.width - _dotPosition.dx).toStringAsFixed(1)}',
-                        style: style,
-                      ),
-                    ],
+              children: [
+                Icon(
+                  Icons.straighten,
+                  size: 18,
+                  color: Color(0xFF4A90E2),
+                ),
+                SizedBox(width: 8),
+                Text(
+                  '对齐标尺',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1A1A1A),
                   ),
                 ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                Spacer(),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _switched ? Color(0xFF4A90E2) : Color(0xFFE0E0E0),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    _switched ? 'ON' : 'OFF',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: _switched ? Colors.white : Color(0xFF999999),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Position Data
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: _buildMetricCard(
+                        '左边距',
+                        _dotPosition.dx.toStringAsFixed(1),
+                        Icons.keyboard_arrow_left,
+                        Color(0xFF4A90E2),
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: _buildMetricCard(
+                        '上边距',
+                        _dotPosition.dy.toStringAsFixed(1),
+                        Icons.keyboard_arrow_up,
+                        Color(0xFF50C878),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 12),
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: _buildMetricCard(
+                        '右边距',
+                        (_windowSize.width - _dotPosition.dx).toStringAsFixed(1),
+                        Icons.keyboard_arrow_right,
+                        Color(0xFFFF6B6B),
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: _buildMetricCard(
+                        '下边距',
+                        (_windowSize.height - _dotPosition.dy).toStringAsFixed(1),
+                        Icons.keyboard_arrow_down,
+                        Color(0xFFFFB347),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 16),
+                // Switch section
+                Container(
+                  padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Color(0xFFF8F9FA),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _switched ? Color(0xFF4A90E2) : Color(0xFFE0E0E0),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
                     children: <Widget>[
-                      Text('Top: ${_dotPosition.dy.toStringAsFixed(1)}', style: style),
-                      Padding(padding: const EdgeInsets.only(top: 8)),
-                      Text(
-                        'Bottom: ${(_windowSize.height - _dotPosition.dy).toStringAsFixed(1)}',
-                        style: style,
+                      Switch(
+                        value: _switched,
+                        onChanged: _switchChanged,
+                        activeColor: Color(0xFF4A90E2),
+                        activeTrackColor: Color(0xFF4A90E2).withOpacity(0.3),
+                        inactiveThumbColor: Colors.grey[400],
+                        inactiveTrackColor: Colors.grey[300],
+                      ),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '智能吸附',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF1A1A1A),
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              '松手后自动吸附至最近组件',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF666666),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -186,41 +388,12 @@ class _AlignRulerState extends State<_AlignRuler> {
               ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.only(top: 12),
-            child: Row(
-              children: <Widget>[
-                Container(
-                  padding: const EdgeInsets.only(left: 20),
-                  height: 30,
-                  child: Switch(
-                    value: _switched,
-                    onChanged: _switchChanged,
-                    activeColor: Colors.red,
-                  ),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 10),
-                    child: Text(
-                      '开启后松手将会自动吸附至最近widget',
-                      style: const TextStyle(
-                        color: Colors.red,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                )
-              ],
-            ),
-          )
         ],
       ),
     );
 
-    double verticalLeft = _dotPosition.dx + 10;
-    double horizontalTop = _dotPosition.dy - _textSize.height;
+    double verticalLeft = _dotPosition.dx + 8;
+    double horizontalTop = _dotPosition.dy - _textSize.height - 4;
 
     return Container(
       color: Colors.transparent,
@@ -232,45 +405,75 @@ class _AlignRulerState extends State<_AlignRuler> {
           Positioned(
             top: horizontalTop,
             left: _dotPosition.dx / 2 - _textSize.width / 2,
-            child: Text(_dotPosition.dx.toStringAsFixed(1), style: _fontStyle),
+            child: _buildMeasurementLabel(_dotPosition.dx.toStringAsFixed(1)),
           ),
           Positioned(
             left: verticalLeft,
             top: _dotPosition.dy / 2 - _textSize.height / 2,
-            child: Text(_dotPosition.dy.toStringAsFixed(1), style: _fontStyle),
+            child: _buildMeasurementLabel(_dotPosition.dy.toStringAsFixed(1)),
           ),
           Positioned(
             left: _dotPosition.dx + (_windowSize.width - _dotPosition.dx) / 2 - _textSize.width / 2,
             top: horizontalTop,
-            child: Text(
-              (_windowSize.width - _dotPosition.dx).toStringAsFixed(1),
-              style: _fontStyle,
-            ),
+            child: _buildMeasurementLabel((_windowSize.width - _dotPosition.dx).toStringAsFixed(1)),
           ),
           Positioned(
             top: _dotPosition.dy + (_windowSize.height - _dotPosition.dy) / 2 - _textSize.height / 2,
             left: verticalLeft,
-            child: Text(
-              (_windowSize.height - _dotPosition.dy).toStringAsFixed(1),
-              style: _fontStyle,
-            ),
+            child: _buildMeasurementLabel((_windowSize.height - _dotPosition.dy).toStringAsFixed(1)),
           ),
           Positioned(
-            left: _dotPosition.dx,
+            left: _dotPosition.dx - 0.5,
             top: 0,
             child: Container(
               width: 1,
               height: _windowSize.height,
-              color: const Color(0xffff0000),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0xFF4A90E2).withOpacity(0.3),
+                    Color(0xFF4A90E2),
+                    Color(0xFF4A90E2),
+                    Color(0xFF4A90E2).withOpacity(0.3),
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0xFF4A90E2).withOpacity(0.3),
+                    blurRadius: 2,
+                    spreadRadius: 0.5,
+                  ),
+                ],
+              ),
             ),
           ),
           Positioned(
             left: 0,
-            top: _dotPosition.dy,
+            top: _dotPosition.dy - 0.5,
             child: Container(
               width: _windowSize.width,
               height: 1,
-              color: const Color(0xffff0000),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [
+                    Color(0xFF4A90E2).withOpacity(0.3),
+                    Color(0xFF4A90E2),
+                    Color(0xFF4A90E2),
+                    Color(0xFF4A90E2).withOpacity(0.3),
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0xFF4A90E2).withOpacity(0.3),
+                    blurRadius: 2,
+                    spreadRadius: 0.5,
+                  ),
+                ],
+              ),
             ),
           ),
           Positioned(
@@ -283,19 +486,37 @@ class _AlignRulerState extends State<_AlignRuler> {
                 height: _dotSize.height,
                 width: _dotSize.width,
                 decoration: BoxDecoration(
-                  borderRadius: _radius,
+                  shape: BoxShape.circle,
+                  color: Colors.white,
                   border: Border.all(
-                    color: Colors.black,
-                    width: 2,
+                    color: Color(0xFF4A90E2),
+                    width: 3,
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0xFF4A90E2).withOpacity(0.3),
+                      blurRadius: 8,
+                      spreadRadius: 2,
+                    ),
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Center(
                   child: Container(
-                    height: _dotSize.width / 2.5,
-                    width: _dotSize.height / 2.5,
+                    height: 16,
+                    width: 16,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.red.withAlpha(150),
+                      color: Color(0xFF4A90E2),
+                    ),
+                    child: Icon(
+                      Icons.my_location,
+                      size: 10,
+                      color: Colors.white,
                     ),
                   ),
                 ),
