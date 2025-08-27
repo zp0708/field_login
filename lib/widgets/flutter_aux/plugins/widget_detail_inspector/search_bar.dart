@@ -102,8 +102,9 @@ class _SearchInputState extends State<SearchBar> {
     return Container(
         margin: const EdgeInsets.only(right: 11.0),
         child: Icon(
-          Icons.abc_rounded,
+          Icons.search,
           size: 16,
+          color: Colors.white.withValues(alpha: 0.6),
         ));
   }
 
@@ -122,8 +123,9 @@ class _SearchInputState extends State<SearchBar> {
       child: Container(
           margin: EdgeInsets.only(left: 16.0),
           child: Icon(
-            Icons.abc_rounded,
+            Icons.clear,
             size: 16,
+            color: Colors.white.withValues(alpha: 0.6),
           )),
     );
   }
@@ -149,10 +151,10 @@ class _SearchInputState extends State<SearchBar> {
         maxLengthEnforcement: MaxLengthEnforcement.none,
         style: TextStyle(
           fontSize: 15.0,
-          color: Colors.black,
+          color: Colors.white,
           textBaseline: TextBaseline.alphabetic,
         ),
-        cursorColor: widget.cursorColor ?? Colors.red,
+        cursorColor: widget.cursorColor ?? const Color(0xFF3498DB),
         decoration: InputDecoration(
             isDense: true,
             contentPadding: EdgeInsets.zero,
@@ -161,7 +163,7 @@ class _SearchInputState extends State<SearchBar> {
             hintMaxLines: 1,
             hintStyle: TextStyle(
               fontSize: 15.0,
-              color: widget.style == BarStyle.border ? Colors.black38 : Colors.black54,
+              color: Colors.white.withValues(alpha: 0.6),
               textBaseline: TextBaseline.alphabetic,
             )),
         inputFormatters: formatters,
@@ -176,8 +178,7 @@ class _SearchInputState extends State<SearchBar> {
               color: Colors.white,
               borderRadius: const BorderRadius.all(Radius.circular(6.0)),
               border: Border.all(color: Colors.black12, style: BorderStyle.solid, width: 1))
-          : BoxDecoration(
-              color: Colors.black.withOpacity(0.04), borderRadius: const BorderRadius.all(Radius.circular(6.0))),
+          : BoxDecoration(color: Colors.transparent, borderRadius: const BorderRadius.all(Radius.circular(6.0))),
       padding: const EdgeInsets.only(top: 9.0, left: 12.0, right: 12.0, bottom: 8.0),
       child: Flex(
         direction: Axis.horizontal,

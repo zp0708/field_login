@@ -14,7 +14,7 @@ class WidgetDetailInspector extends Pluggable {
   String get name => 'widget_detail';
 
   @override
-  String get display => '组件详情';
+  String get display => '组件详情面板';
 
   @override
   Size get size => const Size(400, 500);
@@ -28,7 +28,7 @@ class WidgetDetailInspector extends Pluggable {
   bool get isOverlay => true;
 
   @override
-  String get tips => '点击组件查看组件详情';
+  String get tips => '点击任意组件查看详细信息和构建链';
 }
 
 class _DetailPage extends StatefulWidget {
@@ -168,42 +168,128 @@ class __InfoPageState extends State<_InfoPage> {
     );
   }
 
-  Widget _cell(_DetailModel model, BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.of(context).push(MaterialPageRoute(builder: (ctx) {
-          return Scaffold(
-            body: _DetailContent(element: model.element),
-            appBar: PreferredSize(
-              preferredSize: Size.fromHeight(44),
-              child: AppBar(
-                elevation: 0.0,
-                title: Text("widget_detail"),
+  Widget _buildWidgetCard(_DetailModel model, BuildContext context, int index) {
+    final String widgetType = model.element.widget.toStringShort();
+    final bool isTopLevel = index < 3;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            Navigator.of(context).push(MaterialPageRoute(builder: (ctx) {
+              return _OptimizedDetailContent(element: model.element);
+            }));
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color:
+                    isTopLevel ? const Color(0xFF3498DB).withValues(alpha: 0.3) : Colors.white.withValues(alpha: 0.1),
+                width: isTopLevel ? 2 : 1,
               ),
             ),
-          );
-        }));
-      },
-      child: Container(
-        margin: const EdgeInsets.only(
-          top: 6,
-          bottom: 6,
-          left: 12,
-          right: 12,
-        ),
-        child: Row(
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: _dot(model.colors),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [
+                        Color.fromARGB(255, model.colors[0], model.colors[1], model.colors[2]),
+                        Color.fromARGB(255, model.colors[0], model.colors[1], model.colors[2]).withValues(alpha: 0.7),
+                      ],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Color.fromARGB(255, model.colors[0], model.colors[1], model.colors[2])
+                            .withValues(alpha: 0.3),
+                        blurRadius: 8,
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      (index + 1).toString(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widgetType,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.layers,
+                            size: 14,
+                            color: Colors.white.withValues(alpha: 0.6),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '层级 ${index + 1}',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.8),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          if (isTopLevel) ...[
+                            const SizedBox(width: 12),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF3498DB),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Text(
+                                '顶层',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: Colors.white.withValues(alpha: 0.6),
+                ),
+              ],
             ),
-            Expanded(
-              child: Text(
-                model.element.widget.toStringShort(),
-                style: TextStyle(fontSize: 15),
-              ),
-            )
-          ],
+          ),
         ),
       ),
     );
@@ -226,137 +312,518 @@ class __InfoPageState extends State<_InfoPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF2C3E50),
       resizeToAvoidBottomInset: false,
-      body: Column(
-        children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.only(
-              left: 12,
-              right: 12,
-              top: 10,
-              bottom: 10,
-            ),
-            child: search_bar.SearchBar(
-              placeHolder: '请输入要搜索的widget',
-              onChangeHandle: _textChange,
-            ),
+      appBar: _buildAppBar(),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              const Color(0xFF2C3E50),
+              const Color(0xFF34495E),
+            ],
           ),
-          Expanded(
-            child: GestureDetector(
-              onPanDown: (_) {
-                FocusScope.of(context).requestFocus(FocusNode());
-              },
-              child: ListView.builder(
-                physics: BouncingScrollPhysics(),
-                itemBuilder: (_, index) {
-                  _DetailModel model = _showList[index];
-                  return _cell(model, context);
-                },
-                itemCount: _showList.length,
-              ),
+        ),
+        child: Column(
+          children: <Widget>[
+            _buildSearchSection(),
+            Expanded(
+              child: _buildWidgetList(),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(44),
-        child: AppBar(
-          elevation: 0.0,
-          title: RichText(
-            text: TextSpan(
-              text: 'widget_build_chain',
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 19,
-                fontWeight: FontWeight.w500,
-                fontFamily: "PingFang SC",
-              ),
-              children: <TextSpan>[
-                TextSpan(
-                  text: '  depth: ${widget.elements.length}',
-                  style: TextStyle(color: Colors.black, fontSize: 11),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      elevation: 0,
+      backgroundColor: Colors.transparent,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+        onPressed: () => Navigator.of(context).pop(),
+      ),
+      title: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFF3498DB).withValues(alpha: 0.2),
+            ),
+            child: const Icon(
+              Icons.widgets,
+              color: Color(0xFF3498DB),
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '组件构建链',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Text(
+                  '深度: ${widget.elements.length} 层',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchSection() {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(25),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.1),
+          width: 1,
         ),
+      ),
+      child: search_bar.SearchBar(
+        placeHolder: '搜索 Widget 类型...',
+        onChangeHandle: _textChange,
+      ),
+    );
+  }
+
+  Widget _buildWidgetList() {
+    if (_showList.isEmpty) {
+      return _buildEmptyState();
+    }
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      child: GestureDetector(
+        onPanDown: (_) {
+          FocusScope.of(context).requestFocus(FocusNode());
+        },
+        child: ListView.builder(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.only(bottom: 16),
+          itemBuilder: (_, index) {
+            _DetailModel model = _showList[index];
+            return _buildWidgetCard(model, context, index);
+          },
+          itemCount: _showList.length,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withOpacity(0.1),
+            ),
+            child: Icon(
+              Icons.search_off,
+              size: 48,
+              color: Colors.white.withOpacity(0.6),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            '未找到匹配的 Widget',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.8),
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '请尝试修改搜索关键词',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.6),
+              fontSize: 14,
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _DetailContent extends StatelessWidget {
-  const _DetailContent({required this.element});
+class _OptimizedDetailContent extends StatelessWidget {
+  const _OptimizedDetailContent({required this.element});
 
   final Element element;
 
-  Widget _titleWidget(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 12, left: 12),
-      child: Text(
-        title,
-        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF2C3E50),
+      appBar: _buildAppBar(context),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              const Color(0xFF2C3E50),
+              const Color(0xFF34495E),
+            ],
+          ),
+        ),
+        child: FutureBuilder<List<String>>(
+          future: _getDetailInfo(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return _buildLoadingState();
+            } else if (snapshot.hasError) {
+              return _buildErrorState();
+            } else if (snapshot.hasData) {
+              return _buildContent(snapshot.data!);
+            }
+            return const SizedBox.shrink();
+          },
+        ),
       ),
     );
   }
 
-  Future<List<String>> getInfo() async {
-    Completer<List<String>> completer = Completer();
-    String string = element.renderObject!.toStringDeep();
-    List<String> list = string.split("\n");
-    completer.complete(list);
-    return completer.future;
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    return AppBar(
+      elevation: 0,
+      backgroundColor: Colors.transparent,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+        onPressed: () => Navigator.of(context).pop(),
+      ),
+      title: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFF3498DB).withValues(alpha: 0.2),
+            ),
+            child: const Icon(
+              Icons.info_outline,
+              color: Color(0xFF3498DB),
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Text(
+              'Widget 详细信息',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: getInfo(),
-      builder: (_, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(
-            child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
+  Widget _buildLoadingState() {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3498DB)),
+          ),
+          SizedBox(height: 16),
+          Text(
+            '正在加载组件信息...',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
             ),
-          );
-        } else if (snapshot.connectionState == ConnectionState.done) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _titleWidget("Widget Description"),
-              Container(
-                constraints: BoxConstraints(maxHeight: 200),
-                padding: const EdgeInsets.only(top: 12, left: 12, right: 12),
-                child: SingleChildScrollView(
-                  child: Text(
-                    element.widget.toStringDeep(),
-                  ),
-                ),
-              ),
-              _titleWidget("RenderObject Description"),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 12, right: 12, left: 12),
-                  child: ListView.builder(
-                    physics: BouncingScrollPhysics(),
-                    itemBuilder: (_, index) {
-                      return SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Text(
-                          (snapshot.data as List<String>)[index],
-                        ),
-                      );
-                    },
-                    itemCount: (snapshot.data as List<String>).length,
-                  ),
-                ),
-              ),
-            ],
-          );
-        } else {
-          return SizedBox.shrink();
-        }
-      },
+          ),
+        ],
+      ),
     );
+  }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.red.withValues(alpha: 0.1),
+            ),
+            child: const Icon(
+              Icons.error_outline,
+              size: 48,
+              color: Colors.red,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            '加载失败',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContent(List<String> renderData) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildInfoCard(
+            title: 'Widget 信息',
+            icon: Icons.widgets,
+            color: const Color(0xFF3498DB),
+            child: _buildWidgetInfo(),
+          ),
+          const SizedBox(height: 16),
+          _buildInfoCard(
+            title: 'RenderObject 详情',
+            icon: Icons.account_tree,
+            color: const Color(0xFF27AE60),
+            child: _buildRenderObjectInfo(renderData),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoCard({
+    required String title,
+    required IconData icon,
+    required Color color,
+    required Widget child,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.1),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: color.withOpacity(0.2),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: color,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: child,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWidgetInfo() {
+    final widgetInfo = element.widget.toStringDeep();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildPropertyRow('类型', element.widget.runtimeType.toString()),
+        const SizedBox(height: 12),
+        _buildPropertyRow('状态', element.dirty ? '脏数据' : '干净数据'),
+        const SizedBox(height: 16),
+        const Text(
+          '详细描述',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          constraints: const BoxConstraints(maxHeight: 200),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.1),
+              width: 1,
+            ),
+          ),
+          child: SingleChildScrollView(
+            child: SelectableText(
+              widgetInfo,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontFamily: 'monospace',
+                height: 1.4,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRenderObjectInfo(List<String> renderData) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (element.renderObject != null) ...[
+          _buildPropertyRow('类型', element.renderObject.runtimeType.toString()),
+          const SizedBox(height: 12),
+          _buildPropertyRow('需要重绘', element.renderObject!.debugNeedsPaint.toString()),
+          const SizedBox(height: 16),
+        ],
+        const Text(
+          'RenderObject 树结构',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          constraints: const BoxConstraints(maxHeight: 600),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.1),
+              width: 1,
+            ),
+          ),
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: renderData.length,
+            itemBuilder: (context, index) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: SelectableText(
+                    renderData[index],
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontFamily: 'monospace',
+                      height: 1.3,
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPropertyRow(String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 80,
+          child: Text(
+            label,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.8),
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: SelectableText(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<List<String>> _getDetailInfo() async {
+    if (element.renderObject == null) {
+      return ['RenderObject is null'];
+    }
+
+    final String renderString = element.renderObject!.toStringDeep();
+    return renderString.split('\n');
   }
 }
