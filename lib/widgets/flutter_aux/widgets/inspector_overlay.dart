@@ -147,7 +147,7 @@ class _InspectorOverlayLayer extends Layer {
     final Paint glowPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 6.0
-      ..color = kHighlightedRenderObjectBorderColor.withOpacity(0.3)
+      ..color = kHighlightedRenderObjectBorderColor.withAlpha(75)
       ..maskFilter = MaskFilter.blur(BlurStyle.normal, 4);
 
     final Rect selectedPaintRect = state.selected.rect.deflate(0.5);
@@ -201,7 +201,7 @@ class _InspectorOverlayLayer extends Layer {
       final Paint candidatePaint = Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.0
-        ..color = kHighlightedRenderObjectBorderColor.withOpacity(0.6);
+        ..color = kHighlightedRenderObjectBorderColor.withAlpha(150);
 
       for (_TransformedRect transformedRect in state.candidates) {
         canvas
@@ -273,7 +273,7 @@ class _InspectorOverlayLayer extends Layer {
     // Draw shadow
     final Paint shadowPaint = Paint()
       ..style = PaintingStyle.fill
-      ..color = Colors.black.withOpacity(0.2)
+      ..color = Colors.black.withAlpha(50)
       ..maskFilter = MaskFilter.blur(BlurStyle.normal, 8);
 
     final RRect shadowRRect = RRect.fromRectAndRadius(
@@ -292,7 +292,7 @@ class _InspectorOverlayLayer extends Layer {
         end: Alignment.bottomRight,
         colors: [
           kTooltipBackgroundColor,
-          kTooltipBackgroundColor.withOpacity(0.9),
+          kTooltipBackgroundColor.withAlpha(225),
         ],
       ).createShader(Rect.fromPoints(
         tipOffset,
@@ -311,7 +311,7 @@ class _InspectorOverlayLayer extends Layer {
     // Draw border
     final Paint borderPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..color = Color(0xFF3498DB).withOpacity(0.6)
+      ..color = Color(0xFF3498DB).withAlpha(150)
       ..strokeWidth = 1;
     canvas.drawRRect(backgroundRRect, borderPaint);
 
@@ -319,8 +319,8 @@ class _InspectorOverlayLayer extends Layer {
     final bool tooltipBelow = tipOffset.dy > target.dy;
     if (!tooltipBelow) wedgeY += tooltipSize.height;
 
-    const double wedgeSize = kTooltipPadding * 2.5;
-    double wedgeX = math.max(tipOffset.dx, target.dx) + wedgeSize * 2;
+    const double wedgeSize = 10;
+    double wedgeX = math.max(tipOffset.dx, target.dx) + targetRect.width * 0.5;
     wedgeX = math.min(wedgeX, tipOffset.dx + tooltipSize.width - wedgeSize * 2);
     final List<Offset> wedge = <Offset>[
       Offset(wedgeX - wedgeSize, wedgeY),

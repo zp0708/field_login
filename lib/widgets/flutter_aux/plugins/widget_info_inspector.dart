@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'dart:ui' as ui;
 import '../utils/binding_ambiguate.dart';
 import '../widgets/inspector_overlay.dart';
 
 import 'pluggable.dart';
-import '../utils/constants.dart';
 import '../utils/hit_test.dart';
 
 class WidgetInfoInspector extends Pluggable {
@@ -39,8 +39,6 @@ class _WidgetInfoInspectorPage extends StatefulWidget {
 class _WidgetInfoInspectorState extends State<_WidgetInfoInspectorPage> with WidgetsBindingObserver {
   _WidgetInfoInspectorState() : selection = WidgetInspectorService.instance.selection;
 
-  final window = bindingAmbiguate(WidgetsBinding.instance)!.window;
-
   Offset? _lastPointerLocation;
   bool _isInspecting = false;
 
@@ -62,7 +60,8 @@ class _WidgetInfoInspectorState extends State<_WidgetInfoInspectorPage> with Wid
   }
 
   void _handlePanEnd(DragEndDetails details) {
-    final Rect bounds = (Offset.zero & (window.physicalSize / window.devicePixelRatio)).deflate(1.0);
+    final ui.FlutterView view = ui.PlatformDispatcher.instance.views.first;
+    final Rect bounds = (Offset.zero & (view.physicalSize / view.devicePixelRatio)).deflate(1.0);
     if (!bounds.contains(_lastPointerLocation!)) {
       setState(() {
         selection.clear();
@@ -99,7 +98,7 @@ class _WidgetInfoInspectorState extends State<_WidgetInfoInspectorPage> with Wid
         child: Container(
           width: MediaQuery.of(context).size.width,
           height: MediaQuery.of(context).size.height,
-          color: _isInspecting ? Colors.black.withOpacity(0.2) : Colors.transparent,
+          color: _isInspecting ? Colors.black.withAlpha(50) : Colors.transparent,
         ),
       ),
     );
@@ -143,7 +142,7 @@ class _WidgetInfoInspectorState extends State<_WidgetInfoInspectorPage> with Wid
             color: const Color(0xFF2C3E50),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.3),
+                color: Colors.black.withAlpha(75),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),
@@ -167,7 +166,7 @@ class _WidgetInfoInspectorState extends State<_WidgetInfoInspectorPage> with Wid
         child.markNeedsPaint();
         child.visitChildren(visitor);
       };
-      bindingAmbiguate(RendererBinding.instance)?.renderView.visitChildren(visitor);
+      bindingAmbiguate(RendererBinding.instance)?.renderViews.first.visitChildren(visitor);
     });
   }
 }
@@ -184,75 +183,45 @@ class _EnhancedDebugPaintButton extends StatefulWidget {
 }
 
 class _EnhancedDebugPaintButtonState extends State<_EnhancedDebugPaintButton> {
-  double _dx = windowSize.width - 80 - 20;
-  double _dy = windowSize.height - 80 - 100;
-  bool _isDragging = false;
-
   @override
   Widget build(BuildContext context) {
     return Positioned(
-      left: _dx,
-      top: _dy,
+      left: 90,
+      bottom: 40,
       child: GestureDetector(
-        onPanStart: _buttonPanStart,
-        onPanUpdate: _buttonPanUpdate,
-        onPanEnd: _buttonPanEnd,
         onTap: widget.onLongPress,
-        child: Transform.scale(
-          scale: _isDragging ? 1.1 : 1.0,
-          child: Container(
-            width: 70,
-            height: 70,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  const Color(0xFF667EEA),
-                  const Color(0xFF764BA2),
-                ],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF667EEA).withAlpha(102),
-                  blurRadius: _isDragging ? 20 : 15,
-                  offset: const Offset(0, 8),
-                  spreadRadius: _isDragging ? 2 : 0,
-                ),
+        child: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                const Color(0xFF667EEA),
+                const Color(0xFF764BA2),
               ],
             ),
-            child: SizedBox(
-              width: 40,
-              height: 40,
-              child: Icon(
-                debugPaintSizeEnabled ? Icons.visibility_off : Icons.search,
-                color: Colors.white,
-                size: 24,
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF667EEA).withAlpha(102),
+                blurRadius: 15,
+                offset: const Offset(0, 8),
               ),
+            ],
+          ),
+          child: SizedBox(
+            width: 40,
+            height: 40,
+            child: Icon(
+              debugPaintSizeEnabled ? Icons.visibility_off : Icons.line_style_rounded,
+              color: Colors.white,
+              size: 24,
             ),
           ),
         ),
       ),
     );
-  }
-
-  void _buttonPanStart(DragStartDetails details) {
-    setState(() {
-      _isDragging = true;
-    });
-  }
-
-  void _buttonPanUpdate(DragUpdateDetails details) {
-    setState(() {
-      _dx = (details.globalPosition.dx - 35).clamp(0, windowSize.width - 70);
-      _dy = (details.globalPosition.dy - 35).clamp(0, windowSize.height - 70);
-    });
-  }
-
-  void _buttonPanEnd(DragEndDetails details) {
-    setState(() {
-      _isDragging = false;
-    });
   }
 }

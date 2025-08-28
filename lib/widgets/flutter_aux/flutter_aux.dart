@@ -11,6 +11,7 @@ import 'plugins/widget_info_inspector.dart';
 import 'plugins/align_ruler.dart';
 import 'plugins/widget_detail_inspector/widget_detail_inspector.dart';
 import 'plugins/color_sucker.dart';
+import 'plugins/performance.dart';
 
 /// Overlay 管理器，负责管理 overlay 的弹出和移除
 class FlutterAux {
@@ -37,10 +38,11 @@ class FlutterAux {
           NetworkData(),
           DeviceInfo(),
           ConsolePlugin(),
+          AlignRulerPlugin(),
           WidgetInfoInspector(),
           WidgetDetailInspector(),
-          AlignRulerPlugin(),
           ColorSucker(),
+          Performance(),
         ];
     // 显示入口
     showEntries();
@@ -58,7 +60,7 @@ class FlutterAux {
     removeOverlay();
 
     // 恢复保存的位置
-    final position = await _getSavedPosition(plugin.name) ?? Offset(100, 100);
+    final position = await _getSavedPosition(plugin.name) ?? Offset(50, 50);
     // 恢复保存的大小
     final size = await _getSavedSize(plugin.name) ?? plugin.size;
 

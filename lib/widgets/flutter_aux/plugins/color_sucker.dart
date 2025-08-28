@@ -57,7 +57,8 @@ class _ColorSuckerState extends State<_ColorSucker> {
 
   @override
   void initState() {
-    _windowSize = ui.window.physicalSize / ui.window.devicePixelRatio;
+    final ui.FlutterView view = ui.PlatformDispatcher.instance.views.first;
+    _windowSize = view.physicalSize / view.devicePixelRatio;
     _magnifierSize = Size(120, 120);
     _scale = 8;
     _radius = BorderRadius.circular(_magnifierSize.longestSide);
