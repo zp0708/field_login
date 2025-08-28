@@ -32,7 +32,6 @@ class _DeviceInfo extends StatefulWidget {
 
 class _DeviceInfoPanelState extends State<_DeviceInfo> {
   String _content = '';
-  bool _isLoading = true;
   Map<String, dynamic> _deviceData = {};
 
   @override
@@ -42,10 +41,6 @@ class _DeviceInfoPanelState extends State<_DeviceInfo> {
   }
 
   void _getDeviceInfo() async {
-    setState(() {
-      _isLoading = true;
-    });
-
     DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
     Map dataMap = {};
     if (Platform.isAndroid) {
@@ -63,10 +58,6 @@ class _DeviceInfoPanelState extends State<_DeviceInfo> {
       buffer.write('$k:  $v\n');
     });
     _content = buffer.toString();
-
-    setState(() {
-      _isLoading = false;
-    });
   }
 
   Map<String, dynamic> _readAndroidBuildData(AndroidDeviceInfo build) {
@@ -119,7 +110,7 @@ class _DeviceInfoPanelState extends State<_DeviceInfo> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.all(16),
+      margin: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         gradient: LinearGradient(
@@ -132,13 +123,13 @@ class _DeviceInfoPanelState extends State<_DeviceInfo> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 15,
             offset: const Offset(0, 8),
             spreadRadius: 0,
           ),
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 5,
             offset: const Offset(0, 2),
             spreadRadius: 0,
@@ -149,7 +140,7 @@ class _DeviceInfoPanelState extends State<_DeviceInfo> {
         children: [
           _buildHeader(),
           Expanded(
-            child: _isLoading ? _buildLoadingState() : _buildContent(),
+            child: _buildContent(),
           ),
         ],
       ),
@@ -158,9 +149,9 @@ class _DeviceInfoPanelState extends State<_DeviceInfo> {
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: Colors.white.withValues(alpha: 0.1),
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(20),
           topRight: Radius.circular(20),
@@ -172,7 +163,7 @@ class _DeviceInfoPanelState extends State<_DeviceInfo> {
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFF3498DB).withOpacity(0.2),
+              color: const Color(0xFF3498DB).withValues(alpha: 0.2),
             ),
             child: const Icon(
               Icons.phone_android,
@@ -180,29 +171,15 @@ class _DeviceInfoPanelState extends State<_DeviceInfo> {
               size: 24,
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 10),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  '设备信息',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  Platform.isAndroid ? 'Android 设备' : 'iOS 设备',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.white.withOpacity(0.8),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
+            child: Text(
+              Platform.isAndroid ? 'Android 设备' : 'iOS 设备',
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
           _buildActionButtons(),
@@ -212,21 +189,10 @@ class _DeviceInfoPanelState extends State<_DeviceInfo> {
   }
 
   Widget _buildActionButtons() {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _buildActionButton(
-          icon: Icons.refresh,
-          label: '刷新',
-          onTap: _getDeviceInfo,
-        ),
-        const SizedBox(width: 8),
-        _buildActionButton(
-          icon: Icons.copy,
-          label: '复制',
-          onTap: () => _copyData(_content),
-        ),
-      ],
+    return _buildActionButton(
+      icon: Icons.copy,
+      label: '复制',
+      onTap: () => _copyData(_content),
     );
   }
 
@@ -240,10 +206,10 @@ class _DeviceInfoPanelState extends State<_DeviceInfo> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.1),
+          color: Colors.white.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: Colors.white.withOpacity(0.3),
+            color: Colors.white.withValues(alpha: 0.3),
             width: 1,
           ),
         ),
@@ -270,53 +236,15 @@ class _DeviceInfoPanelState extends State<_DeviceInfo> {
     );
   }
 
-  Widget _buildLoadingState() {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3498DB)),
-          ),
-          SizedBox(height: 16),
-          Text(
-            '正在获取设备信息...',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildContent() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            '设备信息',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Expanded(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: _buildQuickInfo(),
-              ),
-            ),
-          ),
-        ],
+    return Padding(
+      padding: const EdgeInsets.all(10.0),
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: _buildQuickInfo(),
+        ),
       ),
     );
   }
@@ -364,8 +292,8 @@ class _DeviceInfoPanelState extends State<_DeviceInfo> {
 
   Widget _buildInfoCard({required String label, required String value}) {
     return Container(
-      constraints: const BoxConstraints(minWidth: 120),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(10),
+      margin: EdgeInsets.only(bottom: 5),
       decoration: BoxDecoration(
         color: Colors.black.withAlpha(25),
         borderRadius: BorderRadius.circular(12),
@@ -374,8 +302,8 @@ class _DeviceInfoPanelState extends State<_DeviceInfo> {
           width: 1,
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             label,
@@ -385,13 +313,19 @@ class _DeviceInfoPanelState extends State<_DeviceInfo> {
               fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 6),
-          SelectableText(
-            value,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
+          SizedBox(width: 10),
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: SelectableText(
+                value,
+                textAlign: TextAlign.right,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
           ),
         ],
