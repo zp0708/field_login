@@ -129,7 +129,7 @@ class _WidgetInfoInspectorState extends State<_WidgetInfoInspectorPage> with Wid
 
   Widget _buildCloseButton() {
     return Positioned(
-      left: 40,
+      left: 90,
       bottom: 40,
       child: GestureDetector(
         onTap: _closeInspection,
@@ -185,7 +185,7 @@ class _EnhancedDebugPaintButtonState extends State<_EnhancedDebugPaintButton> {
   @override
   Widget build(BuildContext context) {
     return Positioned(
-      left: 90,
+      left: 40,
       bottom: 40,
       child: GestureDetector(
         onTap: widget.onLongPress,
