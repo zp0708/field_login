@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'dart:ui' as ui;
-import '../utils/binding_ambiguate.dart';
 import '../widgets/inspector_overlay.dart';
 
 import 'pluggable.dart';
@@ -166,7 +165,7 @@ class _WidgetInfoInspectorState extends State<_WidgetInfoInspectorPage> with Wid
         child.markNeedsPaint();
         child.visitChildren(visitor);
       };
-      bindingAmbiguate(RendererBinding.instance)?.renderViews.first.visitChildren(visitor);
+      RendererBinding.instance.renderViews.first.visitChildren(visitor);
     });
   }
 }

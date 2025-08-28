@@ -138,10 +138,10 @@ class _AlignRulerState extends State<_AlignRuler> {
     return Container(
       padding: EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.05),
+        color: color.withAlpha(12),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: color.withOpacity(0.2),
+          color: color.withAlpha(50),
           width: 1,
         ),
       ),
@@ -188,7 +188,7 @@ class _AlignRulerState extends State<_AlignRuler> {
         borderRadius: BorderRadius.circular(4),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withAlpha(50),
             blurRadius: 4,
             offset: Offset(0, 2),
           ),
@@ -342,7 +342,7 @@ class _AlignRulerState extends State<_AlignRuler> {
                         value: _switched,
                         onChanged: _switchChanged,
                         activeColor: Color(0xFF4A90E2),
-                        activeTrackColor: Color(0xFF4A90E2).withOpacity(0.3),
+                        activeTrackColor: Color(0xFF4A90E2).withAlpha(75),
                         inactiveThumbColor: Colors.grey[400],
                         inactiveTrackColor: Colors.grey[300],
                       ),
@@ -421,15 +421,15 @@ class _AlignRulerState extends State<_AlignRuler> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Color(0xFF4A90E2).withOpacity(0.3),
+                    Color(0xFF4A90E2).withAlpha(75),
                     Color(0xFF4A90E2),
                     Color(0xFF4A90E2),
-                    Color(0xFF4A90E2).withOpacity(0.3),
+                    Color(0xFF4A90E2).withAlpha(75),
                   ],
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Color(0xFF4A90E2).withOpacity(0.3),
+                    color: Color(0xFF4A90E2).withAlpha(75),
                     blurRadius: 2,
                     spreadRadius: 0.5,
                   ),
@@ -448,15 +448,15 @@ class _AlignRulerState extends State<_AlignRuler> {
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                   colors: [
-                    Color(0xFF4A90E2).withOpacity(0.3),
+                    Color(0xFF4A90E2).withAlpha(75),
                     Color(0xFF4A90E2),
                     Color(0xFF4A90E2),
-                    Color(0xFF4A90E2).withOpacity(0.3),
+                    Color(0xFF4A90E2).withAlpha(75),
                   ],
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Color(0xFF4A90E2).withOpacity(0.3),
+                    color: Color(0xFF4A90E2).withAlpha(75),
                     blurRadius: 2,
                     spreadRadius: 0.5,
                   ),
@@ -482,12 +482,12 @@ class _AlignRulerState extends State<_AlignRuler> {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Color(0xFF4A90E2).withOpacity(0.3),
+                      color: Color(0xFF4A90E2).withAlpha(75),
                       blurRadius: 8,
                       spreadRadius: 2,
                     ),
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withAlpha(75),
                       blurRadius: 4,
                       offset: Offset(0, 2),
                     ),

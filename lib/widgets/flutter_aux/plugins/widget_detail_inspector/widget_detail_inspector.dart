@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart' hide SearchBar;
 import '../../utils/hit_test.dart';
 import '../pluggable.dart';
-import '../../utils/binding_ambiguate.dart';
 import '../../widgets/inspector_overlay.dart';
 
 // There was a conflict between the naming of material.SearchBar and ume's SearchBar.
@@ -41,7 +41,7 @@ class _DetailPage extends StatefulWidget {
 class _DetailPageState extends State<_DetailPage> with WidgetsBindingObserver {
   _DetailPageState() : selection = WidgetInspectorService.instance.selection;
 
-  final window = bindingAmbiguate(WidgetsBinding.instance)!.window;
+  final window = ui.PlatformDispatcher.instance.views.first;
 
   Offset? _lastPointerLocation;
 
@@ -424,19 +424,19 @@ class __InfoPageState extends State<_InfoPage> {
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white.withOpacity(0.1),
+              color: Colors.white.withAlpha(25),
             ),
             child: Icon(
               Icons.search_off,
               size: 48,
-              color: Colors.white.withOpacity(0.6),
+              color: Colors.white.withAlpha(150),
             ),
           ),
           const SizedBox(height: 16),
           Text(
             '未找到匹配的 Widget',
             style: TextStyle(
-              color: Colors.white.withOpacity(0.8),
+              color: Colors.white.withAlpha(190),
               fontSize: 16,
               fontWeight: FontWeight.w500,
             ),
@@ -445,7 +445,7 @@ class __InfoPageState extends State<_InfoPage> {
           Text(
             '请尝试修改搜索关键词',
             style: TextStyle(
-              color: Colors.white.withOpacity(0.6),
+              color: Colors.white.withAlpha(150),
               fontSize: 14,
             ),
           ),
@@ -629,7 +629,7 @@ class _OptimizedDetailContent extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withAlpha(25),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(12),
                 topRight: Radius.circular(12),
@@ -641,7 +641,7 @@ class _OptimizedDetailContent extends StatelessWidget {
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: color.withOpacity(0.2),
+                    color: color.withAlpha(50),
                   ),
                   child: Icon(
                     icon,
@@ -692,10 +692,10 @@ class _OptimizedDetailContent extends StatelessWidget {
           constraints: const BoxConstraints(maxHeight: 200),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withAlpha(75),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: Colors.white.withOpacity(0.1),
+              color: Colors.white.withAlpha(25),
               width: 1,
             ),
           ),
@@ -780,7 +780,7 @@ class _OptimizedDetailContent extends StatelessWidget {
           child: Text(
             label,
             style: TextStyle(
-              color: Colors.white.withOpacity(0.8),
+              color: Colors.white.withAlpha(190),
               fontSize: 14,
               fontWeight: FontWeight.w500,
             ),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../utils/binding_ambiguate.dart';
 
 typedef OnSubmitHandle = void Function(String text);
 typedef OnChangeHandle = void Function(String text);
@@ -46,10 +45,10 @@ class SearchBar extends StatefulWidget {
   });
 
   @override
-  _SearchInputState createState() => _SearchInputState();
+  SearchInputState createState() => SearchInputState();
 }
 
-class _SearchInputState extends State<SearchBar> {
+class SearchInputState extends State<SearchBar> {
   bool _showClearIcon = false;
   final TextEditingController _inputController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
@@ -114,7 +113,7 @@ class _SearchInputState extends State<SearchBar> {
     }
     return GestureDetector(
       onTap: () {
-        bindingAmbiguate(WidgetsBinding.instance)!.addPostFrameCallback((_) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
           _inputController.clear();
           _focus();
         });
@@ -223,16 +222,17 @@ class _SearchInputState extends State<SearchBar> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-        child: Flex(
-      direction: Axis.horizontal,
-      children: <Widget>[
-        Expanded(
-          flex: 1,
-          child: _buildInput(),
-        ),
-        Expanded(flex: 0, child: _buildClickButton())
-      ],
-    ));
+    return SizedBox(
+      child: Flex(
+        direction: Axis.horizontal,
+        children: <Widget>[
+          Expanded(
+            flex: 1,
+            child: _buildInput(),
+          ),
+          Expanded(flex: 0, child: _buildClickButton())
+        ],
+      ),
+    );
   }
 }

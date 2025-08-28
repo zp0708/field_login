@@ -248,15 +248,15 @@ class _ColorSuckerState extends State<_ColorSucker> {
 
   Widget _buildColorDisplay() {
     return Container(
-      width: 230,
-      padding: const EdgeInsets.all(20),
+      width: 200,
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildColorSample(),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
           _buildColorInfo(),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
           _buildColorValues(),
         ],
       ),
@@ -265,14 +265,14 @@ class _ColorSuckerState extends State<_ColorSucker> {
 
   Widget _buildColorSample() {
     return Container(
-      height: 30,
+      height: 34,
       decoration: BoxDecoration(
         color: _currentColor,
         border: Border.all(
           width: 2.0,
           color: Colors.white,
         ),
-        borderRadius: BorderRadius.all(Radius.circular(4.0)),
+        borderRadius: BorderRadius.all(Radius.circular(8.0)),
         boxShadow: [
           BoxShadow(
             color: _currentColor.withValues(alpha: 0.4),
@@ -290,71 +290,67 @@ class _ColorSuckerState extends State<_ColorSucker> {
   }
 
   Widget _buildColorInfo() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: Colors.white,
-          width: 1,
-        ),
-      ),
-      child: Text(
-        "HEX #${_currentColor.value.toRadixString(16).substring(2).toUpperCase()}",
-        style: const TextStyle(
-          fontSize: 18,
-          color: Colors.white,
-          fontWeight: FontWeight.w700,
-          fontFamily: 'monospace',
-        ),
-      ),
+    return _buildColorValueRow(
+      'HEX',
+      _colorToHexWithAlpha(),
     );
   }
 
+  // With alpha channel (ARGB format)
+  String _colorToHexWithAlpha() {
+    final r = (_currentColor.r * 255).round().toRadixString(16);
+    final g = (_currentColor.g * 255).round().toRadixString(16);
+    final b = (_currentColor.b * 255).round().toRadixString(16);
+
+    return '#${r.toUpperCase()}'
+        '${g.toUpperCase()}'
+        '${b.toUpperCase()}';
+  }
+
   Widget _buildColorValues() {
+    final red = _colorValue(_currentColor.r);
+    final green = _colorValue(_currentColor.r);
+    final blue = _colorValue(_currentColor.r);
+    return _buildColorValueRow('RGB', '$red, $green, $blue');
+  }
+
+  String _colorValue(double value) {
+    final a = (value * 255).round();
+    return a.toString();
+  }
+
+  Widget _buildColorValueRow(String label, String value) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.1),
           width: 1,
         ),
       ),
-      child: Column(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _buildColorValueRow('RGB', '${_currentColor.red}, ${_currentColor.green}, ${_currentColor.blue}'),
-          const SizedBox(height: 8),
-          _buildColorValueRow('Alpha', '${(_currentColor.alpha / 255 * 100).toStringAsFixed(1)}%'),
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.8),
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ],
       ),
-    );
-  }
-
-  Widget _buildColorValueRow(String label, String value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.8),
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        Text(
-          value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            fontFamily: 'monospace',
-          ),
-        ),
-      ],
     );
   }
 

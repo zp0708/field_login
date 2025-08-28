@@ -38,16 +38,16 @@ class _OverlayDemoState extends State<OverlayDemo> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 InkWell(
-                  onLongPress: () => FlutterAux.show(context),
+                  onTap: () => FlutterAux.show(context),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.deepPurple,
+                      color: Color.fromRGBO(1, 33, 34, 35),
                       borderRadius: BorderRadius.all(
                         Radius.circular(10),
                       ),
                     ),
                     padding: EdgeInsets.symmetric(horizontal: 40, vertical: 10),
-                    child: Text('长按'),
+                    child: Text('点击'),
                   ),
                 ),
                 SizedBox(height: 20),
