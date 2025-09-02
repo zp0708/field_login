@@ -1,39 +1,38 @@
-import 'package:field_login/style/adapt.dart';
 import 'package:flutter/material.dart';
+import '../../style/adapt.dart';
 
 /// 打开一个 Alert 弹窗
 ///
-/// showAlert(context,
-///   titleText: '确认跳过排队',
-///   detailText: '前序还有未安排的排队顾客，确认跳过前序排队顾客吗？',
+/// 基础使用
+/// final result = await showAlert<String>(context,
+///   title: '确认跳过排队',
+///   detail: '前序还有未安排的顾客，确认跳过前序排队顾客吗',
 ///   actions: [
-///     AlertAction('取消'.tr(), onPress: () => print('取消')),
-///     AlertAction('确定'.tr(), fill: true, onPress: () => print('确定')),
-///     AlertAction('取消', onPress: () => print('取消')),
-///     AlertAction('确定', fill: true, onPress: () => print('确定'), builder: (context) {
-///       return Container(
-///         height: 48.dp,
-///         alignment: Alignment.center,
-///         decoration: BoxDecoration(
-///           borderRadius: BorderRadius.all(Radius.circular(8.0)),
-///           border: Border.all(width: 1, color: Colors.black)
-///         ),
-///         child: Text('自定义按钮'),
-///       );
-///      })
-///    ]
-///   );
-Future<void> showAlert(
+///     AlertAction('取消'),
+///     AlertAction('确定', fill: true),
+///   ]
+/// );
+/// print(result); // 返回 '确定' 或者 '取消'
+///
+/// [T] T 可以是 String int AlertAction，默认是返回 int（按钮在 actions 中的位置）
+/// [padding] 默认是EdgeInsets.symmetric(horizontal: 40.dp, vertical: 30.dp)
+/// [title] alert 的标题，String 类型
+/// [titleBuilder] 构建自定义标题类型
+/// [detail] alert 的内容，String 类型
+/// [detailBuilder] 构建自定义内容
+/// [actions] 底部按钮 AlertAction 类型
+Future<T?> showAlert<T>(
   BuildContext context, {
   List<AlertAction>? actions,
-  String? titleText,
-  String? detailText,
-  ValueChanged<int>? onSelect,
+  String? title,
+  String? detail,
+  WidgetBuilder? titleBuilder,
+  WidgetBuilder? detailBuilder,
+  EdgeInsets? padding,
 }) {
   return showGeneralDialog(
     context: context,
-    barrierDismissible: true,
-    barrierLabel: '关闭',
+    barrierDismissible: false,
     barrierColor: Color(0xB3000000),
     transitionDuration: const Duration(milliseconds: 300),
     transitionBuilder: (context, animation, secondaryAnimation, child) {
@@ -47,38 +46,47 @@ Future<void> showAlert(
       Animation<double> animation,
       Animation<double> secondaryAnimation,
     ) {
-      return GeneralAlert(
-        titleText: titleText,
-        detailText: detailText,
-        onSelect: onSelect,
+      return GeneralAlert<T>(
+        title: title,
+        detail: detail,
+        titleBuilder: titleBuilder,
+        detailBuilder: detailBuilder,
         actions: actions,
+        padding: padding,
       );
     },
   );
 }
 
-class GeneralAlert extends StatelessWidget {
-  final String? titleText;
-  final String? detailText;
-  final ValueChanged<int>? onSelect;
+class GeneralAlert<T> extends StatelessWidget {
+  final String? title;
+  final String? detail;
+  final WidgetBuilder? titleBuilder;
+  final WidgetBuilder? detailBuilder;
   final List<AlertAction>? actions;
+  final EdgeInsets? padding;
 
   const GeneralAlert({
     super.key,
-    this.titleText,
-    this.detailText,
-    this.onSelect,
+    this.title,
+    this.detail,
+    this.titleBuilder,
+    this.detailBuilder,
     this.actions,
+    this.padding,
   });
 
   @override
   Widget build(BuildContext context) {
     final List<Widget> widgets = [];
-    if (titleText != null) {
+
+    if (titleBuilder != null) {
+      widgets.add(titleBuilder!(context));
+    } else if (title != null) {
       widgets.add(SizedBox(height: 10.dp));
       widgets.add(
         Text(
-          titleText!,
+          title!,
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 17.dp,
@@ -89,11 +97,13 @@ class GeneralAlert extends StatelessWidget {
       );
     }
 
-    if (detailText != null) {
+    if (detailBuilder != null) {
+      widgets.add(detailBuilder!(context));
+    } else if (detail != null) {
       widgets.add(SizedBox(height: 30.dp));
       widgets.add(
         Text(
-          detailText!,
+          detail!,
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 14.dp,
@@ -115,7 +125,7 @@ class GeneralAlert extends StatelessWidget {
               action,
               () {
                 action.onPress?.call();
-                Navigator.of(context).pop();
+                Navigator.of(context).pop(_getResult(action, i));
               },
             ),
           ),
@@ -134,7 +144,7 @@ class GeneralAlert extends StatelessWidget {
       type: MaterialType.transparency,
       child: Center(
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 40.dp, vertical: 30.dp),
+          padding: padding ?? EdgeInsets.symmetric(horizontal: 40.dp, vertical: 30.dp),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.all(
@@ -144,12 +154,23 @@ class GeneralAlert extends StatelessWidget {
           width: 440.dp,
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: widgets,
           ),
         ),
       ),
     );
+  }
+
+  Object _getResult(AlertAction action, int index) {
+    if (T == String) {
+      return action.title;
+    } else if (T == int) {
+      return index;
+    } else if (T == AlertAction) {
+      return action;
+    }
+    return index;
   }
 
   Widget _build(BuildContext context, AlertAction action, VoidCallback onPressed) {

@@ -2,6 +2,7 @@ import 'package:field_login/demos/carousel_demo.dart';
 import 'package:field_login/demos/page_view_demo.dart';
 import 'package:field_login/demos/websocket_demo.dart';
 import 'package:field_login/demos/double_tap_zoom_demo.dart';
+import 'package:field_login/demos/settlement_demo.dart';
 import 'package:field_login/pages/scroll_to_index.dart';
 import 'package:field_login/demos/overlay_demo.dart';
 import 'package:field_login/widgets/semi_circle_scroll/rotating_menu.dart';
@@ -175,6 +176,13 @@ class HomePage extends StatelessWidget {
         icon: Icons.anchor,
         color: Colors.deepOrange,
         demoPage: const ProductDetailAnchorDemo(),
+      ),
+      _ComponentItem(
+        title: '结算单组件',
+        description: '支持多选、状态管理、实时计算的结算单页面，使用 Riverpod 进行状态管理',
+        icon: Icons.receipt_long,
+        color: Colors.green,
+        demoPage: const SettlementDemo(),
       ),
     ];
 

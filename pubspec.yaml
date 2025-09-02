@@ -27,6 +27,8 @@ dependencies:
   dio: ^5.7.0                         
   system_info2: ^2.0.0
   device_info_plus: ^11.3.0
+  # 状态管理
+  flutter_riverpod: ^2.5.1
 
 dev_dependencies:
   flutter_test:
