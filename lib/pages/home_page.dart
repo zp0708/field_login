@@ -1,4 +1,5 @@
 import 'package:field_login/demos/carousel_demo.dart';
+import 'package:field_login/demos/generic_refresh_list_example.dart';
 import 'package:field_login/demos/page_view_demo.dart';
 import 'package:field_login/demos/websocket_demo.dart';
 import 'package:field_login/demos/double_tap_zoom_demo.dart';
@@ -78,6 +79,13 @@ class HomePage extends StatelessWidget {
         icon: Icons.toll_outlined,
         color: Colors.blue,
         demoPage: OverlayDemo(),
+      ),
+      _ComponentItem(
+        title: 'Generic Refresh',
+        description: '通用的可刷新组件',
+        icon: Icons.image,
+        color: Colors.blue,
+        demoPage: const UserListPage(),
       ),
       _ComponentItem(
         title: '图片轮播器',
