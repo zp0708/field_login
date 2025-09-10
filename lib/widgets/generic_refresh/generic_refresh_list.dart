@@ -7,14 +7,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
-/// Generic list model interface
-abstract class GenericListModel<T> {
+/// Generic list model mixin - can be mixed into existing models
+mixin GenericListMixin<T> {
   List<T> get items;
   bool get hasMore;
   int get page;
   bool get isLoading;
 
-  GenericListModel<T> copyWith({
+  /// Copy method that preserves the concrete type
+  /// Implementers should override this to return their concrete type
+  GenericListMixin<T> copyWith({
     List<T>? items,
     bool? hasMore,
     int? page,
@@ -22,14 +24,14 @@ abstract class GenericListModel<T> {
   });
 }
 
-/// Generic list notifier interface
-abstract class GenericListNotifier<T, M extends GenericListModel<T>> extends AutoDisposeNotifier<M> {
+/// Generic list notifier interface - works with mixin, interface, and base class
+abstract class GenericListNotifier<T, M extends GenericListMixin<T>> extends AutoDisposeNotifier<M> {
   Future<bool> refresh();
   Future<bool> loadMore();
 }
 
 /// Generic refresh list widget
-class GenericRefreshList<T, M extends GenericListModel<T>, N extends GenericListNotifier<T, M>>
+class GenericRefreshList<T, M extends GenericListMixin<T>, N extends GenericListNotifier<T, M>>
     extends ConsumerStatefulWidget {
   const GenericRefreshList({
     super.key,
@@ -87,9 +89,10 @@ class GenericRefreshList<T, M extends GenericListModel<T>, N extends GenericList
   ConsumerState<GenericRefreshList<T, M, N>> createState() => _GenericRefreshListState<T, M, N>();
 }
 
-class _GenericRefreshListState<T, M extends GenericListModel<T>, N extends GenericListNotifier<T, M>>
+class _GenericRefreshListState<T, M extends GenericListMixin<T>, N extends GenericListNotifier<T, M>>
     extends ConsumerState<GenericRefreshList<T, M, N>> {
   late EasyRefreshController refreshController;
+  bool _isNeedSkeleton = true;
 
   @override
   void initState() {
@@ -117,7 +120,7 @@ class _GenericRefreshListState<T, M extends GenericListModel<T>, N extends Gener
     // Access notifier dynamically to work with both NotifierProvider and AutoDisposeNotifierProvider
     final notifier = ref.read(widget.provider.notifier) as N;
     final result = await notifier.refresh();
-
+    _isNeedSkeleton = false;
     refreshController.finishRefresh(
       result ? IndicatorResult.success : IndicatorResult.fail,
     );
@@ -191,9 +194,10 @@ class _GenericRefreshListState<T, M extends GenericListModel<T>, N extends Gener
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(widget.provider) as M;
+    final showSkeleton = widget.enableSkeleton && _isNeedSkeleton;
 
     return Skeletonizer(
-      enabled: widget.enableSkeleton && state.isLoading && state.items.isEmpty,
+      enabled: showSkeleton,
       textBoneBorderRadius: TextBoneBorderRadius(BorderRadius.circular(2.0)),
       child: EasyRefresh(
         header: widget.enableRefresh ? ClassicHeader(showMessage: false) : null,
@@ -203,7 +207,7 @@ class _GenericRefreshListState<T, M extends GenericListModel<T>, N extends Gener
         canLoadAfterNoMore: true,
         onRefresh: widget.enableRefresh ? _onRefresh : null,
         onLoad: widget.enableLoadMore ? _onLoad : null,
-        child: state.items.isEmpty && !state.isLoading ? _buildEmptyWidget() : _buildListView(state),
+        child: state.items.isEmpty ? _buildEmptyWidget() : _buildListView(state),
       ),
     );
   }

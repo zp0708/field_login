@@ -83,7 +83,7 @@ class HomePage extends StatelessWidget {
       _ComponentItem(
         title: 'Generic Refresh',
         description: '通用的可刷新组件',
-        icon: Icons.image,
+        icon: Icons.refresh,
         color: Colors.blue,
         demoPage: const UserListPage(),
       ),
