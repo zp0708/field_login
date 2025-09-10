@@ -1,7 +1,7 @@
 import 'package:field_login/demos/carousel_demo.dart';
 import 'package:field_login/demos/generic_refresh_list_example.dart';
 import 'package:field_login/demos/page_view_demo.dart';
-import 'package:field_login/demos/websocket_demo.dart';
+import 'package:field_login/demos/socket_demo.dart';
 import 'package:field_login/demos/double_tap_zoom_demo.dart';
 import 'package:field_login/demos/settlement_demo.dart';
 import 'package:field_login/pages/scroll_to_index.dart';
@@ -172,11 +172,11 @@ class HomePage extends StatelessWidget {
         demoPage: const LeftSemiCircleMenuDemo(),
       ),
       _ComponentItem(
-        title: 'Websocket',
-        description: '按钮均匀分布在圆内的圆形菜单组件',
-        icon: Icons.menu,
-        color: Colors.pink,
-        demoPage: const WebsocketDemo(),
+        title: 'Socket Client Demo',
+        description: '完整的 WebSocket 客户端工具演示，支持单例管理、消息监听、心跳和重连',
+        icon: Icons.wifi,
+        color: Colors.blue,
+        demoPage: const SocketDemo(),
       ),
       _ComponentItem(
         title: '商品详情锚点定位',
