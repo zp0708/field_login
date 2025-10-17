@@ -1,11 +1,14 @@
 import 'package:field_login/demos/carousel_demo.dart';
 import 'package:field_login/demos/generic_refresh_list_example.dart';
 import 'package:field_login/demos/page_view_demo.dart';
+import 'package:field_login/demos/anchor_overlay_demo.dart';
+import 'package:field_login/demos/price_text_field_demo.dart';
 import 'package:field_login/demos/socket_demo.dart';
 import 'package:field_login/demos/double_tap_zoom_demo.dart';
 import 'package:field_login/demos/settlement_demo.dart';
 import 'package:field_login/pages/scroll_to_index.dart';
 import 'package:field_login/demos/overlay_demo.dart';
+import 'package:field_login/widgets/price_text_field/price_text_field_example.dart';
 import 'package:field_login/widgets/semi_circle_scroll/rotating_menu.dart';
 import 'package:flutter/material.dart';
 import '../demos/progress_demo.dart';
@@ -73,6 +76,20 @@ class HomePage extends StatelessWidget {
 
   Widget _buildComponentList(BuildContext context) {
     final components = [
+      _ComponentItem(
+        title: 'AnchorOverlay 演示',
+        description: '输入时在下方锚定显示下拉建议，随滚动移动',
+        icon: Icons.anchor,
+        color: Colors.deepPurple,
+        demoPage: const AnchorOverlayDemo(),
+      ),
+      _ComponentItem(
+        title: 'PriceTextField 演示',
+        description: '带人民币符号的金额输入，整数14号，小数12号，保留2位',
+        icon: Icons.currency_yen,
+        color: Colors.teal,
+        demoPage: const PriceTextFieldDemo(),
+      ),
       _ComponentItem(
         title: '开发工具浮窗',
         description: '开发工具浮窗，支持拖动和关闭',
