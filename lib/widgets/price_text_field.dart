@@ -31,8 +31,9 @@ class PriceTextEditingController extends TextEditingController {
     }
 
     if (currencySymbol != null) {
-      valueText = valueText.replaceAll(currencySymbol!, '').trimLeft();
-      children.add(TextSpan(text: currencySymbol!, style: base.merge(currencyStyle)));
+      final prefix = '$currencySymbol ';
+      valueText = valueText.replaceAll(prefix, '').trimLeft();
+      children.add(TextSpan(text: prefix, style: base.merge(currencyStyle)));
     }
 
     String integerPart = valueText;
@@ -118,9 +119,10 @@ class _PriceTextFieldState extends State<PriceTextField> {
       textAlign: widget.textAlign,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       inputFormatters: [
-        _PriceFormatter(
+        PriceFormatter(
           maxFractionDigits: _controller.maxFractionDigits,
           currencySymbol: widget.currencySymbol,
+          maxIntegerDigits:4,
         ),
       ],
       style: const TextStyle(fontSize: 14),
@@ -138,45 +140,112 @@ class _PriceTextFieldState extends State<PriceTextField> {
   }
 }
 
-class _PriceFormatter extends TextInputFormatter {
-  final int maxFractionDigits;
+// 自定义输入格式化器，用于在右对齐时添加固定的货币符号前缀，
+// 并限制整数和小数位数。
+class PriceFormatter extends TextInputFormatter {
+  final int? maxFractionDigits;
+  final int? maxIntegerDigits;
   final String? currencySymbol;
 
-  const _PriceFormatter({
-    required this.maxFractionDigits,
+  const PriceFormatter({
+    this.maxFractionDigits,
+    this.maxIntegerDigits,
     this.currencySymbol,
   });
 
+  // 定义固定的前缀，例如 '¥ '
+  String get _prefix => currencySymbol != null ? '$currencySymbol ' : '';
+
   @override
   TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
-    if (currencySymbol == null) return newValue;
-    final prefix = '$currencySymbol ';
-    // 如果用户清空了输入或删除到了前缀区域
-    if (!newValue.text.startsWith(prefix)) {
-      // 只保留用户输入的数字部分
-      final numeric = newValue.text.replaceAll(prefix, '').replaceAll(RegExp('[^0-9.]'), '').trimLeft();
-
-      // 重新拼接前缀
-      final updated = prefix + numeric;
-
-      // 设置光标在最后（防止跳动）
-      return TextEditingValue(
-        text: updated,
-        selection: TextSelection.collapsed(offset: updated.length),
-      );
+      TextEditingValue oldValue,
+      TextEditingValue newValue,
+      ) {
+    if (currencySymbol == null) {
+      // 如果没有设置货币符号，则不进行格式化
+      return newValue;
     }
 
-    // ⚠️ 特殊情况：当用户试图删除前缀时，直接还原 oldValue，防止重复
-    if (newValue.text.length < oldValue.text.length &&
-        oldValue.text.startsWith(prefix) &&
-        !newValue.text.startsWith(prefix)) {
+    // 1. 获取用户输入的纯净数字部分 (移除前缀)
+    // 同时也移除任何非数字、非点、非前缀的字符，以保持输入清洁
+    final String cleanValue = newValue.text
+        .replaceAll(_prefix, '')
+        .replaceAllMapped(RegExp(r'[^0-9.]'), (match) => '');
+
+    // 2. 检查数值有效性 (多个小数点)
+
+    // 2.1. 阻止输入多个小数点
+    if (cleanValue.contains('.') && cleanValue.indexOf('.') != cleanValue.lastIndexOf('.')) {
       return oldValue;
     }
 
-    // 正常输入时直接返回
-    return newValue;
+    // 2.2. 阻止非法起始字符
+    // 允许空字符串，或者以数字开头，或者只输入一个点 '.'
+    if (cleanValue.isNotEmpty && !cleanValue.startsWith(RegExp(r'[0-9]')) && cleanValue != '.') {
+      return oldValue;
+    }
+
+    // 3. 检查整数和小数位数限制
+    final parts = cleanValue.split('.');
+    final integerPart = parts[0];
+
+    // 3.1. 检查整数位数限制 (新增逻辑)
+    if (maxIntegerDigits != null && integerPart.length > maxIntegerDigits!) {
+      // 如果整数位数超过限制，则返回旧值
+      return oldValue;
+    }
+
+    // 3.2. 检查小数位数限制
+    if (maxFractionDigits != null && parts.length > 1) {
+      final fractionalPart = parts[1];
+      if (fractionalPart.length > maxFractionDigits!) {
+        // 如果小数位数超过限制，则返回旧值
+        return oldValue;
+      }
+    }
+
+    // 4. 重新格式化并调整光标位置
+    // 如果纯净值为空，返回只包含前缀但没有数字的值，并将光标放在前缀末尾
+    if (cleanValue.isEmpty) {
+      return TextEditingValue(
+        text: _prefix,
+        selection: TextSelection.collapsed(offset: _prefix.length),
+      );
+    }
+
+    final String formattedText = _prefix + cleanValue;
+
+    // 调整光标位置：
+    // newCursorOffset 是在新文本中光标应在的位置
+    int newCursorOffset = newValue.selection.end;
+
+    // 如果用户是在文本中间操作 (例如删除)
+    // 这是一个简化处理，主要确保光标落在数字部分之后
+    if (!newValue.text.startsWith(_prefix)) {
+      // 如果格式化器强制添加了前缀，光标位置需要加上前缀的长度
+      newCursorOffset = cleanValue.length + _prefix.length;
+    } else {
+      // 如果前缀存在且格式正确，我们尝试保持光标在数字部分的相对位置
+      final prefixLength = _prefix.length;
+
+      // 光标相对于纯净值末尾的位置
+      final relativePosition = oldValue.text.length - oldValue.selection.end;
+
+      // 新的光标位置应该在新文本长度 - 相对位置
+      newCursorOffset = formattedText.length - relativePosition;
+
+      // 如果发生了粘贴或大量修改，确保光标不会跑到前缀里面
+      if (newCursorOffset < prefixLength) {
+        newCursorOffset = formattedText.length;
+      }
+    }
+
+    // 确保光标不超过新文本的长度
+    newCursorOffset = newCursorOffset.clamp(_prefix.length, formattedText.length);
+
+    return TextEditingValue(
+      text: formattedText,
+      selection: TextSelection.collapsed(offset: newCursorOffset),
+    );
   }
 }
