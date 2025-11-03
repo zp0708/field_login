@@ -1,21 +1,20 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
 class RandomMovingChildren extends StatefulWidget {
   final List<Widget> children;
-
-  /// 每秒移动的像素速度（默认 50px/s）
   final double speed;
-
-  /// 子组件的估计尺寸，用于初始随机布局
   final Size? estimatedChildSize;
+  final int collisionCheckIntervalMs;
 
   const RandomMovingChildren({
     super.key,
     required this.children,
     this.speed = 50,
     this.estimatedChildSize,
+    this.collisionCheckIntervalMs = 100,
   });
 
   @override
@@ -30,34 +29,40 @@ class _RandomMovingChildrenState extends State<RandomMovingChildren> with Ticker
   final Map<int, Offset> _startPositions = {};
   final Map<int, Offset> _endPositions = {};
   final Map<int, Size> _childSizes = {};
+  final Set<String> _cooldowns = {}; // 碰撞冷却表
 
   Size? _containerSize;
+  Timer? _collisionTimer;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _initializePositions());
+    _collisionTimer = Timer.periodic(
+      Duration(milliseconds: widget.collisionCheckIntervalMs),
+      (_) => _checkCollisions(),
+    );
   }
 
   void _initializePositions() {
     if (_containerSize == null) return;
+
     for (int i = 0; i < widget.children.length; i++) {
-      _startPositions[i] = _randomPositionForChild(i);
-      _endPositions[i] = _randomPositionForChild(i);
-      _createControllerForChild(i);
+      _startPositions[i] = _randomPosition(i);
+      _endPositions[i] = _randomPosition(i);
+      _createController(i);
       _startChildAnimation(i);
     }
     setState(() {});
   }
 
-  void _createControllerForChild(int index) {
+  void _createController(int index) {
     _controllers[index]?.dispose();
-
     final controller = AnimationController(vsync: this);
     controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         _startPositions[index] = _endPositions[index]!;
-        _endPositions[index] = _randomPositionForChild(index);
+        _endPositions[index] = _randomPosition(index);
         _startChildAnimation(index);
       }
     });
@@ -67,35 +72,94 @@ class _RandomMovingChildrenState extends State<RandomMovingChildren> with Ticker
   void _startChildAnimation(int index) {
     final start = _startPositions[index]!;
     final end = _endPositions[index]!;
-
     final distance = (end - start).distance;
     final duration = Duration(
       milliseconds: (distance / widget.speed * 1000).round().clamp(300, 8000),
-    ); // 限制最短/最长动画时间
+    );
 
     final controller = _controllers[index]!;
     controller.duration = duration;
-
-    _animations[index] = Tween<Offset>(begin: start, end: end).animate(CurvedAnimation(
+    _animations[index] = Tween(begin: start, end: end).animate(CurvedAnimation(
       parent: controller,
       curve: Curves.linear,
     ));
-
     controller.forward(from: 0);
   }
 
-  Offset _randomPositionForChild(int index) {
+  Offset _randomPosition(int index) {
     final container = _containerSize;
     if (container == null) return Offset.zero;
-
-    final childSize = _childSizes[index] ?? widget.estimatedChildSize ?? const Size(40, 40);
-
-    final double w = childSize.width;
-    final double h = childSize.height;
-
-    final dx = _rnd.nextDouble() * max(1, container.width - w);
-    final dy = _rnd.nextDouble() * max(1, container.height - h);
+    final size = _childSizes[index] ?? widget.estimatedChildSize ?? const Size(40, 40);
+    final dx = _rnd.nextDouble() * max(1, container.width - size.width);
+    final dy = _rnd.nextDouble() * max(1, container.height - size.height);
     return Offset(dx, dy);
+  }
+
+  void _checkCollisions() {
+    if (_containerSize == null) return;
+    final entries = _animations.entries.toList();
+
+    for (int i = 0; i < entries.length; i++) {
+      for (int j = i + 1; j < entries.length; j++) {
+        final iKey = entries[i].key;
+        final jKey = entries[j].key;
+        final pairKey = '$iKey-$jKey';
+        if (_cooldowns.contains(pairKey)) continue;
+
+        final iPos = entries[i].value.value;
+        final jPos = entries[j].value.value;
+
+        final iSize = _childSizes[iKey] ?? widget.estimatedChildSize ?? const Size(40, 40);
+        final jSize = _childSizes[jKey] ?? widget.estimatedChildSize ?? const Size(40, 40);
+
+        final iRect = Rect.fromLTWH(iPos.dx, iPos.dy, iSize.width, iSize.height);
+        final jRect = Rect.fromLTWH(jPos.dx, jPos.dy, jSize.width, jSize.height);
+
+        if (iRect.overlaps(jRect)) {
+          _cooldowns.add(pairKey);
+          _handleCollision(iKey, jKey);
+          // 短暂冷却 800ms，避免反复触发
+          Future.delayed(const Duration(milliseconds: 800), () {
+            _cooldowns.remove(pairKey);
+          });
+        }
+      }
+    }
+  }
+
+  void _handleCollision(int i, int j) {
+    final posA = _animations[i]?.value ?? Offset.zero;
+    final posB = _animations[j]?.value ?? Offset.zero;
+
+    final dir = (posA - posB);
+    final dirNorm = dir.distance == 0 ? const Offset(1, 0) : Offset(dir.dx / dir.distance, dir.dy / dir.distance);
+
+    final distance = 80 + _rnd.nextDouble() * 60; // 偏离距离
+    final newA = _clampPosition(posA + dirNorm * distance, i);
+    final newB = _clampPosition(posB - dirNorm * distance, j);
+
+    // 重启动画
+    _restartAnimation(i, newA);
+    _restartAnimation(j, newB);
+  }
+
+  void _restartAnimation(int index, Offset newTarget) {
+    final controller = _controllers[index];
+    if (controller == null) return;
+    controller.stop();
+
+    _startPositions[index] = _animations[index]?.value ?? Offset.zero;
+    _endPositions[index] = newTarget;
+    _startChildAnimation(index);
+  }
+
+  Offset _clampPosition(Offset pos, int index) {
+    final container = _containerSize;
+    if (container == null) return pos;
+    final size = _childSizes[index] ?? widget.estimatedChildSize ?? const Size(40, 40);
+    final dx = pos.dx.clamp(0, container.width - size.width);
+    final dy = pos.dy.clamp(0, container.height - size.height);
+    return Offset(dx.toDouble(), dy.toDouble());
   }
 
   @override
@@ -103,6 +167,7 @@ class _RandomMovingChildrenState extends State<RandomMovingChildren> with Ticker
     for (final c in _controllers.values) {
       c.dispose();
     }
+    _collisionTimer?.cancel();
     super.dispose();
   }
 
@@ -121,9 +186,7 @@ class _RandomMovingChildrenState extends State<RandomMovingChildren> with Ticker
                   left: offset.dx,
                   top: offset.dy,
                   child: MeasureSize(
-                    onChange: (size) {
-                      _childSizes[i] = size;
-                    },
+                    onChange: (size) => _childSizes[i] = size,
                     child: child!,
                   ),
                 );
@@ -136,7 +199,6 @@ class _RandomMovingChildrenState extends State<RandomMovingChildren> with Ticker
   }
 }
 
-/// 🔹 尺寸测量组件（不依赖 GlobalKey）
 class MeasureSize extends SingleChildRenderObjectWidget {
   final ValueChanged<Size> onChange;
 

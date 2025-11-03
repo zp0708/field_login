@@ -18,20 +18,26 @@ class _RandomMovingDemoState extends State<RandomMovingDemo> {
         appBar: AppBar(title: const Text('随机移动子组件示例')),
         body: Center(
           child: Container(
-            width: 320,
-            height: 320,
+            width: 520,
+            height: 520,
             decoration: BoxDecoration(
                 gradient: RadialGradient(
               colors: [
-                Color(0xFFC3C4BC),
+                Color.fromARGB(255, 230, 230, 230),
                 Colors.white,
               ],
             )),
             child: RandomMovingChildren(
               estimatedChildSize: const Size(60, 30), // 👈 提供大致尺寸
               speed: 30,
+              collisionCheckIntervalMs: 1000,
               // 示例：5个彩色圆
               children: [
+                _buildLable('指甲比较软'),
+                _buildLable('下单 5 次'),
+                _buildLable('粉色爱好者'),
+                _buildLable('偏爱猫眼'),
+                _buildLable('时间观念比较强'),
                 _buildLable('指甲比较软'),
                 _buildLable('下单 5 次'),
                 _buildLable('粉色爱好者'),
