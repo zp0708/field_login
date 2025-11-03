@@ -5,7 +5,6 @@
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:skeletonizer/skeletonizer.dart';
 
 /// Generic list model mixin - can be mixed into existing models
 mixin GenericListMixin<T> {
@@ -196,19 +195,15 @@ class _GenericRefreshListState<T, M extends GenericListMixin<T>, N extends Gener
     final state = ref.watch(widget.provider) as M;
     final showSkeleton = widget.enableSkeleton && _isNeedSkeleton;
 
-    return Skeletonizer(
-      enabled: showSkeleton,
-      textBoneBorderRadius: TextBoneBorderRadius(BorderRadius.circular(2.0)),
-      child: EasyRefresh(
-        header: widget.enableRefresh ? ClassicHeader(showMessage: false) : null,
-        footer: widget.enableLoadMore ? ClassicFooter(showMessage: false) : null,
-        controller: refreshController,
-        canRefreshAfterNoMore: true,
-        canLoadAfterNoMore: true,
-        onRefresh: widget.enableRefresh ? _onRefresh : null,
-        onLoad: widget.enableLoadMore ? _onLoad : null,
-        child: state.items.isEmpty ? _buildEmptyWidget() : _buildListView(state),
-      ),
+    return EasyRefresh(
+      header: widget.enableRefresh ? ClassicHeader(showMessage: false) : null,
+      footer: widget.enableLoadMore ? ClassicFooter(showMessage: false) : null,
+      controller: refreshController,
+      canRefreshAfterNoMore: true,
+      canLoadAfterNoMore: true,
+      onRefresh: widget.enableRefresh ? _onRefresh : null,
+      onLoad: widget.enableLoadMore ? _onLoad : null,
+      child: state.items.isEmpty ? _buildEmptyWidget() : _buildListView(state),
     );
   }
 }

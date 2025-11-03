@@ -3,6 +3,7 @@ import 'package:field_login/demos/generic_refresh_list_example.dart';
 import 'package:field_login/demos/page_view_demo.dart';
 import 'package:field_login/demos/anchor_overlay_demo.dart';
 import 'package:field_login/demos/price_text_field_demo.dart';
+import 'package:field_login/demos/random_moving_demo.dart';
 import 'package:field_login/demos/socket_demo.dart';
 import 'package:field_login/demos/double_tap_zoom_demo.dart';
 import 'package:field_login/demos/settlement_demo.dart';
@@ -76,6 +77,13 @@ class HomePage extends StatelessWidget {
 
   Widget _buildComponentList(BuildContext context) {
     final components = [
+      _ComponentItem(
+        title: 'Random Moving 演示',
+        description: 'Random Moving 演示',
+        icon: Icons.currency_yen,
+        color: Colors.teal,
+        demoPage: const RandomMovingDemo(),
+      ),
       _ComponentItem(
         title: 'AnchorOverlay 演示',
         description: '输入时在下方锚定显示下拉建议，随滚动移动',
