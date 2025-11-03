@@ -8,13 +8,15 @@ class RandomMovingChildren extends StatefulWidget {
   final double speed;
   final Size? estimatedChildSize;
   final int collisionCheckIntervalMs;
+  final Curve? curve;
 
   const RandomMovingChildren({
     super.key,
     required this.children,
     this.speed = 50,
     this.estimatedChildSize,
-    this.collisionCheckIntervalMs = 100,
+    this.collisionCheckIntervalMs = 200,
+    this.curve,
   });
 
   @override
@@ -81,7 +83,7 @@ class _RandomMovingChildrenState extends State<RandomMovingChildren> with Ticker
     controller.duration = duration;
     _animations[index] = Tween(begin: start, end: end).animate(CurvedAnimation(
       parent: controller,
-      curve: Curves.linear,
+      curve: widget.curve ?? Curves.linear,
     ));
     controller.forward(from: 0);
   }

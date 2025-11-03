@@ -15,7 +15,15 @@ class _RandomMovingDemoState extends State<RandomMovingDemo> {
       title: 'Random Moving Children Demo',
       home: Scaffold(
         backgroundColor: Colors.white,
-        appBar: AppBar(title: const Text('随机移动子组件示例')),
+        appBar: AppBar(
+          title: const Text('随机移动子组件示例'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('返回'),
+            ),
+          ],
+        ),
         body: Center(
           child: Container(
             width: 520,
@@ -30,7 +38,8 @@ class _RandomMovingDemoState extends State<RandomMovingDemo> {
             child: RandomMovingChildren(
               estimatedChildSize: const Size(60, 30), // 👈 提供大致尺寸
               speed: 30,
-              collisionCheckIntervalMs: 1000,
+              collisionCheckIntervalMs: 200,
+              curve: Curves.easeOut,
               // 示例：5个彩色圆
               children: [
                 _buildLable('指甲比较软'),
