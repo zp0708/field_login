@@ -1,121 +1,158 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 class RandomMovingChildren extends StatefulWidget {
-  final List<Widget> childrenBuilders;
-  final Duration minMoveDuration;
-  final Duration maxMoveDuration;
+  final List<Widget> children;
+  final Duration moveDuration;
+
+  /// 子组件的大致尺寸，用于初始化时估算位置，避免超出容器
+  final Size? estimatedChildSize;
 
   const RandomMovingChildren({
     super.key,
-    required this.childrenBuilders,
-    this.minMoveDuration = const Duration(seconds: 4),
-    this.maxMoveDuration = const Duration(seconds: 5),
+    required this.children,
+    this.moveDuration = const Duration(seconds: 4),
+    this.estimatedChildSize,
   });
 
   @override
   State<RandomMovingChildren> createState() => _RandomMovingChildrenState();
 }
 
-class _RandomMovingChildrenState extends State<RandomMovingChildren> {
+class _RandomMovingChildrenState extends State<RandomMovingChildren> with SingleTickerProviderStateMixin {
   final Random _rnd = Random();
-  final List<GlobalKey> _childKeys = [];
-  late List<Offset> _positions;
-  late List<Duration> _durations;
-  Size _containerSize = Size.zero;
+
+  final Map<int, Offset> _startPositions = {};
+  final Map<int, Offset> _endPositions = {};
+  final Map<int, Size> _childSizes = {};
+
+  Size? _containerSize;
+  late AnimationController _controller;
 
   @override
   void initState() {
     super.initState();
-    _positions = List.filled(widget.childrenBuilders.length, Offset.zero);
-    _durations = List.filled(widget.childrenBuilders.length, widget.minMoveDuration);
-    _childKeys.addAll(List.generate(widget.childrenBuilders.length, (_) => GlobalKey()));
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: widget.moveDuration,
+    );
+
+    _controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        _startNextMove();
+      }
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializePositions();
+    });
+  }
+
+  void _initializePositions() {
+    if (_containerSize == null) return;
+    for (int i = 0; i < widget.children.length; i++) {
+      final pos = _randomPositionForChild(i);
+      _startPositions[i] = pos;
+      _endPositions[i] = _randomPositionForChild(i);
+    }
+    _controller.forward(from: 0);
+  }
+
+  void _startNextMove() {
+    for (int i = 0; i < widget.children.length; i++) {
+      _startPositions[i] = _endPositions[i]!;
+      _endPositions[i] = _randomPositionForChild(i);
+    }
+    _controller.forward(from: 0);
+  }
+
+  Offset _randomPositionForChild(int index) {
+    final container = _containerSize;
+    if (container == null) return Offset.zero;
+
+    // 使用测量尺寸，否则使用估计尺寸
+    final childSize = _childSizes[index] ?? widget.estimatedChildSize ?? const Size(40, 40);
+
+    final double w = childSize.width;
+    final double h = childSize.height;
+
+    final dx = _rnd.nextDouble() * max(1, container.width - w);
+    final dy = _rnd.nextDouble() * max(1, container.height - h);
+    return Offset(dx, dy);
   }
 
   @override
-  void didUpdateWidget(covariant RandomMovingChildren oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.childrenBuilders.length != widget.childrenBuilders.length) {
-      _positions = List.generate(
-        widget.childrenBuilders.length,
-        (i) => i < _positions.length ? _positions[i] : Offset.zero,
-      );
-      _durations = List.generate(
-        widget.childrenBuilders.length,
-        (i) => i < _durations.length ? _durations[i] : widget.minMoveDuration,
-      );
-      _childKeys.clear();
-      _childKeys.addAll(List.generate(widget.childrenBuilders.length, (_) => GlobalKey()));
-    }
-  }
-
-  Duration _randomDuration() {
-    final minMs = widget.minMoveDuration.inMilliseconds;
-    final maxMs = widget.maxMoveDuration.inMilliseconds;
-    return Duration(milliseconds: minMs + _rnd.nextInt(maxMs - minMs + 1));
-  }
-
-  /// 随机生成合法位置（保证子组件不超出容器边界）
-  Offset _randomPositionForChild(GlobalKey key) {
-    final renderBox = key.currentContext?.findRenderObject() as RenderBox?;
-    final childSize = renderBox?.size ?? const Size(50, 50);
-    final maxX = max(0.0, _containerSize.width - childSize.width);
-    final maxY = max(0.0, _containerSize.height - childSize.height);
-    return Offset(_rnd.nextDouble() * maxX, _rnd.nextDouble() * maxY);
-  }
-
-  void _moveNext(int index) async {
-    if (!mounted) return;
-
-    setState(() {
-      _positions[index] = _randomPositionForChild(_childKeys[index]);
-      _durations[index] = _randomDuration();
-    });
-
-    await Future.delayed(_durations[index]);
-    _moveNext(index);
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
-      final newSize = Size(constraints.maxWidth, constraints.maxHeight);
-      if (_containerSize != newSize) {
-        _containerSize = newSize;
-        // 初始化随机位置
-        for (int i = 0; i < _positions.length; i++) {
-          _positions[i] = Offset(
-            _rnd.nextDouble() * _containerSize.width * 0.8,
-            _rnd.nextDouble() * _containerSize.height * 0.8,
-          );
-          _durations[i] = _randomDuration();
-        }
-
-        // 启动连续动画
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          for (int i = 0; i < _positions.length; i++) {
-            _moveNext(i);
-          }
-        });
-      }
+      _containerSize = Size(constraints.maxWidth, constraints.maxHeight);
 
       return Stack(
-        clipBehavior: Clip.none,
-        children: List.generate(widget.childrenBuilders.length, (i) {
-          final pos = _positions[i];
-          return AnimatedPositioned(
-            key: ValueKey('child_$i'),
-            duration: _durations[i],
-            curve: Curves.linear, // 匀速线性动画
-            left: pos.dx,
-            top: pos.dy,
-            child: Container(
-              key: _childKeys[i],
-              child: widget.childrenBuilders[i],
+        children: [
+          for (int i = 0; i < widget.children.length; i++)
+            AnimatedBuilder(
+              animation: _controller,
+              builder: (context, child) {
+                final start = _startPositions[i] ?? Offset.zero;
+                final end = _endPositions[i] ?? start;
+                final offset = Offset.lerp(start, end, _controller.value)!;
+                return Positioned(
+                  left: offset.dx,
+                  top: offset.dy,
+                  child: MeasureSize(
+                    onChange: (size) {
+                      _childSizes[i] = size;
+                    },
+                    child: child!,
+                  ),
+                );
+              },
+              child: widget.children[i],
             ),
-          );
-        }),
+        ],
       );
     });
+  }
+}
+
+/// 🔹 尺寸测量组件
+class MeasureSize extends SingleChildRenderObjectWidget {
+  final ValueChanged<Size> onChange;
+
+  const MeasureSize({
+    super.key,
+    required this.onChange,
+    required Widget child,
+  }) : super(child: child);
+
+  @override
+  RenderObject createRenderObject(BuildContext context) {
+    return _MeasureSizeRenderObject(onChange);
+  }
+}
+
+class _MeasureSizeRenderObject extends RenderProxyBox {
+  final ValueChanged<Size> onChange;
+  Size? _oldSize;
+
+  _MeasureSizeRenderObject(this.onChange);
+
+  @override
+  void performLayout() {
+    super.performLayout();
+    final newSize = child?.size;
+    if (newSize != _oldSize && newSize != null) {
+      _oldSize = newSize;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        onChange(newSize);
+      });
+    }
   }
 }

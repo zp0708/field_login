@@ -20,8 +20,9 @@ class _RandomMovingDemoState extends State<RandomMovingDemo> {
             width: 320,
             height: 520,
             child: RandomMovingChildren(
+              estimatedChildSize: const Size(60, 30), // 👈 提供大致尺寸
               // 示例：5个彩色圆
-              childrenBuilders: [
+              children: [
                 _buildLable('指甲比较软'),
                 _buildLable('下单 5 次'),
                 _buildLable('粉色爱好者'),
