@@ -4,15 +4,17 @@ import 'package:flutter/rendering.dart';
 
 class RandomMovingChildren extends StatefulWidget {
   final List<Widget> children;
-  final Duration moveDuration;
 
-  /// 子组件的大致尺寸，用于初始化时估算位置，避免超出容器
+  /// 每秒移动的像素速度（默认 50px/s）
+  final double speed;
+
+  /// 子组件的估计尺寸，用于初始随机布局
   final Size? estimatedChildSize;
 
   const RandomMovingChildren({
     super.key,
     required this.children,
-    this.moveDuration = const Duration(seconds: 4),
+    this.speed = 50,
     this.estimatedChildSize,
   });
 
@@ -20,59 +22,72 @@ class RandomMovingChildren extends StatefulWidget {
   State<RandomMovingChildren> createState() => _RandomMovingChildrenState();
 }
 
-class _RandomMovingChildrenState extends State<RandomMovingChildren> with SingleTickerProviderStateMixin {
+class _RandomMovingChildrenState extends State<RandomMovingChildren> with TickerProviderStateMixin {
   final Random _rnd = Random();
 
+  final Map<int, AnimationController> _controllers = {};
+  final Map<int, Animation<Offset>> _animations = {};
   final Map<int, Offset> _startPositions = {};
   final Map<int, Offset> _endPositions = {};
   final Map<int, Size> _childSizes = {};
 
   Size? _containerSize;
-  late AnimationController _controller;
 
   @override
   void initState() {
     super.initState();
-
-    _controller = AnimationController(
-      vsync: this,
-      duration: widget.moveDuration,
-    );
-
-    _controller.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        _startNextMove();
-      }
-    });
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initializePositions();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _initializePositions());
   }
 
   void _initializePositions() {
     if (_containerSize == null) return;
     for (int i = 0; i < widget.children.length; i++) {
-      final pos = _randomPositionForChild(i);
-      _startPositions[i] = pos;
+      _startPositions[i] = _randomPositionForChild(i);
       _endPositions[i] = _randomPositionForChild(i);
+      _createControllerForChild(i);
+      _startChildAnimation(i);
     }
-    _controller.forward(from: 0);
+    setState(() {});
   }
 
-  void _startNextMove() {
-    for (int i = 0; i < widget.children.length; i++) {
-      _startPositions[i] = _endPositions[i]!;
-      _endPositions[i] = _randomPositionForChild(i);
-    }
-    _controller.forward(from: 0);
+  void _createControllerForChild(int index) {
+    _controllers[index]?.dispose();
+
+    final controller = AnimationController(vsync: this);
+    controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        _startPositions[index] = _endPositions[index]!;
+        _endPositions[index] = _randomPositionForChild(index);
+        _startChildAnimation(index);
+      }
+    });
+    _controllers[index] = controller;
+  }
+
+  void _startChildAnimation(int index) {
+    final start = _startPositions[index]!;
+    final end = _endPositions[index]!;
+
+    final distance = (end - start).distance;
+    final duration = Duration(
+      milliseconds: (distance / widget.speed * 1000).round().clamp(300, 8000),
+    ); // 限制最短/最长动画时间
+
+    final controller = _controllers[index]!;
+    controller.duration = duration;
+
+    _animations[index] = Tween<Offset>(begin: start, end: end).animate(CurvedAnimation(
+      parent: controller,
+      curve: Curves.linear,
+    ));
+
+    controller.forward(from: 0);
   }
 
   Offset _randomPositionForChild(int index) {
     final container = _containerSize;
     if (container == null) return Offset.zero;
 
-    // 使用测量尺寸，否则使用估计尺寸
     final childSize = _childSizes[index] ?? widget.estimatedChildSize ?? const Size(40, 40);
 
     final double w = childSize.width;
@@ -85,7 +100,9 @@ class _RandomMovingChildrenState extends State<RandomMovingChildren> with Single
 
   @override
   void dispose() {
-    _controller.dispose();
+    for (final c in _controllers.values) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -93,16 +110,13 @@ class _RandomMovingChildrenState extends State<RandomMovingChildren> with Single
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
       _containerSize = Size(constraints.maxWidth, constraints.maxHeight);
-
       return Stack(
         children: [
           for (int i = 0; i < widget.children.length; i++)
             AnimatedBuilder(
-              animation: _controller,
+              animation: _animations[i] ?? AlwaysStoppedAnimation(Offset.zero),
               builder: (context, child) {
-                final start = _startPositions[i] ?? Offset.zero;
-                final end = _endPositions[i] ?? start;
-                final offset = Offset.lerp(start, end, _controller.value)!;
+                final offset = _animations[i]?.value ?? Offset.zero;
                 return Positioned(
                   left: offset.dx,
                   top: offset.dy,
@@ -122,7 +136,7 @@ class _RandomMovingChildrenState extends State<RandomMovingChildren> with Single
   }
 }
 
-/// 🔹 尺寸测量组件
+/// 🔹 尺寸测量组件（不依赖 GlobalKey）
 class MeasureSize extends SingleChildRenderObjectWidget {
   final ValueChanged<Size> onChange;
 

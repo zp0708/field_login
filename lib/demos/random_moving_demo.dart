@@ -14,13 +14,22 @@ class _RandomMovingDemoState extends State<RandomMovingDemo> {
     return MaterialApp(
       title: 'Random Moving Children Demo',
       home: Scaffold(
+        backgroundColor: Colors.white,
         appBar: AppBar(title: const Text('随机移动子组件示例')),
         body: Center(
-          child: SizedBox(
+          child: Container(
             width: 320,
-            height: 520,
+            height: 320,
+            decoration: BoxDecoration(
+                gradient: RadialGradient(
+              colors: [
+                Color(0xFFC3C4BC),
+                Colors.white,
+              ],
+            )),
             child: RandomMovingChildren(
               estimatedChildSize: const Size(60, 30), // 👈 提供大致尺寸
+              speed: 30,
               // 示例：5个彩色圆
               children: [
                 _buildLable('指甲比较软'),
@@ -38,7 +47,7 @@ class _RandomMovingDemoState extends State<RandomMovingDemo> {
 
   Widget _buildLable(String label) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+      padding: EdgeInsets.symmetric(horizontal: 13, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.all(Radius.circular(8.0)),
