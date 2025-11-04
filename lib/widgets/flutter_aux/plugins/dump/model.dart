@@ -50,6 +50,9 @@ class HttpDumpRecord {
   ///
   String? responseBody;
 
+  /// 后端排查用
+  String? logId;
+
   ///
   String getStatusText() {
     switch (dumpStatus) {

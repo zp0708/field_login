@@ -58,6 +58,7 @@ class _DeviceInfoPanelState extends State<_DeviceInfo> {
       buffer.write('$k:  $v\n');
     });
     _content = buffer.toString();
+    setState(() {});
   }
 
   Map<String, dynamic> _readAndroidBuildData(AndroidDeviceInfo build) {

@@ -52,7 +52,8 @@ class DumpInterceptor extends Interceptor {
     try {
       final int code = response.statusCode ?? -1;
       final String body = response.toString();
-      DumpManager.update(response.requestOptions.hashCode, code, body);
+      final String? logId = response.headers['log_id']?.first;
+      DumpManager.update(response.requestOptions.hashCode, code, body, logId);
     } catch (e) {
       // do nothing
     }
@@ -65,7 +66,7 @@ class DumpInterceptor extends Interceptor {
     try {
       final int code = err.response?.statusCode ?? -1;
       final String body = err.response?.toString() ?? '-1';
-      DumpManager.update(err.requestOptions.hashCode, code, body);
+      DumpManager.update(err.requestOptions.hashCode, code, body, '');
     } catch (e) {
       // do nothing
     }

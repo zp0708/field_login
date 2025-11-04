@@ -122,7 +122,7 @@ class _PriceTextFieldState extends State<PriceTextField> {
         PriceFormatter(
           maxFractionDigits: _controller.maxFractionDigits,
           currencySymbol: widget.currencySymbol,
-          maxIntegerDigits:4,
+          maxIntegerDigits: 4,
         ),
       ],
       style: const TextStyle(fontSize: 14),
@@ -158,9 +158,9 @@ class PriceFormatter extends TextInputFormatter {
 
   @override
   TextEditingValue formatEditUpdate(
-      TextEditingValue oldValue,
-      TextEditingValue newValue,
-      ) {
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
     if (currencySymbol == null) {
       // 如果没有设置货币符号，则不进行格式化
       return newValue;
@@ -168,9 +168,7 @@ class PriceFormatter extends TextInputFormatter {
 
     // 1. 获取用户输入的纯净数字部分 (移除前缀)
     // 同时也移除任何非数字、非点、非前缀的字符，以保持输入清洁
-    final String cleanValue = newValue.text
-        .replaceAll(_prefix, '')
-        .replaceAllMapped(RegExp(r'[^0-9.]'), (match) => '');
+    final String cleanValue = newValue.text.replaceAll(_prefix, '').replaceAllMapped(RegExp(r'[^0-9.]'), (match) => '');
 
     // 2. 检查数值有效性 (多个小数点)
 

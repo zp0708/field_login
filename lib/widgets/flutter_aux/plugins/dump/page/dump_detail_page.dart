@@ -1,11 +1,11 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../model.dart';
 import '../../../flutter_aux.dart';
 import 'dump_item.dart';
+import './json_viewer.dart';
 
 ///
 class HttpDumpDetailPage extends StatefulWidget {
@@ -20,10 +20,19 @@ class HttpDumpDetailPage extends StatefulWidget {
 
 class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
   late HttpDumpRecord _record;
+  late TextEditingController _searchController;
+  String _keyword = '';
+  bool _unfold = false;
 
   @override
   void initState() {
     _record = widget._record;
+    _searchController = TextEditingController();
+    _searchController.addListener(() {
+      setState(() {
+        _keyword = _searchController.text.trim();
+      });
+    });
     super.initState();
   }
 
@@ -51,7 +60,7 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
                   style: ElevatedButton.styleFrom(
                     foregroundColor: Colors.deepOrange,
                     shape: const StadiumBorder(),
-                    padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
@@ -60,6 +69,7 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
               ],
             ),
           ),
+          _buildSearchBar(),
           Expanded(child: _buildView()),
         ],
       ),
@@ -107,6 +117,7 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
         _buildDataSection('请求头', _record.requestHeader, Icons.view_headline),
         _buildDataSection('请求参数', _record.requestQuery, Icons.query_stats),
         _buildDataSection('请求体', _record.requestBody, Icons.description),
+        _buildDataSectionRow('LogId', _record.logId),
       ],
     );
   }
@@ -181,6 +192,97 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
     );
   }
 
+  Widget _buildSearchBar() {
+    return Container(
+      height: 46,
+      padding: EdgeInsets.symmetric(horizontal: 10),
+      margin: EdgeInsets.only(top: 5),
+      alignment: Alignment.center,
+      color: Colors.white,
+      child: TextField(
+        controller: _searchController,
+        cursorColor: Colors.blue,
+        style: TextStyle(fontSize: 14),
+        decoration: InputDecoration(
+          isDense: true,
+          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          hintText: '搜索 JSON 关键字',
+          prefixIcon: Icon(Icons.search, size: 18, color: Colors.blue),
+          suffixIcon: _keyword.isEmpty
+              ? null
+              : InkWell(
+                  onTap: () {
+                    _searchController.clear();
+                  },
+                  child: Icon(Icons.clear, size: 18, color: Colors.blue),
+                ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: Colors.blue, width: 1),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: Colors.blue, width: 1),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: Colors.blue, width: 2),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDataSectionRow(String title, String? data) {
+    if (data == null || data.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.only(top: 10),
+      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey.shade700,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          Spacer(),
+          Text(data),
+          SizedBox(width: 10),
+          GestureDetector(
+            onTap: () => _copyData(data),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.copy, size: 16, color: Colors.grey.shade600),
+                const SizedBox(width: 4),
+                Text(
+                  '复制',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildDataSection(String title, String? data, IconData icon, [bool showCopy = false]) {
     if (data == null || data.isEmpty) {
       return const SizedBox.shrink();
@@ -189,6 +291,7 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        SizedBox(height: 5),
         Row(
           children: [
             Icon(icon, size: 16, color: Colors.grey.shade600),
@@ -202,6 +305,25 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
               ),
             ),
             Spacer(),
+            if (showCopy)
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _unfold = !_unfold;
+                  });
+                },
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(_unfold ? Icons.unfold_less : Icons.unfold_more, size: 16, color: Colors.blue),
+                    const SizedBox(width: 4),
+                    Text(
+                      _unfold ? '收起' : '展开',
+                      style: const TextStyle(fontSize: 12, color: Colors.blue),
+                    ),
+                  ],
+                ),
+              ),
             if (showCopy)
               // 复制按钮
               GestureDetector(
@@ -231,18 +353,10 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: Colors.grey.shade200),
           ),
-          child: _buildCodeViewer(title, data),
+          child: _buildCodeViewer(title, data, showCopy),
         ),
       ],
     );
-  }
-
-  String _formatJson(String? jsonText) {
-    if (jsonText == null) {
-      return '';
-    }
-    final dynamic object = jsonDecode(jsonText);
-    return const JsonEncoder.withIndent('  ').convert(object);
   }
 
   void _copyLink() {
@@ -273,11 +387,8 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
     return cmd.toString();
   }
 
-  Widget _buildCodeViewer(String title, String data) {
-    // 判断是否为 JSON 数据
-    final bool isJson = _isValidJson(data);
-    final String displayData = isJson ? _formatJson(data) : data;
-
+  Widget _buildCodeViewer(String title, String data, bool unfold) {
+    final dynamic json = _tryDecodeJson(data);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -285,15 +396,7 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(12),
-          child: SelectableText(
-            displayData,
-            style: TextStyle(
-              fontSize: 13,
-              color: Colors.black87,
-              fontFamily: 'monospace',
-              height: 1.4,
-            ),
-          ),
+          child: _buildJsonViewer(data, json, unfold),
         ),
         // 操作按钮栏
         Container(
@@ -330,14 +433,14 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: isJson ? Colors.blue.shade100 : Colors.grey.shade200,
+                  color: json != null ? Colors.blue.shade100 : Colors.grey.shade200,
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  isJson ? 'JSON' : 'TEXT',
+                  json != null ? 'JSON' : 'TEXT',
                   style: TextStyle(
                     fontSize: 10,
-                    color: isJson ? Colors.blue.shade700 : Colors.grey.shade600,
+                    color: json != null ? Colors.blue.shade700 : Colors.grey.shade600,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -349,21 +452,41 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
     );
   }
 
+  Widget _buildJsonViewer(String text, dynamic json, bool unfold) {
+    // 判断是否为 JSON 数据
+    if (json == null || json is! Map<String, dynamic>) {
+      return SelectableText(
+        text,
+        style: TextStyle(
+          fontSize: 14,
+          color: Colors.black87,
+          fontFamily: 'monospace',
+          height: 1.4,
+        ),
+      );
+    }
+    return JsonViewer(
+      key: ValueKey('jsonviewer_${_unfold ? "1" : "0"}'),
+      json,
+      unfold: _unfold || unfold,
+      highlight: _keyword,
+      highlightColor: const Color(0xFFFFFF00),
+    );
+  }
+
   // 检查是否为有效的 JSON
-  bool _isValidJson(String text) {
+  dynamic _tryDecodeJson(String text) {
+    if (text == 'null') return null;
     try {
-      jsonDecode(text);
-      return true;
+      return jsonDecode(text);
     } catch (e) {
-      return false;
+      return null;
     }
   }
 
   // 复制数据到剪贴板
   void _copyData(String data) {
     Clipboard.setData(ClipboardData(text: data));
-    if (Platform.isIOS) {
-      FlutterAux.onMessage('数据已复制到剪贴板');
-    }
+    FlutterAux.onMessage('数据已复制到剪贴板');
   }
 }

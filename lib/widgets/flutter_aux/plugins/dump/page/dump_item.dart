@@ -4,7 +4,8 @@ import '../model.dart';
 class DumpItemWidget extends StatelessWidget {
   final HttpDumpRecord record;
   final VoidCallback? onTap;
-  const DumpItemWidget(this.record, {super.key, this.onTap});
+  final String? highlight;
+  const DumpItemWidget(this.record, {super.key, this.onTap, this.highlight});
 
   @override
   Widget build(BuildContext context) {
@@ -17,19 +18,7 @@ class DumpItemWidget extends StatelessWidget {
           // URI 部分
           Row(
             children: [
-              Expanded(
-                child: Text(
-                  record.uri,
-                  maxLines: 2,
-                  style: const TextStyle(
-                    color: Colors.black87,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    height: 1.3,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
+              Expanded(child: _buildUri(highlight)),
               const SizedBox(width: 8),
               _buildStatusChip(record.dumpStatus, record.getStatusText()),
             ],
@@ -70,6 +59,57 @@ class DumpItemWidget extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildUri(String? highlight) {
+    final TextStyle baseStyle = const TextStyle(
+      color: Colors.black87,
+      fontSize: 14,
+      fontWeight: FontWeight.w600,
+      height: 1.3,
+    );
+
+    final String text = record.uri;
+    if (highlight == null || highlight.isEmpty) {
+      return Text(
+        text,
+        maxLines: 2,
+        style: baseStyle,
+        overflow: TextOverflow.ellipsis,
+      );
+    }
+
+    final String query = highlight.toLowerCase();
+    final String lower = text.toLowerCase();
+    final List<InlineSpan> spans = <InlineSpan>[];
+    int start = 0;
+    while (true) {
+      final int index = lower.indexOf(query, start);
+      if (index < 0) {
+        spans.add(TextSpan(text: text.substring(start)));
+        break;
+      }
+      if (index > start) {
+        spans.add(TextSpan(text: text.substring(start, index)));
+      }
+      spans.add(TextSpan(
+        text: text.substring(index, index + query.length),
+        style: baseStyle.copyWith(
+          backgroundColor: Colors.yellow.withValues(alpha: 0.6),
+          color: Colors.black,
+        ),
+      ));
+      start = index + query.length;
+      if (start >= text.length) {
+        break;
+      }
+    }
+
+    return RichText(
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+      text: TextSpan(style: baseStyle, children: spans),
     );
   }
 
