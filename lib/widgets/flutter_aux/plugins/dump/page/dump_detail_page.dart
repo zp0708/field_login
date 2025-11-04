@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/rendering.dart';
 import '../model.dart';
 import '../../../flutter_aux.dart';
 import 'dump_item.dart';
@@ -23,6 +24,10 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
   late TextEditingController _searchController;
   String _keyword = '';
   bool _unfold = false;
+  List<GlobalKey> _highlightAnchors = <GlobalKey>[];
+  // 当前高亮索引通过 _currentIndexNotifier 维护
+  final ScrollController _scrollController = ScrollController();
+  final ValueNotifier<int> _currentIndexNotifier = ValueNotifier<int>(0);
 
   @override
   void initState() {
@@ -78,6 +83,7 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
 
   Widget _buildView() {
     return SingleChildScrollView(
+      controller: _scrollController,
       padding: const EdgeInsets.all(10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -199,36 +205,80 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
       margin: EdgeInsets.only(top: 5),
       alignment: Alignment.center,
       color: Colors.white,
-      child: TextField(
-        controller: _searchController,
-        cursorColor: Colors.blue,
-        style: TextStyle(fontSize: 14),
-        decoration: InputDecoration(
-          isDense: true,
-          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          hintText: '搜索 JSON 关键字',
-          prefixIcon: Icon(Icons.search, size: 18, color: Colors.blue),
-          suffixIcon: _keyword.isEmpty
-              ? null
-              : InkWell(
-                  onTap: () {
-                    _searchController.clear();
-                  },
-                  child: Icon(Icons.clear, size: 18, color: Colors.blue),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _searchController,
+              cursorColor: Colors.blue,
+              style: TextStyle(fontSize: 14),
+              decoration: InputDecoration(
+                isDense: true,
+                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                hintText: '搜索 JSON 关键字',
+                prefixIcon: Icon(Icons.search, size: 18, color: Colors.blue),
+                suffixIcon: _keyword.isEmpty
+                    ? null
+                    : InkWell(
+                        onTap: () {
+                          _searchController.clear();
+                        },
+                        child: Icon(Icons.clear, size: 18, color: Colors.blue),
+                      ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Colors.blue, width: 1),
                 ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: Colors.blue, width: 1),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Colors.blue, width: 1),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Colors.blue, width: 2),
+                ),
+              ),
+            ),
           ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: Colors.blue, width: 1),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: Colors.blue, width: 2),
-          ),
-        ),
+          const SizedBox(width: 8),
+          if (_keyword.isNotEmpty)
+            Row(
+              children: [
+                ValueListenableBuilder<int>(
+                  valueListenable: _currentIndexNotifier,
+                  builder: (_, int idx, __) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.yellow.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: Colors.amber.shade600),
+                      ),
+                      child: Text(
+                        '${_highlightAnchors.isEmpty ? 0 : (idx + 1)}/${_highlightAnchors.length}',
+                        style: const TextStyle(fontSize: 10, color: Colors.black87),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(width: 6),
+                IconButton(
+                  tooltip: '上一处',
+                  icon: const Icon(Icons.keyboard_arrow_up, size: 18, color: Colors.blue),
+                  onPressed: _highlightAnchors.isEmpty ? null : _goPrevHighlight,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minHeight: 32, minWidth: 32),
+                ),
+                IconButton(
+                  tooltip: '下一处',
+                  icon: const Icon(Icons.keyboard_arrow_down, size: 18, color: Colors.blue),
+                  onPressed: _highlightAnchors.isEmpty ? null : _goNextHighlight,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minHeight: 32, minWidth: 32),
+                ),
+              ],
+            ),
+        ],
       ),
     );
   }
@@ -306,41 +356,47 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
             ),
             Spacer(),
             if (showCopy)
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _unfold = !_unfold;
-                  });
-                },
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(_unfold ? Icons.unfold_less : Icons.unfold_more, size: 16, color: Colors.blue),
-                    const SizedBox(width: 4),
-                    Text(
-                      _unfold ? '收起' : '展开',
-                      style: const TextStyle(fontSize: 12, color: Colors.blue),
-                    ),
-                  ],
+              Padding(
+                padding: EdgeInsets.only(left: 10),
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _unfold = !_unfold;
+                    });
+                  },
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(_unfold ? Icons.unfold_less : Icons.unfold_more, size: 16, color: Colors.blue),
+                      const SizedBox(width: 4),
+                      Text(
+                        _unfold ? '收起' : '展开',
+                        style: const TextStyle(fontSize: 12, color: Colors.blue),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             if (showCopy)
               // 复制按钮
-              GestureDetector(
-                onTap: () => _copyData(data),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.copy, size: 16, color: Colors.grey.shade600),
-                    const SizedBox(width: 4),
-                    Text(
-                      '复制',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
+              Padding(
+                padding: EdgeInsets.only(left: 10),
+                child: GestureDetector(
+                  onTap: () => _copyData(data),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.copy, size: 16, color: Colors.grey.shade600),
+                      const SizedBox(width: 4),
+                      Text(
+                        '复制',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
           ],
@@ -471,7 +527,58 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
       unfold: _unfold || unfold,
       highlight: _keyword,
       highlightColor: const Color(0xFFFFFF00),
+      onAnchorsChanged: (List<GlobalKey> anchors) {
+        setState(() {
+          _highlightAnchors = anchors;
+          if (_highlightAnchors.isEmpty) {
+            // 保持当前索引不变，等待有锚点时再校正
+            return;
+          } else {
+            final int clamped = (_currentIndexNotifier.value).clamp(0, _highlightAnchors.length - 1);
+            _currentIndexNotifier.value = clamped;
+          }
+        });
+      },
     );
+  }
+
+  void _goPrevHighlight() {
+    if (_highlightAnchors.isEmpty) return;
+    final int nextIndex = ((_currentIndexNotifier.value) - 1 + _highlightAnchors.length) % _highlightAnchors.length;
+    _currentIndexNotifier.value = nextIndex;
+    _scrollToCurrentAnchor();
+  }
+
+  void _goNextHighlight() {
+    if (_highlightAnchors.isEmpty) return;
+    final int nextIndex = ((_currentIndexNotifier.value) + 1) % _highlightAnchors.length;
+    _currentIndexNotifier.value = nextIndex;
+    _scrollToCurrentAnchor();
+  }
+
+  void _scrollToCurrentAnchor() {
+    if (_highlightAnchors.isEmpty) return;
+    final BuildContext? ctx = _highlightAnchors[_currentIndexNotifier.value].currentContext;
+    if (ctx != null) {
+      final RenderObject? renderObject = ctx.findRenderObject();
+      if (renderObject != null) {
+        final RenderAbstractViewport viewport = RenderAbstractViewport.of(renderObject);
+        final RevealedOffset revealed = viewport.getOffsetToReveal(renderObject, 0.1);
+        final double target = revealed.offset.clamp(
+          _scrollController.position.minScrollExtent,
+          _scrollController.position.maxScrollExtent,
+        );
+        _scrollController.animateTo(
+          target,
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeInOut,
+        );
+        return;
+      }
+      // 兜底：如果无法获取 viewport，则退回 ensureVisible
+      Scrollable.ensureVisible(ctx,
+          alignment: 0.1, duration: const Duration(milliseconds: 200), curve: Curves.easeInOut);
+    }
   }
 
   // 检查是否为有效的 JSON

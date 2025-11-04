@@ -7,6 +7,7 @@ class JsonViewer extends StatefulWidget {
   final bool unfold;
   final String? highlight;
   final Color highlightColor;
+  final void Function(List<GlobalKey>)? onAnchorsChanged;
 
   const JsonViewer(
     this.jsonObj, {
@@ -14,6 +15,7 @@ class JsonViewer extends StatefulWidget {
     this.unfold = false,
     this.highlight,
     this.highlightColor = const Color(0xFFFFFF00),
+    this.onAnchorsChanged,
   });
 
   @override
@@ -21,14 +23,36 @@ class JsonViewer extends StatefulWidget {
 }
 
 class JsonViewerState extends State<JsonViewer> {
+  final List<GlobalKey> _anchorsCollector = <GlobalKey>[];
+  List<GlobalKey> _lastReportedAnchors = const <GlobalKey>[];
   @override
   Widget build(BuildContext context) {
-    return getContentWidget(
+    _anchorsCollector.clear();
+    final Widget w = getContentWidget(
       widget.jsonObj,
       widget.unfold,
       widget.highlight,
       widget.highlightColor,
+      _anchorsCollector,
     );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final List<GlobalKey> snapshot = List<GlobalKey>.unmodifiable(_anchorsCollector);
+      if (_didAnchorsChange(snapshot)) {
+        _lastReportedAnchors = snapshot;
+        widget.onAnchorsChanged?.call(snapshot);
+      }
+    });
+    return w;
+  }
+
+  bool _didAnchorsChange(List<GlobalKey> next) {
+    final List<GlobalKey> prev = _lastReportedAnchors;
+    if (identical(prev, next)) return false;
+    if (prev.length != next.length) return true;
+    for (int i = 0; i < prev.length; i++) {
+      if (!identical(prev[i], next[i])) return true;
+    }
+    return false;
   }
 
   static getContentWidget(
@@ -36,6 +60,7 @@ class JsonViewerState extends State<JsonViewer> {
     bool unfold,
     String? highlight,
     Color highlightColor,
+    List<GlobalKey> anchorsCollector,
   ) {
     if (content == null) {
       return Text('{}');
@@ -46,6 +71,7 @@ class JsonViewerState extends State<JsonViewer> {
         unfold: unfold,
         highlight: highlight,
         highlightColor: highlightColor,
+        anchorsCollector: anchorsCollector,
       );
     } else {
       return JsonObjectViewer(
@@ -54,6 +80,7 @@ class JsonViewerState extends State<JsonViewer> {
         unfold: unfold,
         highlight: highlight,
         highlightColor: highlightColor,
+        anchorsCollector: anchorsCollector,
       );
     }
   }
@@ -65,6 +92,7 @@ class JsonObjectViewer extends StatefulWidget {
   final bool unfold;
   final String? highlight;
   final Color highlightColor;
+  final List<GlobalKey> anchorsCollector;
 
   const JsonObjectViewer(
     this.jsonObj, {
@@ -73,6 +101,7 @@ class JsonObjectViewer extends StatefulWidget {
     this.unfold = false,
     this.highlight,
     this.highlightColor = const Color(0xFFFFFF00),
+    required this.anchorsCollector,
   });
 
   @override
@@ -130,6 +159,7 @@ class JsonObjectViewerState extends State<JsonObjectViewer> {
                     TextStyle(color: Colors.purple[900]),
                     widget.highlight,
                     widget.highlightColor,
+                    widget.anchorsCollector,
                     selectable: false,
                   ),
                   onTap: () {
@@ -144,6 +174,7 @@ class JsonObjectViewerState extends State<JsonObjectViewer> {
                   ),
                   widget.highlight,
                   widget.highlightColor,
+                  widget.anchorsCollector,
                   selectable: false,
                 ),
           Text(
@@ -161,6 +192,7 @@ class JsonObjectViewerState extends State<JsonObjectViewer> {
           widget.unfold,
           highlight: widget.highlight,
           highlightColor: widget.highlightColor,
+          anchorsCollector: widget.anchorsCollector,
         ));
       }
     }
@@ -168,7 +200,7 @@ class JsonObjectViewerState extends State<JsonObjectViewer> {
   }
 
   static getContentWidget(dynamic content, bool unfold,
-      {String? highlight, Color highlightColor = const Color(0xFFFFFF00)}) {
+      {String? highlight, Color highlightColor = const Color(0xFFFFFF00), required List<GlobalKey> anchorsCollector}) {
     if (content is List) {
       return JsonArrayViewer(
         content,
@@ -176,6 +208,7 @@ class JsonObjectViewerState extends State<JsonObjectViewer> {
         unfold: unfold,
         highlight: highlight,
         highlightColor: highlightColor,
+        anchorsCollector: anchorsCollector,
       );
     } else {
       return JsonObjectViewer(
@@ -184,6 +217,7 @@ class JsonObjectViewerState extends State<JsonObjectViewer> {
         unfold: unfold,
         highlight: highlight,
         highlightColor: highlightColor,
+        anchorsCollector: anchorsCollector,
       );
     }
   }
@@ -231,6 +265,7 @@ class JsonObjectViewerState extends State<JsonObjectViewer> {
           TextStyle(color: Colors.redAccent),
           widget.highlight,
           widget.highlightColor,
+          widget.anchorsCollector,
           selectable: true,
         ),
       );
@@ -319,6 +354,7 @@ class JsonArrayViewer extends StatefulWidget {
   final bool unfold;
   final String? highlight;
   final Color highlightColor;
+  final List<GlobalKey> anchorsCollector;
 
   const JsonArrayViewer(
     this.jsonArray, {
@@ -327,6 +363,7 @@ class JsonArrayViewer extends StatefulWidget {
     this.unfold = false,
     this.highlight,
     this.highlightColor = const Color(0xFFFFFF00),
+    required this.anchorsCollector,
   });
 
   @override
@@ -400,6 +437,7 @@ class JsonArrayViewerState extends State<JsonArrayViewer> {
           widget.unfold,
           highlight: widget.highlight,
           highlightColor: widget.highlightColor,
+          anchorsCollector: widget.anchorsCollector,
         ));
       }
       i++;
@@ -440,6 +478,7 @@ class JsonArrayViewerState extends State<JsonArrayViewer> {
           TextStyle(color: Colors.redAccent),
           widget.highlight,
           widget.highlightColor,
+          widget.anchorsCollector,
           selectable: true,
         ),
       );
@@ -496,7 +535,8 @@ Widget _buildHighlightedText(
   String text,
   TextStyle baseStyle,
   String? highlight,
-  Color highlightColor, {
+  Color highlightColor,
+  List<GlobalKey>? anchorsCollector, {
   bool selectable = false,
 }) {
   if (highlight == null || highlight.isEmpty) {
@@ -531,11 +571,16 @@ Widget _buildHighlightedText(
         ),
       );
     }
-    spans.add(TextSpan(
-      text: text.substring(index, index + query.length),
-      style: baseStyle.copyWith(
-        backgroundColor: highlightColor.withOpacity(0.6),
-        color: Colors.black,
+    final String match = text.substring(index, index + query.length);
+    final GlobalKey key = GlobalKey();
+    anchorsCollector?.add(key);
+    spans.add(WidgetSpan(
+      alignment: PlaceholderAlignment.baseline,
+      baseline: TextBaseline.alphabetic,
+      child: Container(
+        key: key,
+        color: highlightColor.withOpacity(0.6),
+        child: Text(match, style: baseStyle.copyWith(color: Colors.black)),
       ),
     ));
     start = index + query.length;
