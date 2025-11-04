@@ -1,4 +1,4 @@
-import 'package:field_login/widgets/random_moving_widget.dart';
+import 'package:field_login/widgets/floating_widgets.dart';
 import 'package:flutter/material.dart';
 
 class RandomMovingDemo extends StatefulWidget {
@@ -35,28 +35,37 @@ class _RandomMovingDemoState extends State<RandomMovingDemo> {
                 Colors.white,
               ],
             )),
-            child: RandomMovingChildren(
+            child: FloatingWidgets(
               estimatedChildSize: const Size(60, 30), // 👈 提供大致尺寸
               speed: 30,
               collisionCheckIntervalMs: 200,
               curve: Curves.easeOut,
-              // 示例：5个彩色圆
               children: [
                 _buildLable('指甲比较软'),
                 _buildLable('下单 5 次'),
                 _buildLable('粉色爱好者'),
-                _buildLable('偏爱猫眼'),
+                _buildImage('assets/image_robot_fault.png', Size(40, 40)),
                 _buildLable('时间观念比较强'),
                 _buildLable('指甲比较软'),
                 _buildLable('下单 5 次'),
+                _buildImage('assets/image_robot_big.png', Size(80, 80)),
                 _buildLable('粉色爱好者'),
                 _buildLable('偏爱猫眼'),
+                _buildImage('assets/image_robot_normal.png', Size(40, 40)),
                 _buildLable('时间观念比较强'),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildImage(String assets, Size size) {
+    return Image.asset(
+      assets,
+      width: size.width,
+      height: size.height,
     );
   }
 

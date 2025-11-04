@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
-class RandomMovingChildren extends StatefulWidget {
+class FloatingWidgets extends StatefulWidget {
   final List<Widget> children;
   final double speed;
   final Size? estimatedChildSize;
@@ -11,7 +11,7 @@ class RandomMovingChildren extends StatefulWidget {
   final int collisionCooldownMs;
   final Curve? curve;
 
-  const RandomMovingChildren({
+  const FloatingWidgets({
     super.key,
     required this.children,
     this.speed = 50,
@@ -22,10 +22,10 @@ class RandomMovingChildren extends StatefulWidget {
   });
 
   @override
-  State<RandomMovingChildren> createState() => _RandomMovingChildrenState();
+  State<FloatingWidgets> createState() => _FloatingWidgetsState();
 }
 
-class _RandomMovingChildrenState extends State<RandomMovingChildren> with TickerProviderStateMixin {
+class _FloatingWidgetsState extends State<FloatingWidgets> with TickerProviderStateMixin {
   final Random _rnd = Random();
 
   final Map<int, AnimationController> _controllers = {};
@@ -187,10 +187,7 @@ class _RandomMovingChildrenState extends State<RandomMovingChildren> with Ticker
                   left: offset.dx,
                   top: offset.dy,
                   child: MeasureSize(
-                    onChange: (size) {
-                      _childSizes[i] = size;
-                      print('size change');
-                    },
+                    onChange: (size) => _childSizes[i] = size,
                     child: child!,
                   ),
                 );
