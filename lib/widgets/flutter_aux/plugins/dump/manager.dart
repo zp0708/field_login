@@ -21,13 +21,13 @@ class DumpManager {
   }
 
   ///
-  static void update(int requestId, int httpCode, String responseBody, String? logId) {
+  static void update(int requestId, int httpCode, dynamic responseBody, String? logId) {
     for (final HttpDumpRecord record in _list) {
       if (record.requestId == requestId) {
         record.logId = logId;
         record.httpCode = httpCode;
         record.dumpStatus = httpCode == -1 ? HttpDumpStatus.error : HttpDumpStatus.success;
-        record.responseBody = responseBody;
+        record.response = responseBody;
         record.finishTime = DateTime.now();
         break;
       }

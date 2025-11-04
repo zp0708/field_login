@@ -51,7 +51,7 @@ class DumpInterceptor extends Interceptor {
   void onResponse(Response response, ResponseInterceptorHandler handler) {
     try {
       final int code = response.statusCode ?? -1;
-      final String body = response.toString();
+      final dynamic body = response.data;
       final String? logId = response.headers['log_id']?.first;
       DumpManager.update(response.requestOptions.hashCode, code, body, logId);
     } catch (e) {

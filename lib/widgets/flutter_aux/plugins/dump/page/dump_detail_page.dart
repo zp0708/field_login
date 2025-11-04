@@ -24,7 +24,7 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
   late TextEditingController _searchController;
   String _keyword = '';
   bool _unfold = false;
-  List<GlobalKey> _highlightAnchors = <GlobalKey>[];
+  final ValueNotifier<List<GlobalKey>> _highlightAnchorsNotifier = ValueNotifier<List<GlobalKey>>(<GlobalKey>[]);
   // 当前高亮索引通过 _currentIndexNotifier 维护
   final ScrollController _scrollController = ScrollController();
   final ValueNotifier<int> _currentIndexNotifier = ValueNotifier<int>(0);
@@ -120,21 +120,28 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
       icon: Icons.upload,
       color: Colors.green,
       children: [
-        _buildDataSection('请求头', _record.requestHeader, Icons.view_headline),
-        _buildDataSection('请求参数', _record.requestQuery, Icons.query_stats),
-        _buildDataSection('请求体', _record.requestBody, Icons.description),
+        _buildDataSection(title: '请求头', data: _record.requestHeader, icon: Icons.view_headline),
+        _buildDataSection(title: '请求参数', data: _record.requestQuery, icon: Icons.query_stats),
+        _buildDataSection(title: '请求体', data: _record.requestBody, icon: Icons.description),
         _buildDataSectionRow('LogId', _record.logId),
       ],
     );
   }
 
   Widget _buildResponseInfoCard() {
+    print('object');
     return _buildInfoCard(
       title: '响应信息',
       icon: Icons.download,
       color: Colors.orange,
       children: [
-        _buildDataSection('响应体', _record.responseBody, Icons.download_done, true),
+        _buildDataSection(
+          title: '响应体',
+          data: _record.response,
+          icon: Icons.download_done,
+          showCopy: true,
+          highlight: true,
+        ),
       ],
     );
   }
@@ -215,7 +222,7 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
               decoration: InputDecoration(
                 isDense: true,
                 contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                hintText: '搜索 JSON 关键字',
+                hintText: '搜索响应体',
                 prefixIcon: Icon(Icons.search, size: 18, color: Colors.blue),
                 suffixIcon: _keyword.isEmpty
                     ? null
@@ -242,41 +249,46 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
           ),
           const SizedBox(width: 8),
           if (_keyword.isNotEmpty)
-            Row(
-              children: [
-                ValueListenableBuilder<int>(
-                  valueListenable: _currentIndexNotifier,
-                  builder: (_, int idx, __) {
-                    return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.yellow.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: Colors.amber.shade600),
-                      ),
-                      child: Text(
-                        '${_highlightAnchors.isEmpty ? 0 : (idx + 1)}/${_highlightAnchors.length}',
-                        style: const TextStyle(fontSize: 10, color: Colors.black87),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(width: 6),
-                IconButton(
-                  tooltip: '上一处',
-                  icon: const Icon(Icons.keyboard_arrow_up, size: 18, color: Colors.blue),
-                  onPressed: _highlightAnchors.isEmpty ? null : _goPrevHighlight,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minHeight: 32, minWidth: 32),
-                ),
-                IconButton(
-                  tooltip: '下一处',
-                  icon: const Icon(Icons.keyboard_arrow_down, size: 18, color: Colors.blue),
-                  onPressed: _highlightAnchors.isEmpty ? null : _goNextHighlight,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minHeight: 32, minWidth: 32),
-                ),
-              ],
+            ValueListenableBuilder<List<GlobalKey>>(
+              valueListenable: _highlightAnchorsNotifier,
+              builder: (_, List<GlobalKey> anchors, __) {
+                return Row(
+                  children: [
+                    ValueListenableBuilder<int>(
+                      valueListenable: _currentIndexNotifier,
+                      builder: (_, int idx, __) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.yellow.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: Colors.amber.shade600),
+                          ),
+                          child: Text(
+                            '${anchors.isEmpty ? 0 : (idx + 1)}/${anchors.length}',
+                            style: const TextStyle(fontSize: 10, color: Colors.black87),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 6),
+                    IconButton(
+                      tooltip: '上一处',
+                      icon: const Icon(Icons.keyboard_arrow_up, size: 18, color: Colors.blue),
+                      onPressed: anchors.isEmpty ? null : _goPrevHighlight,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minHeight: 32, minWidth: 32),
+                    ),
+                    IconButton(
+                      tooltip: '下一处',
+                      icon: const Icon(Icons.keyboard_arrow_down, size: 18, color: Colors.blue),
+                      onPressed: anchors.isEmpty ? null : _goNextHighlight,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minHeight: 32, minWidth: 32),
+                    ),
+                  ],
+                );
+              },
             ),
         ],
       ),
@@ -333,7 +345,13 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
     );
   }
 
-  Widget _buildDataSection(String title, String? data, IconData icon, [bool showCopy = false]) {
+  Widget _buildDataSection({
+    required String title,
+    dynamic data,
+    required IconData icon,
+    bool showCopy = false,
+    bool highlight = false,
+  }) {
     if (data == null || data.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -409,7 +427,7 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: Colors.grey.shade200),
           ),
-          child: _buildCodeViewer(title, data, showCopy),
+          child: _buildCodeViewer(data: data, unfold: !showCopy, highlight: highlight),
         ),
       ],
     );
@@ -443,8 +461,12 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
     return cmd.toString();
   }
 
-  Widget _buildCodeViewer(String title, String data, bool unfold) {
-    final dynamic json = _tryDecodeJson(data);
+  Widget _buildCodeViewer({
+    dynamic data,
+    bool unfold = false,
+    bool highlight = false,
+  }) {
+    final isJson = data is Map;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -452,7 +474,11 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(12),
-          child: _buildJsonViewer(data, json, unfold),
+          child: _buildJsonViewer(
+            data: data,
+            unfold: unfold,
+            highlight: highlight,
+          ),
         ),
         // 操作按钮栏
         Container(
@@ -468,7 +494,13 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
             children: [
               // 复制按钮
               GestureDetector(
-                onTap: () => _copyData(data),
+                onTap: () {
+                  if (isJson) {
+                    _copyData(json.encode(data));
+                  } else {
+                    _copyData(data.toString());
+                  }
+                },
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -489,14 +521,14 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: json != null ? Colors.blue.shade100 : Colors.grey.shade200,
+                  color: isJson ? Colors.blue.shade100 : Colors.grey.shade200,
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  json != null ? 'JSON' : 'TEXT',
+                  isJson ? 'JSON' : 'TEXT',
                   style: TextStyle(
                     fontSize: 10,
-                    color: json != null ? Colors.blue.shade700 : Colors.grey.shade600,
+                    color: isJson ? Colors.blue.shade700 : Colors.grey.shade600,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -508,11 +540,15 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
     );
   }
 
-  Widget _buildJsonViewer(String text, dynamic json, bool unfold) {
+  Widget _buildJsonViewer({
+    dynamic data,
+    bool unfold = false,
+    bool highlight = false,
+  }) {
     // 判断是否为 JSON 数据
-    if (json == null || json is! Map<String, dynamic>) {
+    if (data is! Map) {
       return SelectableText(
-        text,
+        data.toString(),
         style: TextStyle(
           fontSize: 14,
           color: Colors.black87,
@@ -522,43 +558,45 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
       );
     }
     return JsonViewer(
-      key: ValueKey('jsonviewer_${_unfold ? "1" : "0"}'),
-      json,
+      data,
       unfold: _unfold || unfold,
-      highlight: _keyword,
+      highlight: highlight ? _keyword : null,
       highlightColor: const Color(0xFFFFFF00),
-      onAnchorsChanged: (List<GlobalKey> anchors) {
-        setState(() {
-          _highlightAnchors = anchors;
-          if (_highlightAnchors.isEmpty) {
-            // 保持当前索引不变，等待有锚点时再校正
-            return;
-          } else {
-            final int clamped = (_currentIndexNotifier.value).clamp(0, _highlightAnchors.length - 1);
-            _currentIndexNotifier.value = clamped;
-          }
-        });
-      },
+      onAnchorsChanged: highlight
+          ? (List<GlobalKey> anchors) {
+              _highlightAnchorsNotifier.value = anchors;
+              if (anchors.isEmpty) {
+                return;
+              }
+              final int clamped = (_currentIndexNotifier.value).clamp(0, anchors.length - 1);
+              if (_currentIndexNotifier.value != clamped) {
+                _currentIndexNotifier.value = clamped;
+              }
+            }
+          : null,
     );
   }
 
   void _goPrevHighlight() {
-    if (_highlightAnchors.isEmpty) return;
-    final int nextIndex = ((_currentIndexNotifier.value) - 1 + _highlightAnchors.length) % _highlightAnchors.length;
+    final List<GlobalKey> anchors = _highlightAnchorsNotifier.value;
+    if (anchors.isEmpty) return;
+    final int nextIndex = ((_currentIndexNotifier.value) - 1 + anchors.length) % anchors.length;
     _currentIndexNotifier.value = nextIndex;
     _scrollToCurrentAnchor();
   }
 
   void _goNextHighlight() {
-    if (_highlightAnchors.isEmpty) return;
-    final int nextIndex = ((_currentIndexNotifier.value) + 1) % _highlightAnchors.length;
+    final List<GlobalKey> anchors = _highlightAnchorsNotifier.value;
+    if (anchors.isEmpty) return;
+    final int nextIndex = ((_currentIndexNotifier.value) + 1) % anchors.length;
     _currentIndexNotifier.value = nextIndex;
     _scrollToCurrentAnchor();
   }
 
   void _scrollToCurrentAnchor() {
-    if (_highlightAnchors.isEmpty) return;
-    final BuildContext? ctx = _highlightAnchors[_currentIndexNotifier.value].currentContext;
+    final List<GlobalKey> anchors = _highlightAnchorsNotifier.value;
+    if (anchors.isEmpty) return;
+    final BuildContext? ctx = anchors[_currentIndexNotifier.value].currentContext;
     if (ctx != null) {
       final RenderObject? renderObject = ctx.findRenderObject();
       if (renderObject != null) {
@@ -581,19 +619,18 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
     }
   }
 
-  // 检查是否为有效的 JSON
-  dynamic _tryDecodeJson(String text) {
-    if (text == 'null') return null;
-    try {
-      return jsonDecode(text);
-    } catch (e) {
-      return null;
-    }
-  }
-
   // 复制数据到剪贴板
   void _copyData(String data) {
     Clipboard.setData(ClipboardData(text: data));
     FlutterAux.onMessage('数据已复制到剪贴板');
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _currentIndexNotifier.dispose();
+    _highlightAnchorsNotifier.dispose();
+    _scrollController.dispose();
+    super.dispose();
   }
 }

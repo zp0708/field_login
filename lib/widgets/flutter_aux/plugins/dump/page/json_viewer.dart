@@ -199,8 +199,13 @@ class JsonObjectViewerState extends State<JsonObjectViewer> {
     return list;
   }
 
-  static getContentWidget(dynamic content, bool unfold,
-      {String? highlight, Color highlightColor = const Color(0xFFFFFF00), required List<GlobalKey> anchorsCollector}) {
+  static getContentWidget(
+    dynamic content,
+    bool unfold, {
+    String? highlight,
+    Color highlightColor = const Color(0xFFFFFF00),
+    required List<GlobalKey> anchorsCollector,
+  }) {
     if (content is List) {
       return JsonArrayViewer(
         content,

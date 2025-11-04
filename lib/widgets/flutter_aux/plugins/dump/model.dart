@@ -49,6 +49,7 @@ class HttpDumpRecord {
 
   ///
   String? responseBody;
+  dynamic response;
 
   /// 后端排查用
   String? logId;
