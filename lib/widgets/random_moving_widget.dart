@@ -8,6 +8,7 @@ class RandomMovingChildren extends StatefulWidget {
   final double speed;
   final Size? estimatedChildSize;
   final int collisionCheckIntervalMs;
+  final int collisionCooldownMs;
   final Curve? curve;
 
   const RandomMovingChildren({
@@ -16,6 +17,7 @@ class RandomMovingChildren extends StatefulWidget {
     this.speed = 50,
     this.estimatedChildSize,
     this.collisionCheckIntervalMs = 200,
+    this.collisionCooldownMs = 800,
     this.curve,
   });
 
@@ -31,7 +33,7 @@ class _RandomMovingChildrenState extends State<RandomMovingChildren> with Ticker
   final Map<int, Offset> _startPositions = {};
   final Map<int, Offset> _endPositions = {};
   final Map<int, Size> _childSizes = {};
-  final Set<String> _cooldowns = {}; // 碰撞冷却表
+  final Map<String, int> _cooldowns = {}; // 碰撞冷却记录（时间戳）
 
   Size? _containerSize;
   Timer? _collisionTimer;
@@ -98,35 +100,32 @@ class _RandomMovingChildrenState extends State<RandomMovingChildren> with Ticker
   }
 
   void _checkCollisions() {
-    if (_containerSize == null) return;
+    if (_containerSize == null || _childSizes.length < 2) return;
     final entries = _animations.entries.toList();
 
+    final now = DateTime.now().millisecondsSinceEpoch;
+
     for (int i = 0; i < entries.length; i++) {
+      final rectA = _childRect(i);
       for (int j = i + 1; j < entries.length; j++) {
-        final iKey = entries[i].key;
-        final jKey = entries[j].key;
-        final pairKey = '$iKey-$jKey';
-        if (_cooldowns.contains(pairKey)) continue;
-
-        final iPos = entries[i].value.value;
-        final jPos = entries[j].value.value;
-
-        final iSize = _childSizes[iKey] ?? widget.estimatedChildSize ?? const Size(40, 40);
-        final jSize = _childSizes[jKey] ?? widget.estimatedChildSize ?? const Size(40, 40);
-
-        final iRect = Rect.fromLTWH(iPos.dx, iPos.dy, iSize.width, iSize.height);
-        final jRect = Rect.fromLTWH(jPos.dx, jPos.dy, jSize.width, jSize.height);
-
-        if (iRect.overlaps(jRect)) {
-          _cooldowns.add(pairKey);
-          _handleCollision(iKey, jKey);
-          // 短暂冷却 800ms，避免反复触发
-          Future.delayed(const Duration(milliseconds: 800), () {
-            _cooldowns.remove(pairKey);
-          });
+        final pairKey = '$i-$j';
+        final last = _cooldowns[pairKey];
+        if (last != null && (now - last < widget.collisionCooldownMs)) continue;
+        final rectB = _childRect(j);
+        if (rectA.overlaps(rectB)) {
+          _cooldowns[pairKey] = now;
+          _handleCollision(i, j);
+        } else if (last != null) {
+          _cooldowns.remove(pairKey);
         }
       }
     }
+  }
+
+  Rect _childRect(int i) {
+    final pos = _animations[i]?.value ?? Offset.zero;
+    final size = _childSizes[i] ?? widget.estimatedChildSize ?? const Size(40, 40);
+    return Rect.fromLTWH(pos.dx, pos.dy, size.width, size.height);
   }
 
   void _handleCollision(int i, int j) {
@@ -188,7 +187,10 @@ class _RandomMovingChildrenState extends State<RandomMovingChildren> with Ticker
                   left: offset.dx,
                   top: offset.dy,
                   child: MeasureSize(
-                    onChange: (size) => _childSizes[i] = size,
+                    onChange: (size) {
+                      _childSizes[i] = size;
+                      print('size change');
+                    },
                     child: child!,
                   ),
                 );
