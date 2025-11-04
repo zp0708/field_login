@@ -28,7 +28,7 @@ class JsonViewerState extends State<JsonViewer> {
   @override
   Widget build(BuildContext context) {
     _anchorsCollector.clear();
-    final Widget w = getContentWidget(
+    final Widget w = _buildContentWidget(
       widget.jsonObj,
       widget.unfold,
       widget.highlight,
@@ -54,36 +54,87 @@ class JsonViewerState extends State<JsonViewer> {
     }
     return false;
   }
+}
 
-  static getContentWidget(
-    dynamic content,
-    bool unfold,
-    String? highlight,
-    Color highlightColor,
-    List<GlobalKey> anchorsCollector,
-  ) {
-    if (content == null) {
-      return Text('{}');
-    } else if (content is List) {
-      return JsonArrayViewer(
-        content,
-        notRoot: false,
-        unfold: unfold,
-        highlight: highlight,
-        highlightColor: highlightColor,
-        anchorsCollector: anchorsCollector,
-      );
+Widget _buildContentWidget(
+  dynamic content,
+  bool unfold,
+  String? highlight,
+  Color highlightColor,
+  List<GlobalKey> anchorsCollector,
+) {
+  if (content == null) {
+    return const Text('{}');
+  } else if (content is List) {
+    return JsonArrayViewer(
+      content,
+      notRoot: false,
+      unfold: unfold,
+      highlight: highlight,
+      highlightColor: highlightColor,
+      anchorsCollector: anchorsCollector,
+    );
+  } else {
+    return JsonObjectViewer(
+      content,
+      notRoot: false,
+      unfold: unfold,
+      highlight: highlight,
+      highlightColor: highlightColor,
+      anchorsCollector: anchorsCollector,
+    );
+  }
+}
+
+bool _isInkWell(dynamic content) {
+  if (content == null) {
+    return false;
+  } else if (content is int) {
+    return false;
+  } else if (content is String) {
+    return false;
+  } else if (content is bool) {
+    return false;
+  } else if (content is double) {
+    return false;
+  } else if (content is List) {
+    if (content.isEmpty) {
+      return false;
     } else {
-      return JsonObjectViewer(
-        content,
-        notRoot: false,
-        unfold: unfold,
-        highlight: highlight,
-        highlightColor: highlightColor,
-        anchorsCollector: anchorsCollector,
-      );
+      return true;
     }
   }
+  return true;
+}
+
+bool _isExtensible(dynamic content) {
+  if (content == null) {
+    return false;
+  } else if (content is int) {
+    return false;
+  } else if (content is String) {
+    return false;
+  } else if (content is bool) {
+    return false;
+  } else if (content is double) {
+    return false;
+  }
+  return true;
+}
+
+String _getTypeName(dynamic content) {
+  if (content is int) {
+    return 'int';
+  } else if (content is String) {
+    return 'String';
+  } else if (content is bool) {
+    return 'bool';
+  } else if (content is double) {
+    return 'double';
+  } else if (content is List) {
+    return 'List';
+  }
+  return 'Object';
 }
 
 class JsonObjectViewer extends StatefulWidget {
@@ -112,6 +163,15 @@ class JsonObjectViewerState extends State<JsonObjectViewer> {
   Map<String, bool> openFlag = {};
 
   @override
+  void didUpdateWidget(covariant JsonObjectViewer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.unfold != widget.unfold) {
+      // 展开策略变化时，清空局部覆盖，让默认策略生效
+      openFlag.clear();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     if (widget.notRoot) {
       return Container(
@@ -131,8 +191,8 @@ class JsonObjectViewerState extends State<JsonObjectViewer> {
   _getList() {
     List<Widget> list = [];
     for (MapEntry entry in widget.jsonObj.entries) {
-      bool ex = isExtensible(entry.value);
-      bool ink = isInkWell(entry.value);
+      bool ex = _isExtensible(entry.value);
+      bool ink = _isInkWell(entry.value);
       list.add(Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
@@ -140,10 +200,10 @@ class JsonObjectViewerState extends State<JsonObjectViewer> {
               ? InkWell(
                   onTap: () {
                     setState(() {
-                      openFlag[entry.key] = !(openFlag[entry.key] ?? false);
+                      openFlag[entry.key] = !(openFlag[entry.key] ?? (ex ? widget.unfold : false));
                     });
                   },
-                  child: ((openFlag[entry.key] ?? false)
+                  child: ((openFlag[entry.key] ?? (ex ? widget.unfold : false))
                       ? Icon(Icons.arrow_drop_down, size: 14, color: Colors.grey[700])
                       : Icon(Icons.arrow_right, size: 14, color: Colors.grey[700])),
                 )
@@ -164,7 +224,8 @@ class JsonObjectViewerState extends State<JsonObjectViewer> {
                   ),
                   onTap: () {
                     setState(() {
-                      openFlag[entry.key] = !(openFlag[entry.key] ?? false);
+                      final bool base = openFlag[entry.key] ?? (ex ? widget.unfold : false);
+                      openFlag[entry.key] = !base;
                     });
                   })
               : _buildHighlightedText(
@@ -187,7 +248,7 @@ class JsonObjectViewerState extends State<JsonObjectViewer> {
       ));
       list.add(const SizedBox(height: 4));
       if (openFlag[entry.key] ?? (ex ? widget.unfold : false)) {
-        list.add(getContentWidget(
+        list.add(_getContentWidget(
           entry.value,
           widget.unfold,
           highlight: widget.highlight,
@@ -199,7 +260,7 @@ class JsonObjectViewerState extends State<JsonObjectViewer> {
     return list;
   }
 
-  static getContentWidget(
+  Widget _getContentWidget(
     dynamic content,
     bool unfold, {
     String? highlight,
@@ -225,27 +286,6 @@ class JsonObjectViewerState extends State<JsonObjectViewer> {
         anchorsCollector: anchorsCollector,
       );
     }
-  }
-
-  static isInkWell(dynamic content) {
-    if (content == null) {
-      return false;
-    } else if (content is int) {
-      return false;
-    } else if (content is String) {
-      return false;
-    } else if (content is bool) {
-      return false;
-    } else if (content is double) {
-      return false;
-    } else if (content is List) {
-      if (content.isEmpty) {
-        return false;
-      } else {
-        return true;
-      }
-    }
-    return true;
   }
 
   getValueWidget(MapEntry entry) {
@@ -297,12 +337,13 @@ class JsonObjectViewerState extends State<JsonObjectViewer> {
       } else {
         return InkWell(
           child: Text(
-            'Array<${getTypeName(entry.value[0])}>[${entry.value.length}]',
+            'Array<${_getTypeName(entry.value[0])}>[${entry.value.length}]',
             style: TextStyle(color: Colors.grey),
           ),
           onTap: () {
             setState(() {
-              openFlag[entry.key] = !(openFlag[entry.key] ?? false);
+              final bool base = openFlag[entry.key] ?? widget.unfold;
+              openFlag[entry.key] = !base;
             });
           },
         );
@@ -315,40 +356,11 @@ class JsonObjectViewerState extends State<JsonObjectViewer> {
       ),
       onTap: () {
         setState(() {
-          openFlag[entry.key] = !(openFlag[entry.key] ?? false);
+          final bool base = openFlag[entry.key] ?? widget.unfold;
+          openFlag[entry.key] = !base;
         });
       },
     );
-  }
-
-  static isExtensible(dynamic content) {
-    if (content == null) {
-      return false;
-    } else if (content is int) {
-      return false;
-    } else if (content is String) {
-      return false;
-    } else if (content is bool) {
-      return false;
-    } else if (content is double) {
-      return false;
-    }
-    return true;
-  }
-
-  static getTypeName(dynamic content) {
-    if (content is int) {
-      return 'int';
-    } else if (content is String) {
-      return 'String';
-    } else if (content is bool) {
-      return 'bool';
-    } else if (content is double) {
-      return 'double';
-    } else if (content is List) {
-      return 'List';
-    }
-    return 'Object';
   }
 }
 
@@ -401,12 +413,20 @@ class JsonArrayViewerState extends State<JsonArrayViewer> {
     openFlag = List.filled(widget.jsonArray.length, widget.unfold);
   }
 
+  @override
+  void didUpdateWidget(covariant JsonArrayViewer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.unfold != widget.unfold || oldWidget.jsonArray.length != widget.jsonArray.length) {
+      openFlag = List.filled(widget.jsonArray.length, widget.unfold);
+    }
+  }
+
   _getList() {
     List<Widget> list = [];
     int i = 0;
     for (dynamic content in widget.jsonArray) {
-      bool ex = JsonObjectViewerState.isExtensible(content);
-      bool ink = JsonObjectViewerState.isInkWell(content);
+      bool ex = _isExtensible(content);
+      bool ink = _isInkWell(content);
       list.add(Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
@@ -437,12 +457,12 @@ class JsonArrayViewerState extends State<JsonArrayViewer> {
       ));
       list.add(const SizedBox(height: 4));
       if (ex && openFlag[i]) {
-        list.add(JsonObjectViewerState.getContentWidget(
+        list.add(_buildContentWidget(
           content,
           widget.unfold,
-          highlight: widget.highlight,
-          highlightColor: widget.highlightColor,
-          anchorsCollector: widget.anchorsCollector,
+          widget.highlight,
+          widget.highlightColor,
+          widget.anchorsCollector,
         ));
       }
       i++;
@@ -510,7 +530,7 @@ class JsonArrayViewerState extends State<JsonArrayViewer> {
       } else {
         return InkWell(
           child: Text(
-            'Array<${JsonObjectViewerState.getTypeName(content)}>[${content.length}]',
+            'Array<${_getTypeName(content)}>[${content.length}]',
             style: TextStyle(color: Colors.grey),
           ),
           onTap: () {
