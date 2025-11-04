@@ -1,13 +1,94 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
+
+class JsonViewerController extends ChangeNotifier {
+  final List<GlobalKey> _anchors = <GlobalKey>[];
+  int _currentIndex = 0;
+  bool _notifyScheduled = false;
+
+  List<GlobalKey> get anchors => List<GlobalKey>.unmodifiable(_anchors);
+  int get length => _anchors.length;
+  int get currentIndex => _currentIndex;
+  GlobalKey? get currentAnchor => _anchors.isEmpty ? null : _anchors[_currentIndex];
+
+  void addAnchor(GlobalKey key) {
+    _anchors.add(key);
+    if (_anchors.length == 1) {
+      _currentIndex = 0;
+    }
+    _notifySafely();
+  }
+
+  void clearAnchors() {
+    if (_anchors.isEmpty) return;
+    _anchors.clear();
+    _currentIndex = 0;
+    _notifySafely();
+  }
+
+  void goNext() {
+    if (_anchors.isEmpty) return;
+    _currentIndex = (_currentIndex + 1) % _anchors.length;
+    _notifySafely();
+  }
+
+  void goPrev() {
+    if (_anchors.isEmpty) return;
+    _currentIndex = (_currentIndex - 1 + _anchors.length) % _anchors.length;
+    _notifySafely();
+  }
+
+  void clampIndex() {
+    if (_anchors.isEmpty) {
+      _currentIndex = 0;
+    } else {
+      if (_currentIndex >= _anchors.length) _currentIndex = _anchors.length - 1;
+      if (_currentIndex < 0) _currentIndex = 0;
+    }
+    _notifySafely();
+  }
+
+  void _notifySafely() {
+    if (SchedulerBinding.instance.schedulerPhase == SchedulerPhase.idle) {
+      notifyListeners();
+      return;
+    }
+    if (_notifyScheduled) return;
+    _notifyScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _notifyScheduled = false;
+      notifyListeners();
+    });
+  }
+}
+
+class JsonViewerScope extends InheritedNotifier<JsonViewerController> {
+  const JsonViewerScope({
+    super.key,
+    required JsonViewerController super.notifier,
+    required super.child,
+  });
+
+  static JsonViewerController? maybeOf(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<JsonViewerScope>()?.notifier;
+  }
+
+  // 不建立依赖关系的读取，避免子节点因为收集锚点而跟随重建
+  static JsonViewerController? read(BuildContext context) {
+    final InheritedElement? element = context.getElementForInheritedWidgetOfExactType<JsonViewerScope>();
+    final JsonViewerScope? scope = element?.widget as JsonViewerScope?;
+    return scope?.notifier;
+  }
+}
 
 class JsonViewer extends StatefulWidget {
   final dynamic jsonObj;
   final bool unfold;
   final String? highlight;
   final Color highlightColor;
-  final void Function(List<GlobalKey>)? onAnchorsChanged;
+  final JsonViewerController? controller;
 
   const JsonViewer(
     this.jsonObj, {
@@ -15,7 +96,7 @@ class JsonViewer extends StatefulWidget {
     this.unfold = false,
     this.highlight,
     this.highlightColor = const Color(0xFFFFFF00),
-    this.onAnchorsChanged,
+    this.controller,
   });
 
   @override
@@ -23,36 +104,19 @@ class JsonViewer extends StatefulWidget {
 }
 
 class JsonViewerState extends State<JsonViewer> {
-  final List<GlobalKey> _anchorsCollector = <GlobalKey>[];
-  List<GlobalKey> _lastReportedAnchors = const <GlobalKey>[];
   @override
   Widget build(BuildContext context) {
-    _anchorsCollector.clear();
+    widget.controller?.clearAnchors();
     final Widget w = _buildContentWidget(
       widget.jsonObj,
       widget.unfold,
       widget.highlight,
       widget.highlightColor,
-      _anchorsCollector,
     );
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final List<GlobalKey> snapshot = List<GlobalKey>.unmodifiable(_anchorsCollector);
-      if (_didAnchorsChange(snapshot)) {
-        _lastReportedAnchors = snapshot;
-        widget.onAnchorsChanged?.call(snapshot);
-      }
-    });
-    return w;
-  }
-
-  bool _didAnchorsChange(List<GlobalKey> next) {
-    final List<GlobalKey> prev = _lastReportedAnchors;
-    if (identical(prev, next)) return false;
-    if (prev.length != next.length) return true;
-    for (int i = 0; i < prev.length; i++) {
-      if (!identical(prev[i], next[i])) return true;
+    if (widget.controller != null) {
+      return JsonViewerScope(notifier: widget.controller!, child: w);
     }
-    return false;
+    return w;
   }
 }
 
@@ -61,7 +125,6 @@ Widget _buildContentWidget(
   bool unfold,
   String? highlight,
   Color highlightColor,
-  List<GlobalKey> anchorsCollector,
 ) {
   if (content == null) {
     return const Text('{}');
@@ -72,7 +135,6 @@ Widget _buildContentWidget(
       unfold: unfold,
       highlight: highlight,
       highlightColor: highlightColor,
-      anchorsCollector: anchorsCollector,
     );
   } else {
     return JsonObjectViewer(
@@ -81,7 +143,6 @@ Widget _buildContentWidget(
       unfold: unfold,
       highlight: highlight,
       highlightColor: highlightColor,
-      anchorsCollector: anchorsCollector,
     );
   }
 }
@@ -143,7 +204,6 @@ class JsonObjectViewer extends StatefulWidget {
   final bool unfold;
   final String? highlight;
   final Color highlightColor;
-  final List<GlobalKey> anchorsCollector;
 
   const JsonObjectViewer(
     this.jsonObj, {
@@ -152,7 +212,6 @@ class JsonObjectViewer extends StatefulWidget {
     this.unfold = false,
     this.highlight,
     this.highlightColor = const Color(0xFFFFFF00),
-    required this.anchorsCollector,
   });
 
   @override
@@ -215,11 +274,11 @@ class JsonObjectViewerState extends State<JsonObjectViewer> {
           (ex && ink)
               ? InkWell(
                   child: _buildHighlightedText(
+                    context,
                     entry.key,
                     TextStyle(color: Colors.purple[900]),
                     widget.highlight,
                     widget.highlightColor,
-                    widget.anchorsCollector,
                     selectable: false,
                   ),
                   onTap: () {
@@ -229,13 +288,13 @@ class JsonObjectViewerState extends State<JsonObjectViewer> {
                     });
                   })
               : _buildHighlightedText(
+                  context,
                   entry.key,
                   TextStyle(
                     color: entry.value == null ? Colors.grey : Colors.purple[900],
                   ),
                   widget.highlight,
                   widget.highlightColor,
-                  widget.anchorsCollector,
                   selectable: false,
                 ),
           Text(
@@ -253,7 +312,6 @@ class JsonObjectViewerState extends State<JsonObjectViewer> {
           widget.unfold,
           highlight: widget.highlight,
           highlightColor: widget.highlightColor,
-          anchorsCollector: widget.anchorsCollector,
         ));
       }
     }
@@ -265,7 +323,6 @@ class JsonObjectViewerState extends State<JsonObjectViewer> {
     bool unfold, {
     String? highlight,
     Color highlightColor = const Color(0xFFFFFF00),
-    required List<GlobalKey> anchorsCollector,
   }) {
     if (content is List) {
       return JsonArrayViewer(
@@ -274,7 +331,6 @@ class JsonObjectViewerState extends State<JsonObjectViewer> {
         unfold: unfold,
         highlight: highlight,
         highlightColor: highlightColor,
-        anchorsCollector: anchorsCollector,
       );
     } else {
       return JsonObjectViewer(
@@ -283,7 +339,6 @@ class JsonObjectViewerState extends State<JsonObjectViewer> {
         unfold: unfold,
         highlight: highlight,
         highlightColor: highlightColor,
-        anchorsCollector: anchorsCollector,
       );
     }
   }
@@ -306,11 +361,11 @@ class JsonObjectViewerState extends State<JsonObjectViewer> {
     } else if (entry.value is String) {
       return Expanded(
         child: _buildHighlightedText(
+          context,
           '"${entry.value}"',
           TextStyle(color: Colors.redAccent),
           widget.highlight,
           widget.highlightColor,
-          widget.anchorsCollector,
           selectable: true,
         ),
       );
@@ -371,7 +426,6 @@ class JsonArrayViewer extends StatefulWidget {
   final bool unfold;
   final String? highlight;
   final Color highlightColor;
-  final List<GlobalKey> anchorsCollector;
 
   const JsonArrayViewer(
     this.jsonArray, {
@@ -380,7 +434,6 @@ class JsonArrayViewer extends StatefulWidget {
     this.unfold = false,
     this.highlight,
     this.highlightColor = const Color(0xFFFFFF00),
-    required this.anchorsCollector,
   });
 
   @override
@@ -462,7 +515,6 @@ class JsonArrayViewerState extends State<JsonArrayViewer> {
           widget.unfold,
           widget.highlight,
           widget.highlightColor,
-          widget.anchorsCollector,
         ));
       }
       i++;
@@ -499,11 +551,11 @@ class JsonArrayViewerState extends State<JsonArrayViewer> {
     } else if (content is String) {
       return Expanded(
         child: _buildHighlightedText(
+          context,
           '"$content"',
           TextStyle(color: Colors.redAccent),
           widget.highlight,
           widget.highlightColor,
-          widget.anchorsCollector,
           selectable: true,
         ),
       );
@@ -557,11 +609,11 @@ class JsonArrayViewerState extends State<JsonArrayViewer> {
 
 // 高亮工具：将命中片段用背景色标记
 Widget _buildHighlightedText(
+  BuildContext context,
   String text,
   TextStyle baseStyle,
   String? highlight,
-  Color highlightColor,
-  List<GlobalKey>? anchorsCollector, {
+  Color highlightColor, {
   bool selectable = false,
 }) {
   if (highlight == null || highlight.isEmpty) {
@@ -598,7 +650,8 @@ Widget _buildHighlightedText(
     }
     final String match = text.substring(index, index + query.length);
     final GlobalKey key = GlobalKey();
-    anchorsCollector?.add(key);
+    final JsonViewerController? controller = JsonViewerScope.read(context);
+    controller?.addAnchor(key);
     spans.add(WidgetSpan(
       alignment: PlaceholderAlignment.baseline,
       baseline: TextBaseline.alphabetic,

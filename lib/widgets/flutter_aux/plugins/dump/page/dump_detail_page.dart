@@ -24,10 +24,8 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
   late TextEditingController _searchController;
   String _keyword = '';
   bool _unfold = false;
-  final ValueNotifier<List<GlobalKey>> _highlightAnchorsNotifier = ValueNotifier<List<GlobalKey>>(<GlobalKey>[]);
-  // 当前高亮索引通过 _currentIndexNotifier 维护
+  final JsonViewerController _jsonController = JsonViewerController();
   final ScrollController _scrollController = ScrollController();
-  final ValueNotifier<int> _currentIndexNotifier = ValueNotifier<int>(0);
 
   @override
   void initState() {
@@ -249,40 +247,37 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
           ),
           const SizedBox(width: 8),
           if (_keyword.isNotEmpty)
-            ValueListenableBuilder<List<GlobalKey>>(
-              valueListenable: _highlightAnchorsNotifier,
-              builder: (_, List<GlobalKey> anchors, __) {
+            AnimatedBuilder(
+              animation: _jsonController,
+              builder: (_, __) {
+                final int len = _jsonController.length;
+                final int idx = len == 0 ? 0 : _jsonController.currentIndex;
                 return Row(
                   children: [
-                    ValueListenableBuilder<int>(
-                      valueListenable: _currentIndexNotifier,
-                      builder: (_, int idx, __) {
-                        return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.yellow.withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: Colors.amber.shade600),
-                          ),
-                          child: Text(
-                            '${anchors.isEmpty ? 0 : (idx + 1)}/${anchors.length}',
-                            style: const TextStyle(fontSize: 10, color: Colors.black87),
-                          ),
-                        );
-                      },
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.yellow.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: Colors.amber.shade600),
+                      ),
+                      child: Text(
+                        '${len == 0 ? 0 : (idx + 1)}/$len',
+                        style: const TextStyle(fontSize: 10, color: Colors.black87),
+                      ),
                     ),
                     const SizedBox(width: 6),
                     IconButton(
                       tooltip: '上一处',
                       icon: const Icon(Icons.keyboard_arrow_up, size: 18, color: Colors.blue),
-                      onPressed: anchors.isEmpty ? null : _goPrevHighlight,
+                      onPressed: len == 0 ? null : _goPrevHighlight,
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(minHeight: 32, minWidth: 32),
                     ),
                     IconButton(
                       tooltip: '下一处',
                       icon: const Icon(Icons.keyboard_arrow_down, size: 18, color: Colors.blue),
-                      onPressed: anchors.isEmpty ? null : _goNextHighlight,
+                      onPressed: len == 0 ? null : _goNextHighlight,
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(minHeight: 32, minWidth: 32),
                     ),
@@ -562,41 +557,26 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
       unfold: _unfold || unfold,
       highlight: highlight ? _keyword : null,
       highlightColor: const Color(0xFFFFFF00),
-      onAnchorsChanged: highlight
-          ? (List<GlobalKey> anchors) {
-              _highlightAnchorsNotifier.value = anchors;
-              if (anchors.isEmpty) {
-                return;
-              }
-              final int clamped = (_currentIndexNotifier.value).clamp(0, anchors.length - 1);
-              if (_currentIndexNotifier.value != clamped) {
-                _currentIndexNotifier.value = clamped;
-              }
-            }
-          : null,
+      controller: highlight ? _jsonController : null,
     );
   }
 
   void _goPrevHighlight() {
-    final List<GlobalKey> anchors = _highlightAnchorsNotifier.value;
-    if (anchors.isEmpty) return;
-    final int nextIndex = ((_currentIndexNotifier.value) - 1 + anchors.length) % anchors.length;
-    _currentIndexNotifier.value = nextIndex;
+    if (_jsonController.length == 0) return;
+    _jsonController.goPrev();
     _scrollToCurrentAnchor();
   }
 
   void _goNextHighlight() {
-    final List<GlobalKey> anchors = _highlightAnchorsNotifier.value;
-    if (anchors.isEmpty) return;
-    final int nextIndex = ((_currentIndexNotifier.value) + 1) % anchors.length;
-    _currentIndexNotifier.value = nextIndex;
+    if (_jsonController.length == 0) return;
+    _jsonController.goNext();
     _scrollToCurrentAnchor();
   }
 
   void _scrollToCurrentAnchor() {
-    final List<GlobalKey> anchors = _highlightAnchorsNotifier.value;
-    if (anchors.isEmpty) return;
-    final BuildContext? ctx = anchors[_currentIndexNotifier.value].currentContext;
+    final GlobalKey? key = _jsonController.currentAnchor;
+    if (key == null) return;
+    final BuildContext? ctx = key.currentContext;
     if (ctx != null) {
       final RenderObject? renderObject = ctx.findRenderObject();
       if (renderObject != null) {
@@ -628,8 +608,7 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
   @override
   void dispose() {
     _searchController.dispose();
-    _currentIndexNotifier.dispose();
-    _highlightAnchorsNotifier.dispose();
+    _jsonController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
