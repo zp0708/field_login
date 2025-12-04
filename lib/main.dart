@@ -13,6 +13,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorObservers: [RouteObserver<PageRoute<dynamic>>()],
       title: 'Mobee 摩笔',
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,

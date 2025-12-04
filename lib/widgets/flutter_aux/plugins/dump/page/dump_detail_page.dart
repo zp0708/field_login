@@ -33,6 +33,7 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
     _searchController = TextEditingController();
     _searchController.addListener(() {
       setState(() {
+        _unfold = true;
         _keyword = _searchController.text.trim();
       });
     });

@@ -1,3 +1,4 @@
+import 'package:field_login/demos/animated_digit_demo.dart';
 import 'package:field_login/demos/carousel_demo.dart';
 import 'package:field_login/demos/generic_refresh_list_example.dart';
 import 'package:field_login/demos/page_view_demo.dart';
@@ -83,6 +84,13 @@ class HomePage extends StatelessWidget {
         icon: Icons.currency_yen,
         color: Colors.teal,
         demoPage: const RandomMovingDemo(),
+      ),
+      _ComponentItem(
+        title: 'Animated Digit 演示',
+        description: 'Animated Digit 演示',
+        icon: Icons.currency_yen,
+        color: Colors.teal,
+        demoPage: const AnimatedDigitDemo(),
       ),
       _ComponentItem(
         title: 'AnchorOverlay 演示',

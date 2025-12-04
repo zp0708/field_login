@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import './floating_widgets_controller.dart';
 
 class FloatingWidgets extends StatefulWidget {
   final List<Widget> children;
@@ -10,6 +11,7 @@ class FloatingWidgets extends StatefulWidget {
   final int collisionCheckIntervalMs;
   final int collisionCooldownMs;
   final Curve? curve;
+  final FloatingWidgetsController? controller;
 
   const FloatingWidgets({
     super.key,
@@ -19,6 +21,7 @@ class FloatingWidgets extends StatefulWidget {
     this.collisionCheckIntervalMs = 200,
     this.collisionCooldownMs = 800,
     this.curve,
+    this.controller,
   });
 
   @override
@@ -37,12 +40,53 @@ class _FloatingWidgetsState extends State<FloatingWidgets> with TickerProviderSt
 
   Size? _containerSize;
   Timer? _collisionTimer;
+  bool _isAnimating = true;
 
   @override
   void initState() {
     super.initState();
+    widget.controller?.addListener(_onControllerChanged);
+    _isAnimating = widget.controller?.isAnimating ?? true;
     WidgetsBinding.instance.addPostFrameCallback((_) => _initializePositions());
-    _collisionTimer = Timer.periodic(
+    // 只有在动画开启时才启动碰撞检测定时器
+    if (_isAnimating) {
+      _collisionTimer = Timer.periodic(
+        Duration(milliseconds: widget.collisionCheckIntervalMs),
+        (_) => _checkCollisions(),
+      );
+    }
+  }
+
+  void _onControllerChanged() {
+    final bool shouldAnimate = widget.controller?.isAnimating ?? true;
+    if (_isAnimating == shouldAnimate) return;
+    setState(() {
+      _isAnimating = shouldAnimate;
+    });
+    if (_isAnimating) {
+      _resumeAllAnimations();
+    } else {
+      _pauseAllAnimations();
+    }
+  }
+
+  void _pauseAllAnimations() {
+    for (final controller in _controllers.values) {
+      controller.stop();
+    }
+    _collisionTimer?.cancel();
+    _collisionTimer = null;
+  }
+
+  void _resumeAllAnimations() {
+    for (int i = 0; i < _controllers.length; i++) {
+      final controller = _controllers[i];
+      if (controller != null && _animations[i] != null) {
+        _startChildAnimation(i);
+      }
+    }
+    // 重新启动碰撞检测定时器
+    _collisionTimer ??= Timer.periodic(
       Duration(milliseconds: widget.collisionCheckIntervalMs),
       (_) => _checkCollisions(),
     );
@@ -74,6 +118,7 @@ class _FloatingWidgetsState extends State<FloatingWidgets> with TickerProviderSt
   }
 
   void _startChildAnimation(int index) {
+    if (!_isAnimating) return;
     final start = _startPositions[index]!;
     final end = _endPositions[index]!;
     final distance = (end - start).distance;
@@ -100,6 +145,8 @@ class _FloatingWidgetsState extends State<FloatingWidgets> with TickerProviderSt
   }
 
   void _checkCollisions() {
+    print('_checkCollisions');
+    if (!_isAnimating) return;
     if (_containerSize == null || _childSizes.length < 2) return;
     final entries = _animations.entries.toList();
 
@@ -145,6 +192,7 @@ class _FloatingWidgetsState extends State<FloatingWidgets> with TickerProviderSt
   }
 
   void _restartAnimation(int index, Offset newTarget) {
+    if (!_isAnimating) return;
     final controller = _controllers[index];
     if (controller == null) return;
     controller.stop();
@@ -165,6 +213,7 @@ class _FloatingWidgetsState extends State<FloatingWidgets> with TickerProviderSt
 
   @override
   void dispose() {
+    widget.controller?.removeListener(_onControllerChanged);
     for (final c in _controllers.values) {
       c.dispose();
     }
