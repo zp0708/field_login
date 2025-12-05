@@ -43,6 +43,12 @@ class AnimatedFlipCounter extends StatelessWidget {
   /// The actual [value] will be rounded to the nearest digit.
   final int fractionDigits;
 
+  /// 数字变化是否需要从低位累加到高位
+  /// 例如 value 增加了0.11
+  /// true: 会从 0.01 到 0.11，分位会进行 11 次动画
+  /// false: 两个分位只增加 1，只做一次动画
+  final bool loop;
+
   /// How many digits to display, before the decimal point.
   ///
   /// For example, `wholeDigits: 4` means it will pad `48` into `0048`.
@@ -50,7 +56,7 @@ class AnimatedFlipCounter extends StatelessWidget {
   /// If the actual [value] has more digits, this property will be ignored.
   ///
   /// See [hideLeadingZeroes] to hide these leading zeroes while maintaining
-  /// flipping animation when the number of digits changes, e.g. from 99 to 100.
+  /// flipping animation  the number of dwhenigits changes, e.g. from 99 to 100.
   final int wholeDigits;
 
   /// Whether to hide leading zeroes, useful when combined with [wholeDigits]
@@ -103,6 +109,7 @@ class AnimatedFlipCounter extends StatelessWidget {
     this.suffix,
     this.fractionDigits = 0,
     this.wholeDigits = 1,
+    this.loop = true,
     this.hideLeadingZeroes = false,
     this.thousandSeparator,
     this.decimalSeparator = '.',
@@ -132,6 +139,7 @@ class AnimatedFlipCounter extends StatelessWidget {
     final prototypeOneDigit = _prePainter(context, '1', style);
     final secondPrototypeDigit = _prePainter(context, '0', smallStyle);
     final secondPrototypeOneDigit = _prePainter(context, '1', smallStyle);
+    final decimalSeparatorPrototypeDigit = _prePainter(context, decimalSeparator, smallStyle);
 
     // Find the text color (or red as warning). This is so we can avoid using
     // `Opacity` and `AnimatedOpacity` widget, for better performance.
@@ -151,8 +159,8 @@ class AnimatedFlipCounter extends StatelessWidget {
     List<int> digits = value == 0 ? [0] : [];
     int v = value.abs();
     while (v > 0) {
-      digits.add(v);
-      v = v ~/ 10;
+      digits.add(loop ? v : v % 10);
+      v ~/= 10;
     }
     while (digits.length < wholeDigits + fractionDigits) {
       digits.add(0); // padding leading zeroes
@@ -161,12 +169,14 @@ class AnimatedFlipCounter extends StatelessWidget {
 
     // Generate the widgets needed for digits before the decimal point.
     final integerWidgets = <Widget>[];
-    for (int i = 0; i < digits.length - fractionDigits; i++) {
+    final ln = digits.length - fractionDigits + 10;
+    for (int i = 0; i < ln; i++) {
+      final index = i - 10;
       final digit = _SingleDigitFlipCounter(
-        key: ValueKey(digits.length - i),
-        value: digits[i].toDouble(),
+        key: ValueKey(ln - i),
+        value: index >= 0 ? digits[index].toDouble() : 0,
         style: style,
-        duration: value == 0 ? Duration.zero : duration,
+        duration: duration,
         curve: curve,
         size: prototypeDigit.size,
         sizeForOne: prototypeOneDigit.size,
@@ -177,7 +187,8 @@ class AnimatedFlipCounter extends StatelessWidget {
         // split into [0, 5, 50, 500]. Since 50 and 500 are not 0, they are
         // always visible. But we should not show 0.48 as .48 so the last
         // zero before decimal point is always visible.
-        visible: hideLeadingZeroes ? digits[i] != 0 || i == digits.length - fractionDigits - 1 : true,
+        visible:
+            index >= 0 && (hideLeadingZeroes ? digits[index] != 0 || i == digits.length - fractionDigits - 1 : true),
       );
       integerWidgets.add(digit);
     }
@@ -242,15 +253,19 @@ class AnimatedFlipCounter extends StatelessWidget {
             ...integerWidgets,
             // Draw the decimal point
             if (fractionDigits != 0)
-              Text(
-                decimalSeparator,
-                style: smallStyle,
+              SizedBox(
+                height: decimalSeparatorPrototypeDigit.height + padding.vertical,
+                width: decimalSeparatorPrototypeDigit.width + padding.horizontal,
+                child: Text(
+                  decimalSeparator,
+                  style: smallStyle,
+                ),
               ),
             // Draw digits after the decimal point
-            for (int i = digits.length - fractionDigits; i < digits.length; i++)
+            for (int i = 0; i < fractionDigits; i++)
               _SingleDigitFlipCounter(
                 key: ValueKey('decimal$i'),
-                value: digits[i].toDouble(),
+                value: digits[digits.length - fractionDigits + i].toDouble(),
                 duration: duration,
                 style: smallStyle,
                 curve: curve,
@@ -295,19 +310,24 @@ class _SingleDigitFlipCounter extends StatelessWidget {
   Widget build(BuildContext context) {
     return TweenAnimationBuilder(
       tween: Tween(end: value),
-      duration: duration,
+      duration: visible ? duration : Duration.zero,
       curve: curve,
       builder: (_, double value, __) {
+        if (!visible) return SizedBox.shrink();
+
         final whole = value ~/ 1;
         final decimal = value - whole;
         final digit = whole % 10;
-        final next = (whole + 1) % 10;
+        final ex = (whole + 1) % 10;
+        print('$digit -- $ex -- $decimal');
+        final exWidth = ex == 1 ? sizeForOne.width : size.width;
         final width = digit == 1 ? sizeForOne.width : size.width;
-        final w = width + padding.horizontal;
+        final difference = width - exWidth;
+        final w = exWidth + difference * (1 - decimal) + padding.horizontal;
         final h = size.height + padding.vertical;
 
         return SizedBox(
-          width: visible ? w : 0,
+          width: w,
           height: h,
           child: Stack(
             children: <Widget>[
@@ -317,7 +337,7 @@ class _SingleDigitFlipCounter extends StatelessWidget {
                 opacity: 1 - decimal,
               ),
               _buildSingleDigit(
-                digit: next,
+                digit: ex,
                 offset: h * decimal - h,
                 opacity: decimal,
               ),

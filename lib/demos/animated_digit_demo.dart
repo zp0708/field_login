@@ -10,7 +10,7 @@ class AnimatedDigitDemo extends StatefulWidget {
 }
 
 class _AnimatedDigitDemoState extends State<AnimatedDigitDemo> {
-  double _value = 0;
+  double _value = 0.00;
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +41,7 @@ class _AnimatedDigitDemoState extends State<AnimatedDigitDemo> {
       floatingActionButton: FloatingActionButton(
         child: Text('+'),
         onPressed: () => setState(() {
-          _value = _value > 0 ? 0 : 1003.12;
+          _value += 0.11;
         }),
       ),
     );
