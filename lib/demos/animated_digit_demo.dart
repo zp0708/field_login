@@ -1,4 +1,4 @@
-import 'package:field_login/widgets/animated_digit.dart/animated_digit_widget.dart';
+import 'package:field_login/widgets/animated_digit.dart/animated_flip_counter.dart';
 import 'package:field_login/widgets/flutter_aux/flutter_aux.dart';
 import 'package:flutter/material.dart';
 
@@ -10,7 +10,7 @@ class AnimatedDigitDemo extends StatefulWidget {
 }
 
 class _AnimatedDigitDemoState extends State<AnimatedDigitDemo> {
-  double _value = 198.0;
+  double _value = 18.12;
 
   @override
   Widget build(BuildContext context) {
@@ -26,29 +26,19 @@ class _AnimatedDigitDemoState extends State<AnimatedDigitDemo> {
       ),
       body: Container(
         alignment: Alignment.center,
-        child: AnimatedDigitWidget(
+        child: AnimatedFlipCounter(
           value: _value,
-          prefix: '¥',
+          textStyle: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.black),
+          // smallStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
           fractionDigits: 2,
-          loop: false,
-          valueColors: [
-            ValueColor(condition: () => _value > 100, color: Colors.yellow),
-            ValueColor(condition: () => _value > 200, color: Colors.blue),
-            ValueColor(condition: () => _value > 500, color: Colors.pink),
-            ValueColor(condition: () => _value > 1000, color: Colors.red),
-          ],
-          textStyle: TextStyle(
-            fontSize: 40,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-            // height: 1,
-          ),
+          duration: Duration(seconds: 1),
+          prefix: '¥',
         ),
       ),
       floatingActionButton: FloatingActionButton(
         child: Text('+'),
         onPressed: () => setState(() {
-          _value += 15.13;
+          _value += 13.12;
         }),
       ),
     );

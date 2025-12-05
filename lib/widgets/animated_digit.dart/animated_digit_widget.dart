@@ -5,8 +5,7 @@ import 'package:flutter/material.dart';
 
 import 'number_percision.dart';
 
-const TextStyle _$defaultTextStyle =
-    TextStyle(color: Colors.black, fontSize: 25);
+const TextStyle _$defaultTextStyle = TextStyle(color: Colors.black, fontSize: 25);
 
 /// 为了适配flutter 2 中的 `WidgetsBinding.instance` 可能为 `null`
 ///
@@ -21,10 +20,10 @@ class WidgetsBindingx {
 ///
 /// [value] is default display result
 ///
-typedef String FormatValue(String value);
+typedef FormatValue = String Function(String value);
 
 /// #### 自定义每一个 Widget
-typedef Widget AnimatedSingleWidgetBuilder(
+typedef AnimatedSingleWidgetBuilder = Widget Function(
   Size size,
   String value,
   bool isNumber,
@@ -32,10 +31,10 @@ typedef Widget AnimatedSingleWidgetBuilder(
 );
 
 /// #### 当值符合条件时，改变颜色
-typedef TextStyle ValueChangeTextStyle(TextStyle style);
+typedef ValueChangeTextStyle = TextStyle Function(TextStyle style);
 
 /// #### 当值符合条件时，改变颜色
-typedef bool ValueColorCondition();
+typedef ValueColorCondition = bool Function();
 
 /// #### 用来描述符合条件的 value 字体颜色
 ///
@@ -141,23 +140,19 @@ class SingleDigitData {
 class SingleDigitProvider extends InheritedWidget {
   /// The [SingleDigitData] `DI` provider widget
   const SingleDigitProvider({
-    Key? key,
+    super.key,
     required this.data,
-    required Widget child,
-  }) : super(key: key, child: child);
+    required super.child,
+  });
 
   final SingleDigitData data;
 
   static SingleDigitData of(BuildContext context) {
-    return context
-        .dependOnInheritedWidgetOfExactType<SingleDigitProvider>()!
-        .data;
+    return context.dependOnInheritedWidgetOfExactType<SingleDigitProvider>()!.data;
   }
 
   static SingleDigitData? maybeOf(BuildContext context) {
-    return context
-        .dependOnInheritedWidgetOfExactType<SingleDigitProvider>()
-        ?.data;
+    return context.dependOnInheritedWidgetOfExactType<SingleDigitProvider>()?.data;
   }
 
   @override
@@ -168,8 +163,7 @@ class SingleDigitProvider extends InheritedWidget {
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(properties);
-    properties.add(
-        DiagnosticsProperty<SingleDigitData>('data', data, showName: false));
+    properties.add(DiagnosticsProperty<SingleDigitData>('data', data, showName: false));
   }
 }
 
@@ -438,19 +432,19 @@ class AnimatedDigitWidget extends StatefulWidget {
   final bool firstScrollAnimate;
 
   /// 最小整数位数，不足时向左补 '0'，但是 [fractionDigits] 必须是 0
-  /// 
+  ///
   /// e.g. value = 1, [enableMinIntegerDigits] = true -> "01"
-  /// 
+  ///
   /// 🍓！🍓！🍓！🍓
-  /// 
+  ///
   /// [fractionDigits] it must be 0
-  /// 
+  ///
   /// 🍓🍓🍓🍓🍓🍓
   final bool enableMinIntegerDigits;
 
   /// see [AnimatedDigitWidget]
   AnimatedDigitWidget({
-    Key? key,
+    super.key,
     TextStyle? textStyle,
     this.controller,
     this.value,
@@ -470,11 +464,8 @@ class AnimatedDigitWidget extends StatefulWidget {
     this.valueColors,
     this.firstScrollAnimate = true,
     this.enableMinIntegerDigits = false,
-  })  : assert(separateLength >= 1,
-            "@separateLength at least greater than or equal to 1"),
-        assert(!(value == null && controller == null),
-            "the @value & @controller cannot be null at the same time"),
-        super(key: key) {
+  })  : assert(separateLength >= 1, "@separateLength at least greater than or equal to 1"),
+        assert(!(value == null && controller == null), "the @value & @controller cannot be null at the same time") {
     if (textStyle != null) {
       if (textStyle.color == null) {
         _textStyle = textStyle.copyWith(color: Colors.black);
@@ -492,8 +483,7 @@ class AnimatedDigitWidget extends StatefulWidget {
   }
 }
 
-class _AnimatedDigitWidgetState extends State<AnimatedDigitWidget>
-    with WidgetsBindingObserver {
+class _AnimatedDigitWidgetState extends State<AnimatedDigitWidget> with WidgetsBindingObserver {
   /// see [MediaQueryData]
   MediaQueryData? _mediaQueryData;
 
@@ -579,9 +569,7 @@ class _AnimatedDigitWidgetState extends State<AnimatedDigitWidget>
       style = dts.merge(widget._textStyle);
     }
 
-    if (_mediaQueryData?.textScaler != mq?.textScaler ||
-        _singleDigitData != sdp ||
-        dts != _defaultTextStyle) {
+    if (_mediaQueryData?.textScaler != mq?.textScaler || _singleDigitData != sdp || dts != _defaultTextStyle) {
       _markNeedRebuild();
     }
     _mediaQueryData = mq;
@@ -609,31 +597,28 @@ class _AnimatedDigitWidgetState extends State<AnimatedDigitWidget>
 
   String _formatNum(String numstr, {int fractionDigits = 2}) {
     String result;
-    final String _numstr = isNegative ? numstr.replaceFirst("-", "") : numstr;
-    final List<String> numSplitArr = num.parse(_numstr).toString().split('.');
+    final String numstr0 = isNegative ? numstr.replaceFirst("-", "") : numstr;
+    final List<String> numSplitArr = num.parse(numstr0).toString().split('.');
     if (numSplitArr.length < 2) {
       numSplitArr.add("".padRight(fractionDigits, '0'));
     }
     if (!widget.enableSeparator && fractionDigits < 1) {
       result = numSplitArr.first;
     }
-    final List<String> digitList =
-        List.from(numSplitArr.first.characters, growable: false);
+    final List<String> digitList = List.from(numSplitArr.first.characters, growable: false);
     if (widget.enableSeparator) {
       int len = digitList.length - 1;
       final separateSymbol = widget.separateSymbol ?? "";
       if (separateSymbol.isNotEmpty) {
         for (int index = 0, i = len; i >= 0; index++, i--)
-          if (index % widget.separateLength == 0 && i != len)
-            digitList[i] += separateSymbol;
+          if (index % widget.separateLength == 0 && i != len) digitList[i] += separateSymbol;
       }
     }
     // handle fraction digits
     if (fractionDigits > 0) {
       List<String> fractionList = List.from(numSplitArr.last.characters);
       if (fractionList.length > fractionDigits) {
-        fractionList =
-            fractionList.take(fractionDigits).toList(growable: false);
+        fractionList = fractionList.take(fractionDigits).toList(growable: false);
       } else {
         final padRightLen = fractionDigits - fractionList.length;
         //Equivalent to `padRight(padRightLen, "0")`
@@ -715,30 +700,23 @@ class _AnimatedDigitWidgetState extends State<AnimatedDigitWidget>
     return Row(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
       children: [
         if (widget.prefix != null) _buildChangeTextColorWidget(widget.prefix!),
         _buildNegativeSymbol(),
-        AnimatedSize(
-          duration: widget.duration,
-          curve: widget.curve,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: _widgets,
-          ),
-        ),
+        ..._widgets,
         if (widget.suffix != null) _buildChangeTextColorWidget(widget.suffix!),
       ],
     );
   }
 
   Widget _buildChangeTextColorWidget(String val) {
-    Widget result = Text(val, style: style);
+    final TextStyle charStyle = style.copyWith(fontSize: 20);
+    Widget result = Text(val, style: charStyle);
     final sdd = _singleDigitData;
     if (sdd == null || !sdd.prefixAndSuffixFollowValueColor) return result;
-    return sdd._buildChangeTextColorWidget(
-            context, val, style, null, widget.duration, widget.curve) ??
-        result;
+    return sdd._buildChangeTextColorWidget(context, val, charStyle, null, widget.duration, widget.curve) ?? result;
   }
 
   void _rebuild([String? value]) {
@@ -748,8 +726,12 @@ class _AnimatedDigitWidgetState extends State<AnimatedDigitWidget>
     if (widget.enableMinIntegerDigits && widget.fractionDigits == 0 && newValue.length < 2) {
       newValue = newValue.padLeft(2, "0");
     }
+    final bool hasFraction = widget.fractionDigits > 0;
+    final int decimalIndex = hasFraction ? newValue.indexOf(widget.decimalSeparator) : -1;
     for (var i = 0; i < newValue.length; i++) {
-      _addAnimatedSingleWidget(newValue[i]);
+      final bool useFractionStyle = hasFraction && decimalIndex >= 0 && i >= decimalIndex;
+      final TextStyle charStyle = useFractionStyle ? style.copyWith(fontSize: 20) : style;
+      _addAnimatedSingleWidget(newValue[i], charStyle);
     }
   }
 
@@ -760,14 +742,11 @@ class _AnimatedDigitWidgetState extends State<AnimatedDigitWidget>
     if (value == 0 || lenNew == lenOld) {
       if (lenNew < lenOld) {
         _widgets.removeRange(
-            lenNew - 1,
-            (lenOld - lenNew) +
-                widget.fractionDigits +
-                (widget.fractionDigits > 0 ? 1 : 0));
+            lenNew - 1, (lenOld - lenNew) + widget.fractionDigits + (widget.fractionDigits > 0 ? 1 : 0));
       }
       // 检查最小整数位数
       if (widget.enableMinIntegerDigits && widget.fractionDigits == 0 && _widgets.length < 2) {
-        _addAnimatedSingleWidget("0");
+        _addAnimatedSingleWidget("0", style);
       }
       for (var i = 0; i < (lenNew == 0 ? 1 : lenNew); i++) {
         final String curr = newValue[i];
@@ -780,8 +759,8 @@ class _AnimatedDigitWidgetState extends State<AnimatedDigitWidget>
 
   Widget _buildNegativeSymbol() {
     final String symbolKey = "_AdwChildSymbol";
-    Widget secondChild = _singleDigitData?._buildChangeTextColorWidget(context,
-            "-", style, ValueKey(symbolKey), widget.duration, widget.curve) ??
+    Widget secondChild = _singleDigitData?._buildChangeTextColorWidget(
+            context, "-", style, ValueKey(symbolKey), widget.duration, widget.curve) ??
         Text("-", key: ValueKey(symbolKey), style: style);
     return AnimatedCrossFade(
       key: ValueKey("_AdwAnimaNegativeSymbol"),
@@ -792,26 +771,25 @@ class _AnimatedDigitWidgetState extends State<AnimatedDigitWidget>
       secondCurve: widget.curve,
       duration: widget.duration,
       reverseDuration: widget.duration,
-      crossFadeState:
-          isNegative ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+      crossFadeState: isNegative ? CrossFadeState.showSecond : CrossFadeState.showFirst,
     );
   }
 
-  void _setValue(Key? _aswsKey, String value) {
-    assert(_aswsKey != null);
-    if (_aswsKey is GlobalKey<_AnimatedSingleWidgetState>) {
-      _aswsKey.currentState?.setValue(value);
+  void _setValue(Key? aswsKey, String value) {
+    assert(aswsKey != null);
+    if (aswsKey is GlobalKey<_AnimatedSingleWidgetState>) {
+      aswsKey.currentState?.setValue(value);
     }
   }
 
-  void _addAnimatedSingleWidget(String value) {
-    _widgets.add(_buildSingleWidget(value));
+  void _addAnimatedSingleWidget(String value, TextStyle charStyle) {
+    _widgets.add(_buildSingleWidget(value, charStyle));
   }
 
-  _AnimatedSingleWidget _buildSingleWidget(String value) {
+  _AnimatedSingleWidget _buildSingleWidget(String value, TextStyle charStyle) {
     return _AnimatedSingleWidget(
       initialValue: value,
-      textStyle: style,
+      textStyle: charStyle,
       boxDecoration: widget.boxDecoration,
       duration: widget.duration,
       curve: widget.curve,
@@ -991,16 +969,13 @@ class _AnimatedSingleWidgetState extends State<_AnimatedSingleWidget> {
   Size _getTextSize(String text) {
     final platformDispatcher = WidgetsBindingx.instance?.platformDispatcher;
     final fontWeight =
-        platformDispatcher?.accessibilityFeatures.boldText ?? false
-            ? FontWeight.bold
-            : _textStyle.fontWeight;
+        platformDispatcher?.accessibilityFeatures.boldText ?? false ? FontWeight.bold : _textStyle.fontWeight;
 
     final TextScaler textScaler;
     if (widget.textScaler != null) {
       textScaler = widget.textScaler!;
     } else {
-      textScaler =
-          TextScaler.linear(platformDispatcher?.textScaleFactor ?? 1.0);
+      textScaler = TextScaler.linear(platformDispatcher?.textScaleFactor ?? 1.0);
     }
 
     TextPainter painter = TextPainter(
@@ -1080,8 +1055,8 @@ class _AnimatedSingleWidgetState extends State<_AnimatedSingleWidget> {
         width: valueSize.width,
         height: valueSize.height,
         decoration: _boxDecoration,
-        child: child,
         duration: _duration,
+        child: child,
       );
     } else {
       child = Container(
@@ -1136,9 +1111,7 @@ class _AnimatedSingleWidgetState extends State<_AnimatedSingleWidget> {
     Widget child = defaultBuildSingleWidget(val);
     if (data == null) return child;
     final SingleDigitData sdd = data!;
-    child = sdd._buildChangeTextColorWidget(
-            context, val, _textStyle, null, widget.duration, widget.curve) ??
-        child;
+    child = sdd._buildChangeTextColorWidget(context, val, _textStyle, null, widget.duration, widget.curve) ?? child;
     if (sdd.builder != null) {
       child = sdd.builder!(valueSize, val, isNumber, child);
     }
@@ -1149,11 +1122,6 @@ class _AnimatedSingleWidgetState extends State<_AnimatedSingleWidget> {
       );
     }
     return child;
-  }
-
-  @override
-  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
-    super.debugFillProperties(properties);
   }
 }
 
@@ -1168,21 +1136,19 @@ class _AnimatedDigitColorWidget extends StatefulWidget {
   final Curve curve;
 
   const _AnimatedDigitColorWidget({
-    Key? key,
+    super.key,
     required this.text,
     required this.baseStyle,
     required this.targetColor,
     required this.duration,
     required this.curve,
-  }) : super(key: key);
+  });
 
   @override
-  _AnimatedDigitColorWidgetState createState() =>
-      _AnimatedDigitColorWidgetState();
+  _AnimatedDigitColorWidgetState createState() => _AnimatedDigitColorWidgetState();
 }
 
-class _AnimatedDigitColorWidgetState extends State<_AnimatedDigitColorWidget>
-    with SingleTickerProviderStateMixin {
+class _AnimatedDigitColorWidgetState extends State<_AnimatedDigitColorWidget> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<Color?> _colorAnim;
   Color? _currentShownColor;
