@@ -10,7 +10,7 @@ class AnimatedDigitDemo extends StatefulWidget {
 }
 
 class _AnimatedDigitDemoState extends State<AnimatedDigitDemo> {
-  double _value = 18.12;
+  double _value = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -18,6 +18,10 @@ class _AnimatedDigitDemoState extends State<AnimatedDigitDemo> {
       appBar: AppBar(
         title: const Text('AnimatedDigit Demo'),
         actions: [
+          IconButton(
+            onPressed: () => setState(() => _value = 0),
+            icon: Icon(Icons.refresh),
+          ),
           IconButton(
             onPressed: () => FlutterAux.show(context),
             icon: Icon(Icons.auto_fix_high),
@@ -28,17 +32,16 @@ class _AnimatedDigitDemoState extends State<AnimatedDigitDemo> {
         alignment: Alignment.center,
         child: AnimatedFlipCounter(
           value: _value,
-          textStyle: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.black),
-          // smallStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
+          intStyle: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.black),
+          secondStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
           fractionDigits: 2,
-          duration: Duration(seconds: 1),
           prefix: '¥',
         ),
       ),
       floatingActionButton: FloatingActionButton(
         child: Text('+'),
         onPressed: () => setState(() {
-          _value += 13.12;
+          _value = _value > 0 ? 0 : 1003.12;
         }),
       ),
     );

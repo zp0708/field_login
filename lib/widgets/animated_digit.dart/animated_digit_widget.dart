@@ -308,6 +308,8 @@ class AnimatedDigitWidget extends StatefulWidget {
   ///
   /// see [TextStyle]
   late final TextStyle _textStyle;
+  late final TextStyle _prefixTextStyle;
+  late final TextStyle _fractionTextStyle;
 
   /// 动画时间 | animate duration
   ///
@@ -446,6 +448,9 @@ class AnimatedDigitWidget extends StatefulWidget {
   AnimatedDigitWidget({
     super.key,
     TextStyle? textStyle,
+    TextStyle? valueTextStyle,
+    TextStyle? prefixTextStyle,
+    TextStyle? decimalTextStyle,
     this.controller,
     this.value,
     this.duration = const Duration(milliseconds: 300),
@@ -466,15 +471,13 @@ class AnimatedDigitWidget extends StatefulWidget {
     this.enableMinIntegerDigits = false,
   })  : assert(separateLength >= 1, "@separateLength at least greater than or equal to 1"),
         assert(!(value == null && controller == null), "the @value & @controller cannot be null at the same time") {
-    if (textStyle != null) {
-      if (textStyle.color == null) {
-        _textStyle = textStyle.copyWith(color: Colors.black);
-      } else {
-        _textStyle = textStyle;
-      }
-    } else {
-      _textStyle = _$defaultTextStyle;
-    }
+    TextStyle ensureColor(TextStyle style, Color fallback) =>
+        style.color == null ? style.copyWith(color: fallback) : style;
+
+    final TextStyle baseValueStyle = valueTextStyle ?? textStyle ?? _$defaultTextStyle;
+    _textStyle = ensureColor(baseValueStyle, Colors.black);
+    _prefixTextStyle = ensureColor(prefixTextStyle ?? _textStyle, _textStyle.color!);
+    _fractionTextStyle = ensureColor(decimalTextStyle ?? _textStyle, _textStyle.color!);
   }
 
   @override
@@ -492,6 +495,8 @@ class _AnimatedDigitWidgetState extends State<AnimatedDigitWidget> with WidgetsB
 
   // text style
   late TextStyle style;
+  late TextStyle _prefixStyle;
+  late TextStyle _fractionStyle;
 
   // Keep track of the DefaultTextStyle InheritedWidget value
   TextStyle? _defaultTextStyle;
@@ -539,6 +544,9 @@ class _AnimatedDigitWidgetState extends State<AnimatedDigitWidget> with WidgetsB
     WidgetsBindingx.instance?.addObserver(this);
     widget.controller?.addListener(_updateValue);
     value = currentValue;
+    style = widget._textStyle;
+    _prefixStyle = widget._prefixTextStyle;
+    _fractionStyle = widget._fractionTextStyle;
   }
 
   String _getFormatValueAsString() {
@@ -565,11 +573,22 @@ class _AnimatedDigitWidgetState extends State<AnimatedDigitWidget> with WidgetsB
     final sdp = SingleDigitProvider.maybeOf(context);
 
     final dts = DefaultTextStyle.of(context).style;
-    if (dts != _defaultTextStyle) {
-      style = dts.merge(widget._textStyle);
+    final mergedValueStyle = dts.merge(widget._textStyle);
+    final mergedPrefixStyle = dts.merge(widget._prefixTextStyle);
+    final mergedFractionStyle = dts.merge(widget._fractionTextStyle);
+
+    bool needsRebuild = false;
+    if (mergedValueStyle != style || mergedPrefixStyle != _prefixStyle || mergedFractionStyle != _fractionStyle) {
+      style = mergedValueStyle;
+      _prefixStyle = mergedPrefixStyle;
+      _fractionStyle = mergedFractionStyle;
+      needsRebuild = true;
     }
 
-    if (_mediaQueryData?.textScaler != mq?.textScaler || _singleDigitData != sdp || dts != _defaultTextStyle) {
+    if (_mediaQueryData?.textScaler != mq?.textScaler ||
+        _singleDigitData != sdp ||
+        dts != _defaultTextStyle ||
+        needsRebuild) {
       _markNeedRebuild();
     }
     _mediaQueryData = mq;
@@ -649,6 +668,10 @@ class _AnimatedDigitWidgetState extends State<AnimatedDigitWidget> with WidgetsB
       style = _defaultTextStyle!.merge(widget._textStyle);
       _markNeedRebuild();
     }
+    if (widget._prefixTextStyle != oldWidget._prefixTextStyle ||
+        widget._fractionTextStyle != oldWidget._fractionTextStyle) {
+      _markNeedRebuild();
+    }
   }
 
   @override
@@ -703,20 +726,32 @@ class _AnimatedDigitWidgetState extends State<AnimatedDigitWidget> with WidgetsB
       crossAxisAlignment: CrossAxisAlignment.baseline,
       textBaseline: TextBaseline.alphabetic,
       children: [
-        if (widget.prefix != null) _buildChangeTextColorWidget(widget.prefix!),
+        if (widget.prefix != null) _buildChangeTextColorWidget(widget.prefix!, _prefixStyle),
         _buildNegativeSymbol(),
         ..._widgets,
-        if (widget.suffix != null) _buildChangeTextColorWidget(widget.suffix!),
+        // AnimatedSize(
+        //   duration: widget.duration,
+        //   curve: widget.curve,
+        //   child: Row(
+        //     mainAxisSize: MainAxisSize.min,
+        //     mainAxisAlignment: MainAxisAlignment.center,
+        //     crossAxisAlignment: CrossAxisAlignment.end,
+        //     children: _widgets,
+        //   ),
+        // ),
+        if (widget.suffix != null) _buildChangeTextColorWidget(widget.suffix!, _prefixStyle),
       ],
     );
   }
 
-  Widget _buildChangeTextColorWidget(String val) {
-    final TextStyle charStyle = style.copyWith(fontSize: 20);
-    Widget result = Text(val, style: charStyle);
+  Widget _buildChangeTextColorWidget(String val, TextStyle baseStyle) {
+    // 确保文本样式使用统一的 height 属性，以便底部对齐
+    final TextStyle alignedStyle = baseStyle.height == null ? baseStyle.copyWith(height: 1.0) : baseStyle;
+    Widget result = Text(val, style: alignedStyle);
     final sdd = _singleDigitData;
     if (sdd == null || !sdd.prefixAndSuffixFollowValueColor) return result;
-    return sdd._buildChangeTextColorWidget(context, val, charStyle, null, widget.duration, widget.curve) ?? result;
+    // 移除 baseStyle != style 的判断，让前缀、后缀和小数部分也能应用颜色变化
+    return sdd._buildChangeTextColorWidget(context, val, alignedStyle, null, widget.duration, widget.curve) ?? result;
   }
 
   void _rebuild([String? value]) {
@@ -730,7 +765,7 @@ class _AnimatedDigitWidgetState extends State<AnimatedDigitWidget> with WidgetsB
     final int decimalIndex = hasFraction ? newValue.indexOf(widget.decimalSeparator) : -1;
     for (var i = 0; i < newValue.length; i++) {
       final bool useFractionStyle = hasFraction && decimalIndex >= 0 && i >= decimalIndex;
-      final TextStyle charStyle = useFractionStyle ? style.copyWith(fontSize: 20) : style;
+      final TextStyle charStyle = useFractionStyle ? _fractionStyle : style;
       _addAnimatedSingleWidget(newValue[i], charStyle);
     }
   }
@@ -759,12 +794,14 @@ class _AnimatedDigitWidgetState extends State<AnimatedDigitWidget> with WidgetsB
 
   Widget _buildNegativeSymbol() {
     final String symbolKey = "_AdwChildSymbol";
+    // 确保文本样式使用统一的 height 属性，以便底部对齐
+    final TextStyle alignedStyle = style.height == null ? style.copyWith(height: 1.0) : style;
     Widget secondChild = _singleDigitData?._buildChangeTextColorWidget(
-            context, "-", style, ValueKey(symbolKey), widget.duration, widget.curve) ??
-        Text("-", key: ValueKey(symbolKey), style: style);
+            context, "-", alignedStyle, ValueKey(symbolKey), widget.duration, widget.curve) ??
+        Text("-", key: ValueKey(symbolKey), style: alignedStyle);
     return AnimatedCrossFade(
       key: ValueKey("_AdwAnimaNegativeSymbol"),
-      firstChild: Text("", key: ValueKey(symbolKey), style: style),
+      firstChild: Text("", key: ValueKey(symbolKey), style: alignedStyle),
       secondChild: secondChild,
       sizeCurve: widget.curve,
       firstCurve: widget.curve,
@@ -787,6 +824,9 @@ class _AnimatedDigitWidgetState extends State<AnimatedDigitWidget> with WidgetsB
   }
 
   _AnimatedSingleWidget _buildSingleWidget(String value, TextStyle charStyle) {
+    // 当 prefixAndSuffixFollowValueColor 为 true 时，所有部分都应该跟随颜色变化
+    final bool followValueColor =
+        _singleDigitData?.prefixAndSuffixFollowValueColor == true ? true : (charStyle == style);
     return _AnimatedSingleWidget(
       initialValue: value,
       textStyle: charStyle,
@@ -795,6 +835,7 @@ class _AnimatedDigitWidgetState extends State<AnimatedDigitWidget> with WidgetsB
       curve: widget.curve,
       textScaler: _mediaQueryData?.textScaler,
       singleDigitData: _singleDigitData,
+      followValueColor: followValueColor,
       loop: widget.loop,
       autoSize: widget.autoSize,
       animateAutoSize: widget.animateAutoSize,
@@ -847,6 +888,7 @@ class _AnimatedSingleWidget extends StatefulWidget {
   final bool firstScrollAnimate;
 
   final AnimatedDigitController? controller;
+  final bool followValueColor;
 
   _AnimatedSingleWidget({
     required this.initialValue,
@@ -861,6 +903,7 @@ class _AnimatedSingleWidget extends StatefulWidget {
     this.autoSize = false,
     this.animateAutoSize = false,
     this.firstScrollAnimate = true,
+    this.followValueColor = true,
   }) : super(key: GlobalKey<_AnimatedSingleWidgetState>());
 
   @override
@@ -1103,7 +1146,9 @@ class _AnimatedSingleWidgetState extends State<_AnimatedSingleWidget> {
 
   /// 默认的构建单个 Widget 的内容
   Widget defaultBuildSingleWidget(String val) {
-    return Text(val, style: _textStyle);
+    // 确保文本样式使用统一的 height 属性，以便底部对齐
+    final TextStyle alignedStyle = _textStyle.height == null ? _textStyle.copyWith(height: 1.0) : _textStyle;
+    return Text(val, style: alignedStyle);
   }
 
   /// 根据配置构建单个 Widget 的内容
@@ -1111,7 +1156,9 @@ class _AnimatedSingleWidgetState extends State<_AnimatedSingleWidget> {
     Widget child = defaultBuildSingleWidget(val);
     if (data == null) return child;
     final SingleDigitData sdd = data!;
-    child = sdd._buildChangeTextColorWidget(context, val, _textStyle, null, widget.duration, widget.curve) ?? child;
+    if (widget.followValueColor) {
+      child = sdd._buildChangeTextColorWidget(context, val, _textStyle, null, widget.duration, widget.curve) ?? child;
+    }
     if (sdd.builder != null) {
       child = sdd.builder!(valueSize, val, isNumber, child);
     }

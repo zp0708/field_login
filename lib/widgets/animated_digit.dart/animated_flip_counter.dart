@@ -1,6 +1,4 @@
 import 'dart:math' as math;
-import 'dart:ui' show FontFeature;
-
 import 'package:flutter/widgets.dart';
 
 class AnimatedFlipCounter extends StatelessWidget {
@@ -25,7 +23,10 @@ class AnimatedFlipCounter extends StatelessWidget {
   ///
   /// Similar to the TextStyle property of Text widget, the style will
   /// be merged with the closest enclosing [DefaultTextStyle].
-  final TextStyle? textStyle;
+  final TextStyle? intStyle;
+
+  /// Except for the style of the int part
+  final TextStyle? secondStyle;
 
   /// Optional text to display before the counter. e.g. `$` + `-100` = `$-100`.
   final String? prefix;
@@ -90,12 +91,13 @@ class AnimatedFlipCounter extends StatelessWidget {
   final EdgeInsets padding;
 
   const AnimatedFlipCounter({
-    Key? key,
+    super.key,
     required this.value,
     this.duration = const Duration(milliseconds: 300),
     this.negativeSignDuration = const Duration(milliseconds: 150),
     this.curve = Curves.linear,
-    this.textStyle,
+    this.intStyle,
+    this.secondStyle,
     this.prefix,
     this.infix,
     this.suffix,
@@ -107,24 +109,29 @@ class AnimatedFlipCounter extends StatelessWidget {
     this.mainAxisAlignment = MainAxisAlignment.center,
     this.padding = EdgeInsets.zero,
   })  : assert(fractionDigits >= 0, 'fractionDigits must be non-negative'),
-        assert(wholeDigits >= 0, 'wholeDigits must be non-negative'),
-        super(key: key);
+        assert(wholeDigits >= 0, 'wholeDigits must be non-negative');
+
+  TextPainter _prePainter(BuildContext context, String text, TextStyle style) {
+    return TextPainter(
+      text: TextSpan(text: text, style: style),
+      textDirection: TextDirection.ltr,
+      textScaler: MediaQuery.textScalerOf(context),
+    )..layout();
+  }
 
   @override
   Widget build(BuildContext context) {
     // Merge the text style with the default style, and request tabular figures
     // for consistent width of digits (if supported by the font).
-    final style = DefaultTextStyle.of(context)
-        .style
-        .merge(textStyle)
-        .merge(const TextStyle(fontFeatures: [FontFeature.tabularFigures()]));
-
+    final defaultStyle = DefaultTextStyle.of(context).style;
+    final features = const TextStyle(fontFeatures: [FontFeature.tabularFigures()]);
+    final style = defaultStyle.merge(intStyle).merge(features);
+    final smallStyle = defaultStyle.merge(secondStyle).merge(features);
     // Layout number "0" (probably the widest digit) to see its size
-    final prototypeDigit = TextPainter(
-      text: TextSpan(text: '0', style: style),
-      textDirection: TextDirection.ltr,
-      textScaler: MediaQuery.textScalerOf(context),
-    )..layout();
+    final prototypeDigit = _prePainter(context, '0', style);
+    final prototypeOneDigit = _prePainter(context, '1', style);
+    final secondPrototypeDigit = _prePainter(context, '0', smallStyle);
+    final secondPrototypeOneDigit = _prePainter(context, '1', smallStyle);
 
     // Find the text color (or red as warning). This is so we can avoid using
     // `Opacity` and `AnimatedOpacity` widget, for better performance.
@@ -158,9 +165,11 @@ class AnimatedFlipCounter extends StatelessWidget {
       final digit = _SingleDigitFlipCounter(
         key: ValueKey(digits.length - i),
         value: digits[i].toDouble(),
-        duration: duration,
+        style: style,
+        duration: value == 0 ? Duration.zero : duration,
         curve: curve,
         size: prototypeDigit.size,
+        sizeForOne: prototypeOneDigit.size,
         color: color,
         padding: padding,
         // We might want to hide leading zeroes. The way we split digits, only
@@ -168,9 +177,7 @@ class AnimatedFlipCounter extends StatelessWidget {
         // split into [0, 5, 50, 500]. Since 50 and 500 are not 0, they are
         // always visible. But we should not show 0.48 as .48 so the last
         // zero before decimal point is always visible.
-        visible: hideLeadingZeroes
-            ? digits[i] != 0 || i == digits.length - fractionDigits - 1
-            : true,
+        visible: hideLeadingZeroes ? digits[i] != 0 || i == digits.length - fractionDigits - 1 : true,
       );
       integerWidgets.add(digit);
     }
@@ -205,45 +212,56 @@ class AnimatedFlipCounter extends StatelessWidget {
       }
     }
 
-    return DefaultTextStyle.merge(
-      style: style,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: mainAxisAlignment,
-        // Even in RTL languages, numbers should always be displayed LTR.
-        textDirection: TextDirection.ltr,
-        children: [
-          if (prefix != null) Text(prefix!),
-          // Draw the negative sign (-), if exists
-          ClipRect(
-            child: TweenAnimationBuilder(
-              // Animate the negative sign (-) appearing and disappearing
-              duration: negativeSignDuration,
-              tween: Tween(end: value < 0 ? 1.0 : 0.0),
-              builder: (_, double v, __) => Center(
-                widthFactor: v,
-                child: Opacity(opacity: v, child: const Text('-')),
+    return SizedBox(
+      height: prototypeDigit.height,
+      child: DefaultTextStyle.merge(
+        style: style,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: mainAxisAlignment,
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          // Even in RTL languages, numbers should always be displayed LTR.
+          textDirection: TextDirection.ltr,
+          children: [
+            if (prefix != null) Text(prefix!, style: smallStyle),
+            // Draw the negative sign (-), if exists
+            ClipRect(
+              child: TweenAnimationBuilder(
+                // Animate the negative sign (-) appearing and disappearing
+                duration: negativeSignDuration,
+                tween: Tween(end: value < 0 ? 1.0 : 0.0),
+                builder: (_, double v, __) => Center(
+                  widthFactor: v,
+                  child: Opacity(opacity: v, child: const Text('-')),
+                ),
               ),
             ),
-          ),
-          if (infix != null) Text(infix!),
-          // Draw digits before the decimal point
-          ...integerWidgets,
-          // Draw the decimal point
-          if (fractionDigits != 0) Text(decimalSeparator),
-          // Draw digits after the decimal point
-          for (int i = digits.length - fractionDigits; i < digits.length; i++)
-            _SingleDigitFlipCounter(
-              key: ValueKey('decimal$i'),
-              value: digits[i].toDouble(),
-              duration: duration,
-              curve: curve,
-              size: prototypeDigit.size,
-              color: color,
-              padding: padding,
-            ),
-          if (suffix != null) Text(suffix!),
-        ],
+            if (infix != null) Text(infix!, style: smallStyle),
+            // Draw digits before the decimal point
+            ...integerWidgets,
+            // Draw the decimal point
+            if (fractionDigits != 0)
+              Text(
+                decimalSeparator,
+                style: smallStyle,
+              ),
+            // Draw digits after the decimal point
+            for (int i = digits.length - fractionDigits; i < digits.length; i++)
+              _SingleDigitFlipCounter(
+                key: ValueKey('decimal$i'),
+                value: digits[i].toDouble(),
+                duration: duration,
+                style: smallStyle,
+                curve: curve,
+                size: secondPrototypeDigit.size,
+                sizeForOne: secondPrototypeOneDigit.size,
+                color: color,
+                padding: padding,
+              ),
+            if (suffix != null) Text(suffix!, style: smallStyle),
+          ],
+        ),
       ),
     );
   }
@@ -254,20 +272,24 @@ class _SingleDigitFlipCounter extends StatelessWidget {
   final Duration duration;
   final Curve curve;
   final Size size;
+  final Size sizeForOne;
   final Color color;
   final EdgeInsets padding;
   final bool visible; // user can choose to hide leading zeroes
+  final TextStyle style;
 
   const _SingleDigitFlipCounter({
-    Key? key,
+    super.key,
     required this.value,
     required this.duration,
     required this.curve,
     required this.size,
+    required this.sizeForOne,
     required this.color,
     required this.padding,
+    required this.style,
     this.visible = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -278,7 +300,10 @@ class _SingleDigitFlipCounter extends StatelessWidget {
       builder: (_, double value, __) {
         final whole = value ~/ 1;
         final decimal = value - whole;
-        final w = size.width + padding.horizontal;
+        final digit = whole % 10;
+        final next = (whole + 1) % 10;
+        final width = digit == 1 ? sizeForOne.width : size.width;
+        final w = width + padding.horizontal;
         final h = size.height + padding.vertical;
 
         return SizedBox(
@@ -287,12 +312,12 @@ class _SingleDigitFlipCounter extends StatelessWidget {
           child: Stack(
             children: <Widget>[
               _buildSingleDigit(
-                digit: whole % 10,
+                digit: digit,
                 offset: h * decimal,
                 opacity: 1 - decimal,
               ),
               _buildSingleDigit(
-                digit: (whole + 1) % 10,
+                digit: next,
                 offset: h * decimal - h,
                 opacity: decimal,
               ),
@@ -310,13 +335,13 @@ class _SingleDigitFlipCounter extends StatelessWidget {
   }) {
     // Try to avoid using the `Opacity` widget when possible, for performance.
     final Widget child;
-    if (color.opacity == 1) {
+    if (color.a == 1) {
       // If the text style does not involve transparency, we can modify
       // the text color directly.
       child = Text(
         '$digit',
         textAlign: TextAlign.center,
-        style: TextStyle(color: color.withOpacity(opacity.clamp(0, 1))),
+        style: style.copyWith(color: color.withValues(alpha: opacity.clamp(0, 1))),
       );
     } else {
       // Otherwise, we have to use the `Opacity` widget (less performant).
@@ -325,13 +350,14 @@ class _SingleDigitFlipCounter extends StatelessWidget {
         child: Text(
           '$digit',
           textAlign: TextAlign.center,
+          style: style,
         ),
       );
     }
-    return Positioned(
-      left: 0,
-      right: 0,
-      bottom: offset + padding.bottom,
+    // 使用 Transform.translate 来处理对齐问题，兼容 baseline 对齐
+    // offset 是从底部向上的偏移量，所以需要从底部向上移动 offset + padding.bottom
+    return Transform.translate(
+      offset: Offset(0, -(offset + padding.bottom)),
       child: child,
     );
   }
