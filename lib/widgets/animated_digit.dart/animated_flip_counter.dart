@@ -162,6 +162,7 @@ class AnimatedFlipCounter extends StatelessWidget {
       digits.add(loop ? v : v % 10);
       v ~/= 10;
     }
+    int leadingEdge = wholeDigits + fractionDigits - digits.length;
     while (digits.length < wholeDigits + fractionDigits) {
       digits.add(0); // padding leading zeroes
     }
@@ -169,12 +170,12 @@ class AnimatedFlipCounter extends StatelessWidget {
 
     // Generate the widgets needed for digits before the decimal point.
     final integerWidgets = <Widget>[];
-    final ln = digits.length - fractionDigits + 10;
-    for (int i = 0; i < ln; i++) {
-      final index = i - 10;
+    for (int i = 0; i < digits.length - fractionDigits; i++) {
+      final v = digits[i].toDouble();
+      // if (isLeadingZero) isLeadingZero = v == 0;
       final digit = _SingleDigitFlipCounter(
-        key: ValueKey(ln - i),
-        value: index >= 0 ? digits[index].toDouble() : 0,
+        key: ValueKey(digits.length - fractionDigits - i),
+        value: v,
         style: style,
         duration: duration,
         curve: curve,
@@ -187,8 +188,9 @@ class AnimatedFlipCounter extends StatelessWidget {
         // split into [0, 5, 50, 500]. Since 50 and 500 are not 0, they are
         // always visible. But we should not show 0.48 as .48 so the last
         // zero before decimal point is always visible.
-        visible:
-            index >= 0 && (hideLeadingZeroes ? digits[index] != 0 || i == digits.length - fractionDigits - 1 : true),
+        visible: hideLeadingZeroes
+            ? (digits[i] != 0 || i == digits.length - fractionDigits - 1 || (!loop && i >= leadingEdge))
+            : true,
       );
       integerWidgets.add(digit);
     }
@@ -319,7 +321,6 @@ class _SingleDigitFlipCounter extends StatelessWidget {
         final decimal = value - whole;
         final digit = whole % 10;
         final ex = (whole + 1) % 10;
-        print('$digit -- $ex -- $decimal');
         final exWidth = ex == 1 ? sizeForOne.width : size.width;
         final width = digit == 1 ? sizeForOne.width : size.width;
         final difference = width - exWidth;

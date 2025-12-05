@@ -35,13 +35,16 @@ class _AnimatedDigitDemoState extends State<AnimatedDigitDemo> {
           intStyle: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.black),
           secondStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
           fractionDigits: 2,
+          wholeDigits: 9,
+          hideLeadingZeroes: true,
+          loop: false,
           prefix: '¥',
         ),
       ),
       floatingActionButton: FloatingActionButton(
         child: Text('+'),
         onPressed: () => setState(() {
-          _value += 0.11;
+          _value = _value > 0 ? 0 : 32143243125.32;
         }),
       ),
     );
