@@ -11,6 +11,7 @@ class AnimatedDigitDemo extends StatefulWidget {
 
 class _AnimatedDigitDemoState extends State<AnimatedDigitDemo> {
   double _value = 0.00;
+  bool _loop = false;
 
   @override
   Widget build(BuildContext context) {
@@ -18,6 +19,7 @@ class _AnimatedDigitDemoState extends State<AnimatedDigitDemo> {
       appBar: AppBar(
         title: const Text('AnimatedDigit Demo'),
         actions: [
+          Switch(value: _loop, onChanged: (v) => setState(() => _loop = v)),
           IconButton(
             onPressed: () => setState(() => _value = 0),
             icon: Icon(Icons.refresh),
@@ -37,14 +39,14 @@ class _AnimatedDigitDemoState extends State<AnimatedDigitDemo> {
           fractionDigits: 2,
           wholeDigits: 9,
           hideLeadingZeroes: true,
-          loop: false,
+          loop: _loop,
           prefix: '¥',
         ),
       ),
       floatingActionButton: FloatingActionButton(
         child: Text('+'),
         onPressed: () => setState(() {
-          _value = _value > 0 ? 0 : 32143243125.32;
+          _value += 12.13;
         }),
       ),
     );
