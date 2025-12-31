@@ -39,7 +39,7 @@ class _AnimatedDigitDemoState extends State<AnimatedDigitDemo> {
           fractionDigits: 2,
           wholeDigits: 9,
           hideLeadingZeroes: true,
-          loop: _loop,
+          rollByDigit: _loop,
           prefix: '¥',
         ),
       ),

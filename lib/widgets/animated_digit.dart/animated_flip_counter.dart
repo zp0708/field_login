@@ -45,9 +45,9 @@ class AnimatedFlipCounter extends StatelessWidget {
 
   /// 数字变化是否需要从低位累加到高位
   /// 例如 value 增加了0.11
-  /// true: 会从 0.01 到 0.11，分位会进行 11 次动画
-  /// false: 两个分位只增加 1，只做一次动画
-  final bool loop;
+  /// false: 会从 0.01 到 0.11，分位会进行 11 次动画
+  /// true: 两个分位只增加 1，只做一次动画
+  final bool rollByDigit;
 
   /// How many digits to display, before the decimal point.
   ///
@@ -109,7 +109,7 @@ class AnimatedFlipCounter extends StatelessWidget {
     this.suffix,
     this.fractionDigits = 0,
     this.wholeDigits = 1,
-    this.loop = true,
+    this.rollByDigit = true,
     this.hideLeadingZeroes = false,
     this.thousandSeparator,
     this.decimalSeparator = '.',
@@ -159,7 +159,7 @@ class AnimatedFlipCounter extends StatelessWidget {
     List<int> digits = value == 0 ? [0] : [];
     int v = value.abs();
     while (v > 0) {
-      digits.add(loop ? v : v % 10);
+      digits.add(rollByDigit ? v % 10 : v);
       v ~/= 10;
     }
     int leadingEdge = wholeDigits + fractionDigits - digits.length;
@@ -189,7 +189,7 @@ class AnimatedFlipCounter extends StatelessWidget {
         // always visible. But we should not show 0.48 as .48 so the last
         // zero before decimal point is always visible.
         visible: hideLeadingZeroes
-            ? (digits[i] != 0 || i == digits.length - fractionDigits - 1 || (!loop && i >= leadingEdge))
+            ? (digits[i] != 0 || i == digits.length - fractionDigits - 1 || (rollByDigit && i >= leadingEdge))
             : true,
       );
       integerWidgets.add(digit);
@@ -315,7 +315,7 @@ class _SingleDigitFlipCounter extends StatelessWidget {
       duration: visible ? duration : Duration.zero,
       curve: curve,
       builder: (_, double value, __) {
-        if (!visible) return SizedBox.shrink();
+        if (!visible) return const SizedBox.shrink();
 
         final whole = value ~/ 1;
         final decimal = value - whole;
