@@ -341,7 +341,7 @@ class _AlignRulerState extends State<_AlignRuler> {
                       Switch(
                         value: _switched,
                         onChanged: _switchChanged,
-                        activeColor: Color(0xFF4A90E2),
+                        thumbColor: WidgetStatePropertyAll(Color(0xFF4A90E2)),
                         activeTrackColor: Color(0xFF4A90E2).withAlpha(75),
                         inactiveThumbColor: Colors.grey[400],
                         inactiveTrackColor: Colors.grey[300],

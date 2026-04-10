@@ -1,3 +1,4 @@
+import 'package:manicure/conf/env.dart';
 import 'plugins/console/console_plugin.dart';
 import 'plugins/device_info.dart';
 import 'package:flutter/material.dart';
@@ -12,13 +13,18 @@ import 'plugins/align_ruler.dart';
 import 'plugins/widget_detail_inspector/widget_detail_inspector.dart';
 import 'plugins/color_sucker.dart';
 import 'plugins/performance.dart';
+import 'plugins/websocket_plugin.dart';
+import 'plugins/host_setting_plugin.dart';
+import 'plugins/easy_localization_log/easy_localization_log.dart';
 
 /// Overlay 管理器，负责管理 overlay 的弹出和移除
 class FlutterAux {
-  static final rootKey = GlobalKey<OverlayState>();
   static OverlayEntry? _currentOverlay;
   static List<Pluggable> _plugins = [];
   static ValueChanged<String>? _onMessage;
+  /// 应用的版本号
+  static String? _appVersion;
+
   static List<Pluggable> get plugins => _plugins;
   static BuildContext? _context;
 
@@ -29,9 +35,11 @@ class FlutterAux {
     BuildContext context, {
     List<Pluggable>? plugins,
     ValueChanged<String>? onMessage,
+        String? appVersion,
   }) {
     _context = context;
     _onMessage = onMessage;
+    _appVersion = appVersion;
     _plugins = plugins ??
         [
           ProxySettings(),
@@ -43,7 +51,11 @@ class FlutterAux {
           WidgetDetailInspector(),
           ColorSucker(),
           Performance(),
+          WebsocketPlugin(),
+          EasyLocalizationLog(),
         ];
+    final env = Env.mode;
+    if (env == Env.dev) _plugins.add(HostSettings());
     // 显示入口
     showEntries();
   }
@@ -52,7 +64,7 @@ class FlutterAux {
   static void showEntries() {
     _plugins = plugins;
     // 显示入口
-    showPlugin(_context!, Entries());
+    showPlugin(_context!, Entries(onPlugin: (value) => {}));
   }
 
   static void showPlugin(BuildContext context, Pluggable plugin) async {
@@ -78,7 +90,6 @@ class FlutterAux {
     Offset position,
     Size size,
   ) {
-    final bool isEntries = plugin is Entries;
     return OverlayEntry(
       builder: (context) {
         if (plugin.isOverlay) {
@@ -91,8 +102,9 @@ class FlutterAux {
           plugin: plugin,
           position: position,
           size: size,
-          showReset: isEntries,
-          onClose: () => isEntries ? removeOverlay() : showEntries(),
+          appVersion: _appVersion,
+          onBack: () => showEntries(),
+          onClose: () => removeOverlay(),
           child: plugin.build(context),
         );
       },
@@ -165,7 +177,7 @@ class FlutterAux {
         _resetPlugin(prefs, plugin.name);
       }
       // 入口
-      _resetPlugin(prefs, Entries().name);
+      _resetPlugin(prefs, Entries(onPlugin: (value) => {}).name);
     } catch (e) {
       // 忽略错误
     }

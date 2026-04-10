@@ -60,26 +60,29 @@ class _HttpDumpListPageState extends State<HttpDumpListPage> {
     }
     return ListView.builder(
       padding: const EdgeInsets.all(10),
-      itemBuilder: (_, int index) => Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: EdgeInsets.all(10),
-        child: DumpItemWidget(
-          _filteredList[index],
-          highlight: _keyword,
-          onTap: () => _onTapItem(_filteredList[index]),
-        ),
-      ),
+      itemBuilder: (_, int index) {
+        final i = _filteredList.length - 1 - index;
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: EdgeInsets.all(10),
+          child: DumpItemWidget(
+            _filteredList[i],
+            highlight: _keyword,
+            onTap: () => _onTapItem(_filteredList[i]),
+          ),
+        );
+      },
       itemCount: _filteredList.length,
     );
   }

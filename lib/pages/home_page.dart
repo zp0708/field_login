@@ -1,5 +1,6 @@
 import 'package:field_login/demos/animated_digit_demo.dart';
 import 'package:field_login/demos/carousel_demo.dart';
+import 'package:field_login/demos/developing_demo.dart';
 import 'package:field_login/demos/generic_refresh_list_example.dart';
 import 'package:field_login/demos/page_view_demo.dart';
 import 'package:field_login/demos/anchor_overlay_demo.dart';
@@ -79,6 +80,13 @@ class HomePage extends StatelessWidget {
 
   Widget _buildComponentList(BuildContext context) {
     final components = [
+      _ComponentItem(
+        title: '开发中的组件',
+        description: '开发中的组件 演示',
+        icon: Icons.developer_board,
+        color: Colors.yellow,
+        demoPage: const DevelopingDemo(),
+      ),
       _ComponentItem(
         title: 'Random Moving 演示',
         description: 'Random Moving 演示',
@@ -230,7 +238,8 @@ class HomePage extends StatelessWidget {
 
     return Column(
       children: components.map((component) {
-        final hasRoute = component.demoPage != null || component.builder != null;
+        final hasRoute =
+            component.demoPage != null || component.builder != null;
         return Card(
           margin: const EdgeInsets.only(bottom: 16),
           child: ListTile(
@@ -271,8 +280,9 @@ class HomePage extends StatelessWidget {
                 ? () => Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) =>
-                            component.builder != null ? component.builder!(context) : component.demoPage!,
+                        builder: (context) => component.builder != null
+                            ? component.builder!(context)
+                            : component.demoPage!,
                       ),
                     )
                 : null,

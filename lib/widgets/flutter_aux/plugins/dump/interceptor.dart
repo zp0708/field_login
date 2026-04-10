@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:dio/dio.dart';
 import 'model.dart';
 
@@ -18,11 +16,9 @@ class DumpInterceptor extends Interceptor {
         HttpDumpStatus.requesting,
       );
 
-      record.requestHeader = _formatMap(options.headers);
-      record.requestQuery = _formatMap(options.queryParameters);
-      record.cURLHeader = _formatCURLMap(options.headers);
-      record.requestBody = json.encode(options.data);
-
+      record.requestHeader = options.headers;
+      record.requestQuery = options.queryParameters;
+      record.requestBody = options.data is Map ? options.data : options.data.toString();
       DumpManager.add(record);
     } catch (e) {
       // do nothing
@@ -30,28 +26,18 @@ class DumpInterceptor extends Interceptor {
     handler.next(options);
   }
 
-  static String _formatMap(Map<dynamic, dynamic> map) {
-    final StringBuffer sb = StringBuffer();
-    map.forEach((dynamic key, dynamic value) {
-      sb.write('$key=$value');
-      sb.write('\n');
-    });
-    return sb.toString().trim();
-  }
-
-  static String _formatCURLMap(Map<dynamic, dynamic> map) {
-    final StringBuffer sb = StringBuffer();
-    map.forEach((dynamic key, dynamic value) {
-      sb.write(' -H \'$key: $value\'');
-    });
-    return sb.toString().trim();
-  }
-
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
     try {
       final int code = response.statusCode ?? -1;
-      final dynamic body = response.data;
+      dynamic body = response.data;
+      // 图片上传时只返回一个空字符串
+      if (body is String && body.isEmpty) {
+        body = {
+          'statusCode': response.statusCode,
+          'statusMessage': response.statusMessage,
+        };
+      }
       final String? logId = response.headers['log_id']?.first;
       DumpManager.update(response.requestOptions.hashCode, code, body, logId);
     } catch (e) {
@@ -65,7 +51,7 @@ class DumpInterceptor extends Interceptor {
   void onError(DioException err, ErrorInterceptorHandler handler) {
     try {
       final int code = err.response?.statusCode ?? -1;
-      final String body = err.response?.toString() ?? '-1';
+      final dynamic body = err.response?.data ?? err.toString();
       DumpManager.update(err.requestOptions.hashCode, code, body, '');
     } catch (e) {
       // do nothing

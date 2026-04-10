@@ -13,16 +13,17 @@ class DumpManager {
 
   ///
   static void add(HttpDumpRecord record) {
-    _list.insert(0, record);
-    if (_list.length > 100) {
-      _list.removeLast();
+    _list.add(record);
+    if (_list.length > 110) {
+      _list.removeRange(0, 10);
     }
     _notifyObserver();
   }
 
   ///
   static void update(int requestId, int httpCode, dynamic responseBody, String? logId) {
-    for (final HttpDumpRecord record in _list) {
+    for (var i = _list.length - 1; i >= 0; i--) {
+      HttpDumpRecord record = _list[i];
       if (record.requestId == requestId) {
         record.logId = logId;
         record.httpCode = httpCode;

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 /// HttpStatus
 enum HttpDumpStatus {
   /// requesting
@@ -34,21 +36,19 @@ class HttpDumpRecord {
   DateTime? finishTime;
 
   ///
-  String? requestHeader;
-
-  String? cURLHeader;
+  Map<String, dynamic>? requestHeader;
 
   ///
-  String? requestQuery;
+  Map<String, dynamic>? requestQuery;
 
   ///
-  String? requestBody;
+  dynamic requestBody;
 
   ///
   int? httpCode;
 
   ///
-  String? responseBody;
+  // String? responseBody;
   dynamic response;
 
   /// 后端排查用
@@ -72,5 +72,39 @@ class HttpDumpRecord {
       return 0;
     }
     return finishTime!.millisecondsSinceEpoch - requestTime.millisecondsSinceEpoch;
+  }
+
+  String get getCURL {
+    final StringBuffer cmd = StringBuffer('curl');
+
+    // Method
+    cmd.write(' -X $method');
+
+    // URL
+    cmd.write(' $uri');
+
+    // Headers
+    cmd.write(' ${_getCURLHeader()}');
+
+    // Data (body)
+    if (requestBody != null) {
+      dynamic data = requestBody ?? '';
+      if (data is Map) {
+        data = json.encode(data);
+      } else {
+        data = data.toString();
+      }
+      cmd.write(' -d \'$data\'');
+    }
+
+    return cmd.toString();
+  }
+
+  String _getCURLHeader() {
+    final StringBuffer sb = StringBuffer();
+    requestHeader?.forEach((dynamic key, dynamic value) {
+      sb.write(' -H \'$key: $value\'');
+    });
+    return sb.toString().trim();
   }
 }

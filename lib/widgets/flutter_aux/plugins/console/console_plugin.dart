@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../pluggable.dart';
 import './console_manager.dart';
-import './show_date_time_style.dart';
 
 class ConsolePlugin extends Pluggable {
   ConsolePlugin({Key? key}) {
@@ -36,7 +35,6 @@ class _ConsolePageState extends State<_ConsolePage> with WidgetsBindingObserver 
   List<ConsoleItem> _logList = <ConsoleItem>[];
   StreamSubscription? _subscription;
   ScrollController? _controller;
-  ShowDateTimeStyle? _showDateTimeStyle;
   bool _top = false;
   RegExp? _filterExp;
 
@@ -45,14 +43,12 @@ class _ConsolePageState extends State<_ConsolePage> with WidgetsBindingObserver 
     _subscription?.cancel();
     _subscription = null;
     _controller = null;
-    _showDateTimeStyle = ShowDateTimeStyle.datetime;
     super.dispose();
   }
 
   @override
   void initState() {
     super.initState();
-    _showDateTimeStyle = ShowDateTimeStyle.none;
     _controller = ScrollController();
     _logList = ConsoleManager.logData.toList();
     _subscription = ConsoleManager.streamController!.stream.listen((onData) {
@@ -82,24 +78,10 @@ class _ConsolePageState extends State<_ConsolePage> with WidgetsBindingObserver 
     setState(() {});
   }
 
-  String _dateTimeString(int logIndex) {
+  String _dateTimeString(ConsoleItem item) {
     String result = '';
-    switch (_showDateTimeStyle) {
-      case ShowDateTimeStyle.datetime:
-        result = _logList[_logList.length - logIndex - 1].dateTime.toString().padRight(26, '0');
-        break;
-      case ShowDateTimeStyle.time:
-        result = _logList[_logList.length - logIndex - 1].dateTime.toString().padRight(26, '0').substring(11);
-        break;
-      case ShowDateTimeStyle.timestamp:
-        result = '${_logList[_logList.length - logIndex - 1].dateTime.millisecondsSinceEpoch}';
-        break;
-      case ShowDateTimeStyle.none:
-        result = '';
-        break;
-      default:
-        break;
-    }
+    result = item.dateTime.toString().padRight(26, '0');
+    result = '${result.substring(11, result.length - 3)} ';
     return result;
   }
 
@@ -116,7 +98,7 @@ class _ConsolePageState extends State<_ConsolePage> with WidgetsBindingObserver 
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.black,
+      color: Colors.white,
       child: Column(
         children: [
           Container(
@@ -161,6 +143,13 @@ class _ConsolePageState extends State<_ConsolePage> with WidgetsBindingObserver 
                     _top ? 'top' : 'bottom',
                     style: TextStyle(fontSize: 12),
                   ),
+                ),
+                ElevatedButton(
+                  onPressed: () => ConsoleManager.clearLog(),
+                  child: Text(
+                    'clear',
+                    style: TextStyle(fontSize: 12),
+                  ),
                 )
               ],
             ),
@@ -171,24 +160,27 @@ class _ConsolePageState extends State<_ConsolePage> with WidgetsBindingObserver 
               controller: _controller,
               itemCount: _logList.length,
               itemBuilder: (BuildContext context, int index) {
+                final idx = _logList.length - index - 1;
+                final item = _logList[idx];
                 return Padding(
-                  padding: const EdgeInsets.only(left: 8, right: 8, top: 3, bottom: 3),
-                  child: RichText(
-                    text: TextSpan(
+                  padding: const EdgeInsets.only(left: 8, right: 8, top: 10, bottom: 3),
+                  child: SelectableText.rich(
+                    onTap: () => setState(() => item.show = !item.show),
+                    TextSpan(
                       children: [
                         TextSpan(
-                          text: _dateTimeString(index),
+                          text: _dateTimeString(item),
                           style: TextStyle(
-                            color: Colors.white60,
+                            color: Colors.red,
                             fontFamily: 'Courier',
                             fontSize: 16,
                             fontWeight: FontWeight.w400,
                           ),
                         ),
                         TextSpan(
-                          text: _logList[_logList.length - index - 1].message,
+                          text: item.message,
                           style: TextStyle(
-                            color: Colors.white,
+                            color: Colors.black,
                             fontFamily: 'Courier',
                             fontSize: 16,
                             fontWeight: FontWeight.w400,
@@ -196,6 +188,7 @@ class _ConsolePageState extends State<_ConsolePage> with WidgetsBindingObserver 
                         ),
                       ],
                     ),
+                    maxLines: item.show ? null : 1,
                   ),
                 );
               },

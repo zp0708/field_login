@@ -1,35 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:manicure/third/flutter_aux/plugins/entries.dart';
 
-import 'flutter_aux.dart';
-import 'plugins/pluggable.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../plugins/pluggable.dart';
 
-/// 功能入口网格组件
-class PluginWrapper extends StatefulWidget {
-  final Pluggable plugin;
-  final Offset position;
-  final Size size;
-  final VoidCallback? onClose;
-  final VoidCallback? onBack;
-  final Widget child;
-  final String? appVersion;
-
-  const PluginWrapper({
+/// 可拖动组件
+class DraggableWidget extends StatefulWidget {
+  const DraggableWidget({
     super.key,
     required this.child,
     required this.plugin,
-    required this.position,
-    required this.size,
-    this.onClose,
-    this.onBack,
-    this.appVersion,
   });
 
+  final Widget child;
+
+  final Pluggable plugin;
+
   @override
-  State<PluginWrapper> createState() => _PluginWrapperState();
+  State<DraggableWidget> createState() => _DraggableWidgetState();
 }
 
-class _PluginWrapperState extends State<PluginWrapper> {
+class _DraggableWidgetState extends State<DraggableWidget> {
   Offset _position = Offset.zero;
   Size _size = Size.zero;
   bool _isDragging = false;
@@ -41,12 +31,20 @@ class _PluginWrapperState extends State<PluginWrapper> {
 
   @override
   void initState() {
-    _position = widget.position;
-    _size = widget.size;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _screenSize = MediaQuery.of(context).size;
-    });
+    _onShow();
     super.initState();
+  }
+
+  void _onShow() async {
+    final position = await _getSavedPosition() ?? Offset(50, 50);
+    final size = await _getSavedSize() ?? widget.plugin.size;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() {
+        _screenSize = MediaQuery.of(context).size;
+        _position = position;
+        _size = size;
+      });
+    });
   }
 
   void _onPanStart(DragStartDetails details) {
@@ -78,7 +76,7 @@ class _PluginWrapperState extends State<PluginWrapper> {
     });
 
     // 拖拽结束时保存位置
-    FlutterAux.savePosition(widget.plugin.name, _position);
+    _savePosition(_position);
   }
 
   // 大小调整相关方法
@@ -111,12 +109,11 @@ class _PluginWrapperState extends State<PluginWrapper> {
     });
 
     // 大小调整结束时保存大小
-    FlutterAux.saveSize(widget.plugin.name, _size);
+    _saveSize(_size);
   }
 
   @override
   Widget build(BuildContext context) {
-    final isEntries = widget.plugin is Entries;
     return Positioned(
       top: _position.dy,
       left: _position.dx,
@@ -168,21 +165,18 @@ class _PluginWrapperState extends State<PluginWrapper> {
                         ),
                       ),
                       Spacer(),
-                      if (!isEntries)
-                        InkWell(
-                          onTap: widget.onBack,
-                          child: SizedBox(
-                            height: 44,
-                            width: 44,
-                            child: Icon(
-                              Icons.remove,
-                              color: Colors.blue.shade700,
-                              size: 20,
-                            ),
+                      InkWell(
+                        child: SizedBox(
+                          height: 44,
+                          width: 44,
+                          child: Icon(
+                            Icons.remove,
+                            color: Colors.blue.shade700,
+                            size: 20,
                           ),
                         ),
+                      ),
                       InkWell(
-                        onTap: widget.onClose,
                         child: SizedBox(
                           height: 44,
                           width: 44,
@@ -206,7 +200,7 @@ class _PluginWrapperState extends State<PluginWrapper> {
                       left: 0,
                       bottom: 20,
                       right: 0,
-                      child: widget.child,
+                      child: Container(color: Colors.red, child: widget.plugin.build(context)),
                     ),
                     // 大小调整手柄 - 右下角
                     Positioned(
@@ -234,60 +228,6 @@ class _PluginWrapperState extends State<PluginWrapper> {
                         ),
                       ),
                     ),
-                    // reset 按钮
-                    if (isEntries)
-                      Positioned(
-                        left: 0,
-                        bottom: 0,
-                        child: GestureDetector(
-                          onTap: () {
-                            FlutterAux.resetPlugins();
-                            setState(() {
-                              _size = widget.plugin.size;
-                            });
-                          },
-                          child: Container(
-                            width: 20,
-                            height: 20,
-                            decoration: BoxDecoration(
-                              color: Colors.blue.shade300,
-                              borderRadius: const BorderRadius.only(
-                                bottomLeft: Radius.circular(12),
-                                topRight: Radius.circular(12),
-                              ),
-                            ),
-                            child: Icon(
-                              Icons.refresh,
-                              size: 12,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    // reset 按钮
-                    if (!isEntries && widget.appVersion != null)
-                      Positioned(
-                        left: 0,
-                        bottom: 0,
-                        child: Container(
-                          height: 20,
-                          decoration: BoxDecoration(
-                            color: Colors.blue.shade300,
-                            borderRadius: const BorderRadius.only(
-                              bottomLeft: Radius.circular(12),
-                              topRight: Radius.circular(12),
-                            ),
-                          ),
-                          child: Text(
-                            '（${widget.appVersion}）',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.black,
-                            ),
-                          ),
-                        ),
-                      ),
                   ],
                 ),
               ),
@@ -297,73 +237,56 @@ class _PluginWrapperState extends State<PluginWrapper> {
       ),
     );
   }
-}
 
-class PluginOverlayWrapper extends StatelessWidget {
-  final Widget child;
-  final Pluggable plugin;
+  /// 获取保存的位置
+  Future<Offset?> _getSavedPosition() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final x = prefs.getDouble('overlay_position_${widget.plugin.name}_x');
+      final y = prefs.getDouble('overlay_position_${widget.plugin.name}_y');
+      if (x != null && y != null) {
+        return Offset(x, y);
+      }
+    } catch (e) {
+      // 忽略错误，返回 null
+    }
+    return null;
+  }
 
-  const PluginOverlayWrapper({
-    super.key,
-    required this.child,
-    required this.plugin,
-  });
+  /// 保存当前位置
+  Future<void> _savePosition(Offset position) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setDouble('overlay_position_${widget.plugin.name}_x', position.dx);
+      await prefs.setDouble('overlay_position_${widget.plugin.name}_y', position.dy);
+    } catch (e) {
+      // 忽略错误
+    }
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    return Navigator(
-      onGenerateInitialRoutes: (NavigatorState state, _) => [
-        MaterialPageRoute(
-          builder: (_) => Material(
-            type: MaterialType.transparency,
-            child: Stack(
-              children: [
-                child,
-                Positioned(
-                  right: 10,
-                  top: 0,
-                  child: SafeArea(
-                    child: Row(
-                      children: [
-                        IconButton(
-                          style: IconButton.styleFrom(
-                            backgroundColor: Colors.black.withValues(alpha: 0.3),
-                          ),
-                          icon: Icon(Icons.remove),
-                          onPressed: () => FlutterAux.showEntries(),
-                        ),
-                        SizedBox(width: 5),
-                        IconButton(
-                          style: IconButton.styleFrom(
-                            backgroundColor: Colors.black.withValues(alpha: 0.3),
-                          ),
-                          icon: Icon(Icons.close),
-                          onPressed: () => FlutterAux.removeOverlay(),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                if (plugin.tips.isNotEmpty)
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    child: SafeArea(
-                      child: Align(
-                        alignment: Alignment.topCenter,
-                        child: Text(
-                          plugin.tips,
-                          style: TextStyle(fontSize: 14),
-                        ),
-                      ),
-                    ),
-                  )
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
+  /// 获取保存的大小
+  Future<Size?> _getSavedSize() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final width = prefs.getDouble('overlay_size_${widget.plugin.name}_width');
+      final height = prefs.getDouble('overlay_size_${widget.plugin.name}_height');
+      if (width != null && height != null) {
+        return Size(width, height);
+      }
+    } catch (e) {
+      // 忽略错误，返回 null
+    }
+    return null;
+  }
+
+  /// 保存大小
+  Future<void> _saveSize(Size size) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setDouble('overlay_size_${widget.plugin.name}_width', size.width);
+      await prefs.setDouble('overlay_size_${widget.plugin.name}_height', size.height);
+    } catch (e) {
+      // 忽略错误
+    }
   }
 }

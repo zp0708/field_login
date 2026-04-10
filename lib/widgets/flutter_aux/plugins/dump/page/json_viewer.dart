@@ -2,6 +2,8 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart';
+import 'package:manicure/third/flutter_aux/flutter_aux.dart';
 
 class JsonViewerController extends ChangeNotifier {
   final List<GlobalKey> _anchors = <GlobalKey>[];
@@ -9,8 +11,11 @@ class JsonViewerController extends ChangeNotifier {
   bool _notifyScheduled = false;
 
   List<GlobalKey> get anchors => List<GlobalKey>.unmodifiable(_anchors);
+
   int get length => _anchors.length;
+
   int get currentIndex => _currentIndex;
+
   GlobalKey? get currentAnchor => _anchors.isEmpty ? null : _anchors[_currentIndex];
 
   void addAnchor(GlobalKey key) {
@@ -77,7 +82,8 @@ class JsonViewerScope extends InheritedNotifier<JsonViewerController> {
 
   // 不建立依赖关系的读取，避免子节点因为收集锚点而跟随重建
   static JsonViewerController? read(BuildContext context) {
-    final InheritedElement? element = context.getElementForInheritedWidgetOfExactType<JsonViewerScope>();
+    final InheritedElement? element =
+        context.getElementForInheritedWidgetOfExactType<JsonViewerScope>();
     final JsonViewerScope? scope = element?.widget as JsonViewerScope?;
     return scope?.notifier;
   }
@@ -353,12 +359,20 @@ class JsonObjectViewerState extends State<JsonObjectViewer> {
       );
     } else if (entry.value is int) {
       return Expanded(
-        child: Text(
+        child: SelectableText(
           entry.value.toString(),
           style: TextStyle(color: Colors.teal),
         ),
       );
     } else if (entry.value is String) {
+      final String value = entry.value as String;
+      if (value.length > 100) {
+        return _buildCopyableText(
+          context,
+          entry.value,
+          TextStyle(color: Colors.redAccent),
+        );
+      }
       return Expanded(
         child: _buildHighlightedText(
           context,
@@ -378,7 +392,7 @@ class JsonObjectViewerState extends State<JsonObjectViewer> {
       );
     } else if (entry.value is double) {
       return Expanded(
-        child: Text(
+        child: SelectableText(
           entry.value.toString(),
           style: TextStyle(color: Colors.teal),
         ),
@@ -469,7 +483,8 @@ class JsonArrayViewerState extends State<JsonArrayViewer> {
   @override
   void didUpdateWidget(covariant JsonArrayViewer oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.unfold != widget.unfold || oldWidget.jsonArray.length != widget.jsonArray.length) {
+    if (oldWidget.unfold != widget.unfold ||
+        oldWidget.jsonArray.length != widget.jsonArray.length) {
       openFlag = List.filled(widget.jsonArray.length, widget.unfold);
     }
   }
@@ -483,15 +498,7 @@ class JsonArrayViewerState extends State<JsonArrayViewer> {
       list.add(Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
-          ex
-              ? ((openFlag[i])
-                  ? Icon(Icons.arrow_drop_down, size: 14, color: Colors.grey[700])
-                  : Icon(Icons.arrow_right, size: 14, color: Colors.grey[700]))
-              : const Icon(
-                  Icons.arrow_right,
-                  color: Color.fromARGB(0, 0, 0, 0),
-                  size: 14,
-                ),
+          getArrow(i, ex, ink),
           (ex && ink)
               ? getInkWell(i)
               : Text(
@@ -505,7 +512,7 @@ class JsonArrayViewerState extends State<JsonArrayViewer> {
             style: TextStyle(color: Colors.grey),
           ),
           const SizedBox(width: 3),
-          getValueWidget(content, i)
+          getValueWidget(content, i),
         ],
       ));
       list.add(const SizedBox(height: 4));
@@ -520,6 +527,28 @@ class JsonArrayViewerState extends State<JsonArrayViewer> {
       i++;
     }
     return list;
+  }
+
+  getArrow(int index, bool ex, bool ink) {
+    final iconData = openFlag[index] ? Icons.arrow_drop_down : Icons.arrow_right;
+    final icon = Icon(iconData, size: 14, color: Colors.grey[700]);
+    if (ex && ink) {
+      return InkWell(
+        onTap: () {
+          setState(() {
+            openFlag[index] = !openFlag[index];
+          });
+        },
+        child: icon,
+      );
+    } else if (ex) {
+      return icon;
+    }
+    return const Icon(
+      Icons.arrow_right,
+      color: Color.fromARGB(0, 0, 0, 0),
+      size: 14,
+    );
   }
 
   getInkWell(int index) {
@@ -543,7 +572,7 @@ class JsonArrayViewerState extends State<JsonArrayViewer> {
       );
     } else if (content is int) {
       return Expanded(
-        child: Text(
+        child: SelectableText(
           content.toString(),
           style: TextStyle(color: Colors.teal),
         ),
@@ -657,7 +686,7 @@ Widget _buildHighlightedText(
       baseline: TextBaseline.alphabetic,
       child: Container(
         key: key,
-        color: highlightColor.withOpacity(0.6),
+        color: highlightColor.withValues(alpha: 0.6),
         child: Text(match, style: baseStyle.copyWith(color: Colors.black)),
       ),
     ));
@@ -675,5 +704,35 @@ Widget _buildHighlightedText(
   return RichText(
     text: TextSpan(children: spans, style: baseStyle),
     maxLines: null,
+  );
+}
+
+Widget _buildCopyableText(BuildContext context, String text, TextStyle baseStyle) {
+  return Expanded(
+    child: Row(
+      children: [
+        Expanded(
+          child: Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: baseStyle,
+          ),
+        ),
+        SizedBox(width: 5),
+        IconButton(
+          onPressed: () {
+            Clipboard.setData(ClipboardData(text: text));
+            FlutterAux.onMessage('数据已复制到剪贴板');
+          },
+          icon: Icon(Icons.copy, size: 16, color: Colors.grey.shade600),
+          style: IconButton.styleFrom(
+            minimumSize: Size.zero,
+            padding: EdgeInsets.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+        ),
+      ],
+    ),
   );
 }

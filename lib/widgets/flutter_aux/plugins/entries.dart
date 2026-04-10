@@ -3,6 +3,10 @@ import 'pluggable.dart';
 import '../flutter_aux.dart';
 
 class Entries extends Pluggable {
+  Entries({required this.onPlugin});
+
+  final ValueChanged<Pluggable> onPlugin;
+
   @override
   String get name => 'entries';
 
@@ -14,7 +18,11 @@ class Entries extends Pluggable {
 
   @override
   Widget build(BuildContext context) {
-    return FunctionGridOverlay(plugins: FlutterAux.plugins, plugin: this);
+    return FunctionGridOverlay(
+      plugins: FlutterAux.plugins,
+      plugin: this,
+      onPlugin: onPlugin,
+    );
   }
 }
 
@@ -23,16 +31,19 @@ class FunctionGridOverlay extends StatelessWidget {
   final Pluggable plugin;
   final List<Pluggable> plugins;
 
+  final ValueChanged<Pluggable> onPlugin;
+
   const FunctionGridOverlay({
     super.key,
     required this.plugins,
     required this.plugin,
+    required this.onPlugin,
   });
 
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.only(left: 10, right: 10, top: 10, bottom: 20),
       child: Wrap(
         spacing: 8,
         runSpacing: 8,
@@ -41,9 +52,7 @@ class FunctionGridOverlay extends StatelessWidget {
           (idx) {
             final entry = plugins[idx];
             return GestureDetector(
-              onTap: () {
-                FlutterAux.showPlugin(context, entry);
-              },
+              onTap: () => onPlugin(entry),
               child: Container(
                 width: 100,
                 height: 80,

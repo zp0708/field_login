@@ -38,7 +38,7 @@ class _ColorSucker extends StatefulWidget {
 
 class _ColorSuckerState extends State<_ColorSucker> {
   late Size _magnifierSize;
-  double? _scale;
+  double _scale = 0.0;
   BorderRadius? _radius;
   Color _currentColor = Colors.white;
   Offset _magnifierPosition = Offset.zero;
@@ -60,9 +60,9 @@ class _ColorSuckerState extends State<_ColorSucker> {
     final ui.FlutterView view = ui.PlatformDispatcher.instance.views.first;
     _windowSize = view.physicalSize / view.devicePixelRatio;
     _magnifierSize = Size(120, 120);
-    _scale = 8;
+    _scale = 8.0;
     _radius = BorderRadius.circular(_magnifierSize.longestSide);
-    _matrix = Matrix4.identity()..scale(_scale);
+    _matrix = Matrix4.identity()..scaleByDouble(_scale, _scale, 1.0, 1.0);
     _magnifierPosition = _windowSize.center(Offset.zero) - _magnifierSize.center(Offset.zero);
     super.initState();
   }
@@ -86,9 +86,9 @@ class _ColorSuckerState extends State<_ColorSucker> {
     double newX = centerPosition.dx;
     double newY = centerPosition.dy;
     final Matrix4 newMatrix = Matrix4.identity()
-      ..translate(newX, newY)
-      ..scale(_scale, _scale)
-      ..translate(-newX, -newY);
+      ..translateByDouble(newX, newY, 1.0, 1.0)
+      ..scaleByDouble(_scale, _scale, 1.0, 1.0)
+      ..translateByDouble(-newX, -newY, 1.0, 1.0);
     _matrix = newMatrix;
     _searchPixel(centerPosition);
     setState(() {

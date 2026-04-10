@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -26,18 +27,36 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
   bool _unfold = false;
   final JsonViewerController _jsonController = JsonViewerController();
   final ScrollController _scrollController = ScrollController();
+  Timer? _debounce;
 
   @override
   void initState() {
     _record = widget._record;
     _searchController = TextEditingController();
-    _searchController.addListener(() {
+    _searchController.addListener(_update);
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchController.dispose();
+    _jsonController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  // 做一下防抖
+  void _update() {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 350), () {
       setState(() {
-        _unfold = true;
         _keyword = _searchController.text.trim();
+        if (_keyword.isNotEmpty) {
+          _unfold = true;
+        }
       });
     });
-    super.initState();
   }
 
   @override
@@ -58,7 +77,16 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
                   icon: Icon(Icons.arrow_back, color: Colors.white),
                   onPressed: () => Navigator.pop(context),
                 ),
-                Text('接口数据', style: TextStyle(color: Colors.white)),
+                Expanded(
+                  child: Text(
+                    _record.uri,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    style: TextStyle(
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
                 ElevatedButton(
                   onPressed: _copyLink,
                   style: ElevatedButton.styleFrom(
@@ -68,7 +96,7 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
-                  child: const Text('复制链接', style: TextStyle(fontSize: 12)),
+                  child: const Text('复cURL', style: TextStyle(fontSize: 12)),
                 ),
               ],
             ),
@@ -128,7 +156,6 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
   }
 
   Widget _buildResponseInfoCard() {
-    print('object');
     return _buildInfoCard(
       title: '响应信息',
       icon: Icons.download,
@@ -250,7 +277,7 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
           if (_keyword.isNotEmpty)
             AnimatedBuilder(
               animation: _jsonController,
-              builder: (_, __) {
+              builder: (_, _) {
                 final int len = _jsonController.length;
                 final int idx = len == 0 ? 0 : _jsonController.currentIndex;
                 return Row(
@@ -258,7 +285,7 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: Colors.yellow.withOpacity(0.3),
+                        color: Colors.yellow.withValues(alpha: 0.3),
                         borderRadius: BorderRadius.circular(4),
                         border: Border.all(color: Colors.amber.shade600),
                       ),
@@ -273,14 +300,22 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
                       icon: const Icon(Icons.keyboard_arrow_up, size: 18, color: Colors.blue),
                       onPressed: len == 0 ? null : _goPrevHighlight,
                       padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(minHeight: 32, minWidth: 32),
+                      style: IconButton.styleFrom(
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size(32, 32),
+                      ),
                     ),
                     IconButton(
                       tooltip: '下一处',
                       icon: const Icon(Icons.keyboard_arrow_down, size: 18, color: Colors.blue),
                       onPressed: len == 0 ? null : _goNextHighlight,
                       padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(minHeight: 32, minWidth: 32),
+                      style: IconButton.styleFrom(
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size(32, 32),
+                      ),
                     ),
                   ],
                 );
@@ -381,7 +416,8 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(_unfold ? Icons.unfold_less : Icons.unfold_more, size: 16, color: Colors.blue),
+                      Icon(_unfold ? Icons.unfold_less : Icons.unfold_more,
+                          size: 16, color: Colors.blue),
                       const SizedBox(width: 4),
                       Text(
                         _unfold ? '收起' : '展开',
@@ -430,31 +466,7 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
   }
 
   void _copyLink() {
-    _copyData(_toCurlCommand());
-  }
-
-  String _toCurlCommand() {
-    final StringBuffer cmd = StringBuffer('curl');
-
-    // Method
-    cmd.write(' -X ${_record.method}');
-
-    // URL
-    cmd.write(' ${_record.uri}');
-
-    // Headers
-    cmd.write(' ${_record.cURLHeader}');
-
-    // Data (body)
-    if (_record.requestBody != null) {
-      String data = _record.requestBody ?? '';
-      if (data is Map) {
-        data = data.toString();
-      }
-      cmd.write(' -d \'$data\'');
-    }
-
-    return cmd.toString();
+    _copyData(_record.getCURL);
   }
 
   Widget _buildCodeViewer({
@@ -601,16 +613,9 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
   }
 
   // 复制数据到剪贴板
-  void _copyData(String data) {
-    Clipboard.setData(ClipboardData(text: data));
+  void _copyData(dynamic data) {
+    final text = data is Map ? json.encode(data) : data.toString();
+    Clipboard.setData(ClipboardData(text: text));
     FlutterAux.onMessage('数据已复制到剪贴板');
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    _jsonController.dispose();
-    _scrollController.dispose();
-    super.dispose();
   }
 }

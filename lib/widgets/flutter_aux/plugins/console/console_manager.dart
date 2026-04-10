@@ -8,7 +8,8 @@ const int maxLine = 1000;
 class ConsoleItem {
   final DateTime dateTime;
   final String message;
-  const ConsoleItem(this.dateTime, this.message);
+  bool show = false;
+  ConsoleItem(this.dateTime, this.message);
 }
 
 class ConsoleManager {
