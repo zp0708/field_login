@@ -30,7 +30,6 @@ class _SettlementTimeWight extends StatefulWidget {
   final VoidCallback? onTimeOver;
   final int expireTime;
   const _SettlementTimeWight({
-    super.key,
     this.expireTime = 0,
     this.onTimeOver,
   });

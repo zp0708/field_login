@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'pluggable.dart';
 import '../flutter_aux.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'pluggable.dart';
 
 class ProxySettings extends Pluggable {
   @override
@@ -138,7 +139,7 @@ class _ProxySettingsPageState extends State<ProxySettingsPage> {
   }
 
   void _showSnackBar(String message) {
-    FlutterAux.onMessage(message);
+    FlutterAux.showMessage(context, message);
   }
 
   @override
@@ -235,7 +236,9 @@ class _ProxySettingsPageState extends State<ProxySettingsPage> {
                               color: isCurrent ? Colors.blue : null,
                             ),
                           ),
-                          subtitle: isCurrent ? const Text('当前使用中', style: TextStyle(color: Colors.blue)) : null,
+                          subtitle: isCurrent
+                              ? const Text('当前使用中', style: TextStyle(color: Colors.blue))
+                              : null,
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [

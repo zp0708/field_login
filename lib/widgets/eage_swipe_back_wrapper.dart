@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:manicure/component/navigator_shell/navigator_provider.dart';
 
 class EdgeSwipeBackWrapper extends StatefulWidget {
   const EdgeSwipeBackWrapper({

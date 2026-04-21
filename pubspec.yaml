@@ -1,11 +1,11 @@
 name: field_login
 description: "A new Flutter project."
-publish_to: 'none'
+publish_to: "none"
 
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.6.2
+  sdk: ^3.8.0
 
 dependencies:
   flutter:
@@ -13,7 +13,7 @@ dependencies:
 
   flutter_localizations:
     sdk: flutter
-  
+
   # 图片缓存
   cached_network_image: ^3.3.1
   # WebView
@@ -24,12 +24,13 @@ dependencies:
   # 本地存储
   shared_preferences: ^2.2.2
   # 网络请求
-  dio: ^5.7.0                         
+  dio: ^5.7.0
   system_info2: ^2.0.0
   device_info_plus: ^11.3.0
   # 状态管理
   flutter_riverpod: ^2.5.1
   #skeletonizer: ^2.1.0                # 骨架屏
+  package_info_plus: ^9.0.0
 
 dev_dependencies:
   flutter_test:
@@ -38,10 +39,9 @@ dev_dependencies:
   flutter_lints: ^5.0.0
 
 flutter:
-
   uses-material-design: true
 
   assets:
-      - assets/
-      - assets/icons/
-      - assets/webview/test_page.html
+    - assets/
+    - assets/icons/
+    - assets/webview/test_page.html

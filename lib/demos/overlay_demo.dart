@@ -29,7 +29,7 @@ class _OverlayDemoState extends State<OverlayDemo> {
 
   @override
   Widget build(BuildContext context) {
-    return RepaintBoundary(
+    return FlutterAux(
       child: MaterialApp(
         home: Scaffold(
           body: Container(
@@ -37,32 +37,17 @@ class _OverlayDemoState extends State<OverlayDemo> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                InkWell(
-                  onTap: () => FlutterAux.show(context),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Color.fromRGBO(1, 33, 34, 35),
-                      borderRadius: BorderRadius.all(
-                        Radius.circular(10),
-                      ),
-                    ),
-                    padding: EdgeInsets.symmetric(horizontal: 40, vertical: 10),
-                    child: Text('点击'),
-                  ),
-                ),
                 SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () => dio.get(
-                      'https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&hourly=temperature_2m,weather_code&past_days=5'),
+                    'https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&hourly=temperature_2m,weather_code&past_days=5',
+                  ),
                   child: Text('抓包测试'),
                 ),
                 SizedBox(height: 20),
                 Text(_proxy),
                 SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () => debugPrint('测试控制台'),
-                  child: Text('控制台打印'),
-                ),
+                ElevatedButton(onPressed: () => debugPrint('测试控制台'), child: Text('控制台打印')),
               ],
             ),
           ),

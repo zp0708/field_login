@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import '../flutter_aux.dart';
@@ -48,7 +49,7 @@ class _ColorSuckerState extends State<_ColorSucker> {
   Offset _toolBarStartPosition = Offset.zero;
   Matrix4 _matrix = Matrix4.identity();
   late Size _windowSize;
-  bool _excuting = false;
+  bool _executing = false;
   Uint8List? _imageData;
   bool _isActive = false;
   bool _isDraggingPanel = false;
@@ -124,8 +125,8 @@ class _ColorSuckerState extends State<_ColorSucker> {
     _magnifierDragStart = dragDetails.globalPosition;
     _magnifierStartPosition = _magnifierPosition;
 
-    if (_imageData == null && _excuting == false) {
-      _excuting = true;
+    if (_executing == false) {
+      _executing = true;
       await _captureScreen();
     }
   }
@@ -143,15 +144,15 @@ class _ColorSuckerState extends State<_ColorSucker> {
 
   Future<void> _captureScreen() async {
     try {
-      RenderRepaintBoundary boundary = FlutterAux.context!.findRenderObject() as RenderRepaintBoundary;
+      RenderRepaintBoundary boundary = auxRepaintKey.currentContext?.findRenderObject() as RenderRepaintBoundary;
       ui.Image image = await boundary.toImage();
       ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
       if (byteData == null) {
-        _excuting = false;
+        _executing = false;
         return;
       }
       _imageData = byteData.buffer.asUint8List();
-      _excuting = false;
+      _executing = false;
       image.dispose();
     } catch (e) {
       debugPrint(e.toString());
@@ -298,19 +299,21 @@ class _ColorSuckerState extends State<_ColorSucker> {
 
   // With alpha channel (ARGB format)
   String _colorToHexWithAlpha() {
-    final r = (_currentColor.r * 255).round().toRadixString(16);
-    final g = (_currentColor.g * 255).round().toRadixString(16);
-    final b = (_currentColor.b * 255).round().toRadixString(16);
+    String format(double v) {
+      return (v * 255).round().toRadixString(16).padLeft(2, '0').toUpperCase();
+    }
+    final a = format(_currentColor.a);
+    final r = format(_currentColor.r);
+    final g = format(_currentColor.g);
+    final b = format(_currentColor.b);
 
-    return '#${r.toUpperCase()}'
-        '${g.toUpperCase()}'
-        '${b.toUpperCase()}';
+    return '#$a$r$g$b';
   }
 
   Widget _buildColorValues() {
     final red = _colorValue(_currentColor.r);
-    final green = _colorValue(_currentColor.r);
-    final blue = _colorValue(_currentColor.r);
+    final green = _colorValue(_currentColor.g);
+    final blue = _colorValue(_currentColor.b);
     return _buildColorValueRow('RGB', '$red, $green, $blue');
   }
 

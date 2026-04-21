@@ -3,7 +3,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
-import 'package:manicure/third/flutter_aux/flutter_aux.dart';
+import '../../../flutter_aux.dart';
 
 class JsonViewerController extends ChangeNotifier {
   final List<GlobalKey> _anchors = <GlobalKey>[];
@@ -82,8 +82,8 @@ class JsonViewerScope extends InheritedNotifier<JsonViewerController> {
 
   // 不建立依赖关系的读取，避免子节点因为收集锚点而跟随重建
   static JsonViewerController? read(BuildContext context) {
-    final InheritedElement? element =
-        context.getElementForInheritedWidgetOfExactType<JsonViewerScope>();
+    final InheritedElement? element = context
+        .getElementForInheritedWidgetOfExactType<JsonViewerScope>();
     final JsonViewerScope? scope = element?.widget as JsonViewerScope?;
     return scope?.notifier;
   }
@@ -258,67 +258,73 @@ class JsonObjectViewerState extends State<JsonObjectViewer> {
     for (MapEntry entry in widget.jsonObj.entries) {
       bool ex = _isExtensible(entry.value);
       bool ink = _isInkWell(entry.value);
-      list.add(Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: <Widget>[
-          ex
-              ? InkWell(
-                  onTap: () {
-                    setState(() {
-                      openFlag[entry.key] = !(openFlag[entry.key] ?? (ex ? widget.unfold : false));
-                    });
-                  },
-                  child: ((openFlag[entry.key] ?? (ex ? widget.unfold : false))
-                      ? Icon(Icons.arrow_drop_down, size: 14, color: Colors.grey[700])
-                      : Icon(Icons.arrow_right, size: 14, color: Colors.grey[700])),
-                )
-              : const Icon(
-                  Icons.arrow_right,
-                  color: Color.fromARGB(0, 0, 0, 0),
-                  size: 14,
-                ),
-          (ex && ink)
-              ? InkWell(
-                  child: _buildHighlightedText(
+      list.add(
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            ex
+                ? InkWell(
+                    onTap: () {
+                      setState(() {
+                        openFlag[entry.key] =
+                            !(openFlag[entry.key] ?? (ex ? widget.unfold : false));
+                      });
+                    },
+                    child: ((openFlag[entry.key] ?? (ex ? widget.unfold : false))
+                        ? Icon(Icons.arrow_drop_down, size: 14, color: Colors.grey[700])
+                        : Icon(Icons.arrow_right, size: 14, color: Colors.grey[700])),
+                  )
+                : const Icon(
+                    Icons.arrow_right,
+                    color: Color.fromARGB(0, 0, 0, 0),
+                    size: 14,
+                  ),
+            (ex && ink)
+                ? InkWell(
+                    child: _buildHighlightedText(
+                      context,
+                      entry.key,
+                      TextStyle(color: Colors.purple[900]),
+                      widget.highlight,
+                      widget.highlightColor,
+                      selectable: false,
+                    ),
+                    onTap: () {
+                      setState(() {
+                        final bool base = openFlag[entry.key] ?? (ex ? widget.unfold : false);
+                        openFlag[entry.key] = !base;
+                      });
+                    },
+                  )
+                : _buildHighlightedText(
                     context,
                     entry.key,
-                    TextStyle(color: Colors.purple[900]),
+                    TextStyle(
+                      color: entry.value == null ? Colors.grey : Colors.purple[900],
+                    ),
                     widget.highlight,
                     widget.highlightColor,
                     selectable: false,
                   ),
-                  onTap: () {
-                    setState(() {
-                      final bool base = openFlag[entry.key] ?? (ex ? widget.unfold : false);
-                      openFlag[entry.key] = !base;
-                    });
-                  })
-              : _buildHighlightedText(
-                  context,
-                  entry.key,
-                  TextStyle(
-                    color: entry.value == null ? Colors.grey : Colors.purple[900],
-                  ),
-                  widget.highlight,
-                  widget.highlightColor,
-                  selectable: false,
-                ),
-          Text(
-            ':',
-            style: TextStyle(color: Colors.grey),
-          ),
-          const SizedBox(width: 3),
-          getValueWidget(entry)
-        ],
-      ));
+            Text(
+              ':',
+              style: TextStyle(color: Colors.grey),
+            ),
+            const SizedBox(width: 3),
+            getValueWidget(entry),
+          ],
+        ),
+      );
       list.add(const SizedBox(height: 4));
       if (openFlag[entry.key] ?? (ex ? widget.unfold : false)) {
-        list.add(_getContentWidget(
-          entry.value,
-          widget.unfold,
-          highlight: widget.highlight,
-          highlightColor: widget.highlightColor,
-        ));
+        list.add(
+          _getContentWidget(
+            entry.value,
+            widget.unfold,
+            highlight: widget.highlight,
+            highlightColor: widget.highlightColor,
+          ),
+        );
       }
     }
     return list;
@@ -495,34 +501,38 @@ class JsonArrayViewerState extends State<JsonArrayViewer> {
     for (dynamic content in widget.jsonArray) {
       bool ex = _isExtensible(content);
       bool ink = _isInkWell(content);
-      list.add(Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: <Widget>[
-          getArrow(i, ex, ink),
-          (ex && ink)
-              ? getInkWell(i)
-              : Text(
-                  '[$i]',
-                  style: TextStyle(
-                    color: content == null ? Colors.grey : Colors.purple[900],
+      list.add(
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            getArrow(i, ex, ink),
+            (ex && ink)
+                ? getInkWell(i)
+                : Text(
+                    '[$i]',
+                    style: TextStyle(
+                      color: content == null ? Colors.grey : Colors.purple[900],
+                    ),
                   ),
-                ),
-          Text(
-            ':',
-            style: TextStyle(color: Colors.grey),
-          ),
-          const SizedBox(width: 3),
-          getValueWidget(content, i),
-        ],
-      ));
+            Text(
+              ':',
+              style: TextStyle(color: Colors.grey),
+            ),
+            const SizedBox(width: 3),
+            getValueWidget(content, i),
+          ],
+        ),
+      );
       list.add(const SizedBox(height: 4));
       if (ex && openFlag[i]) {
-        list.add(_buildContentWidget(
-          content,
-          widget.unfold,
-          widget.highlight,
-          widget.highlightColor,
-        ));
+        list.add(
+          _buildContentWidget(
+            content,
+            widget.unfold,
+            widget.highlight,
+            widget.highlightColor,
+          ),
+        );
       }
       i++;
     }
@@ -681,25 +691,29 @@ Widget _buildHighlightedText(
     final GlobalKey key = GlobalKey();
     final JsonViewerController? controller = JsonViewerScope.read(context);
     controller?.addAnchor(key);
-    spans.add(WidgetSpan(
-      alignment: PlaceholderAlignment.baseline,
-      baseline: TextBaseline.alphabetic,
-      child: Container(
-        key: key,
-        color: highlightColor.withValues(alpha: 0.6),
-        child: Text(match, style: baseStyle.copyWith(color: Colors.black)),
+    spans.add(
+      WidgetSpan(
+        alignment: PlaceholderAlignment.baseline,
+        baseline: TextBaseline.alphabetic,
+        child: Container(
+          key: key,
+          color: highlightColor.withValues(alpha: 0.6),
+          child: Text(match, style: baseStyle.copyWith(color: Colors.black)),
+        ),
       ),
-    ));
+    );
     start = index + query.length;
     if (start >= text.length) {
       break;
     }
   }
   if (selectable) {
-    return SelectableText.rich(TextSpan(
-      children: spans,
-      style: baseStyle,
-    ));
+    return SelectableText.rich(
+      TextSpan(
+        children: spans,
+        style: baseStyle,
+      ),
+    );
   }
   return RichText(
     text: TextSpan(children: spans, style: baseStyle),
@@ -723,7 +737,7 @@ Widget _buildCopyableText(BuildContext context, String text, TextStyle baseStyle
         IconButton(
           onPressed: () {
             Clipboard.setData(ClipboardData(text: text));
-            FlutterAux.onMessage('数据已复制到剪贴板');
+            FlutterAux.showMessage(context, '数据已复制到剪贴板');
           },
           icon: Icon(Icons.copy, size: 16, color: Colors.grey.shade600),
           style: IconButton.styleFrom(

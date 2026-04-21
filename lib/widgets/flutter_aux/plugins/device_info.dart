@@ -31,7 +31,6 @@ class _DeviceInfo extends StatefulWidget {
 }
 
 class _DeviceInfoPanelState extends State<_DeviceInfo> {
-  String _content = '';
   Map<String, dynamic> _deviceData = {};
 
   @override
@@ -41,71 +40,9 @@ class _DeviceInfoPanelState extends State<_DeviceInfo> {
   }
 
   void _getDeviceInfo() async {
-    DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
-    Map dataMap = {};
-    if (Platform.isAndroid) {
-      AndroidDeviceInfo androidDeviceInfo = await deviceInfo.androidInfo;
-      dataMap = _readAndroidBuildData(androidDeviceInfo);
-    } else if (Platform.isIOS) {
-      IosDeviceInfo iosDeviceInfo = await deviceInfo.iosInfo;
-      dataMap = _readIosDeviceInfo(iosDeviceInfo);
-    }
-
-    _deviceData = Map<String, dynamic>.from(dataMap);
-
-    StringBuffer buffer = StringBuffer();
-    dataMap.forEach((k, v) {
-      buffer.write('$k:  $v\n');
-    });
-    _content = buffer.toString();
+    BaseDeviceInfo data = await DeviceInfoPlugin().deviceInfo;
+    _deviceData = data.data;
     setState(() {});
-  }
-
-  Map<String, dynamic> _readAndroidBuildData(AndroidDeviceInfo build) {
-    return <String, dynamic>{
-      'version.securityPatch': build.version.securityPatch,
-      'version.sdkInt': build.version.sdkInt,
-      'version.release': build.version.release,
-      'version.previewSdkInt': build.version.previewSdkInt,
-      'version.incremental': build.version.incremental,
-      'version.codename': build.version.codename,
-      'version.baseOS': build.version.baseOS,
-      'board': build.board,
-      'bootloader': build.bootloader,
-      'brand': build.brand,
-      'device': build.device,
-      'display': build.display,
-      'fingerprint': build.fingerprint,
-      'hardware': build.hardware,
-      'host': build.host,
-      'id': build.id,
-      'manufacturer': build.manufacturer,
-      'model': build.model,
-      'product': build.product,
-      'supported32BitAbis': build.supported32BitAbis,
-      'supported64BitAbis': build.supported64BitAbis,
-      'supportedAbis': build.supportedAbis,
-      'tags': build.tags,
-      'type': build.type,
-      'isPhysicalDevice': build.isPhysicalDevice,
-    };
-  }
-
-  Map<String, dynamic> _readIosDeviceInfo(IosDeviceInfo data) {
-    return <String, dynamic>{
-      'name': data.name,
-      'systemName': data.systemName,
-      'systemVersion': data.systemVersion,
-      'model': data.model,
-      'localizedModel': data.localizedModel,
-      'identifierForVendor': data.identifierForVendor,
-      'isPhysicalDevice': data.isPhysicalDevice,
-      'utsname.sysname': data.utsname.sysname,
-      'utsname.nodename': data.utsname.nodename,
-      'utsname.release': data.utsname.release,
-      'utsname.version': data.utsname.version,
-      'utsname.machine': data.utsname.machine,
-    };
   }
 
   @override
@@ -175,7 +112,7 @@ class _DeviceInfoPanelState extends State<_DeviceInfo> {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              Platform.isAndroid ? 'Android 设备' : 'iOS 设备',
+              Platform.operatingSystem,
               style: TextStyle(
                 fontSize: 18,
                 color: Colors.white,
@@ -183,17 +120,13 @@ class _DeviceInfoPanelState extends State<_DeviceInfo> {
               ),
             ),
           ),
-          _buildActionButtons(),
+          _buildActionButton(
+            icon: Icons.copy,
+            label: '复制',
+            onTap: () => _copyData(),
+          ),
         ],
       ),
-    );
-  }
-
-  Widget _buildActionButtons() {
-    return _buildActionButton(
-      icon: Icons.copy,
-      label: '复制',
-      onTap: () => _copyData(_content),
     );
   }
 
@@ -238,57 +171,24 @@ class _DeviceInfoPanelState extends State<_DeviceInfo> {
   }
 
   Widget _buildContent() {
+    final sortedKeys = _deviceData.keys.toList()..sort();
     return Padding(
       padding: const EdgeInsets.all(10.0),
       child: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: _buildQuickInfo(),
+          children: sortedKeys
+              .map(
+                (key) => _buildInfoCard(
+                  label: key,
+                  value: _deviceData[key]?.toString() ?? 'Unknown',
+                ),
+              )
+              .toList(),
         ),
       ),
     );
-  }
-
-  List<Widget> _buildQuickInfo() {
-    List<Map<String, String>> quickInfoItems = [];
-    List skipKeys = [];
-
-    if (Platform.isAndroid) {
-      skipKeys = ['model', 'brand', 'version.release', 'version.sdkInt'];
-      quickInfoItems = [
-        {'label': '设备型号', 'value': _deviceData['model'] ?? 'Unknown'},
-        {'label': '品牌', 'value': _deviceData['brand'] ?? 'Unknown'},
-        {'label': 'Android 版本', 'value': _deviceData['version.release'] ?? 'Unknown'},
-        {'label': 'SDK 版本', 'value': _deviceData['version.sdkInt']?.toString() ?? 'Unknown'},
-      ];
-    } else if (Platform.isIOS) {
-      skipKeys = ['name', 'model', 'systemVersion', 'systemName'];
-      quickInfoItems = [
-        {'label': '设备名称', 'value': _deviceData['name'] ?? 'Unknown'},
-        {'label': '设备型号', 'value': _deviceData['model'] ?? 'Unknown'},
-        {'label': '系统版本', 'value': _deviceData['systemVersion'] ?? 'Unknown'},
-        {'label': '系统名称', 'value': _deviceData['systemName'] ?? 'Unknown'},
-      ];
-    }
-
-    final widgets = quickInfoItems
-        .map((item) => _buildInfoCard(
-              label: item['label']!,
-              value: item['value']!,
-            ))
-        .toList();
-
-    _deviceData.forEach((key, value) {
-      if (!skipKeys.contains(key)) {
-        widgets.add(_buildInfoCard(
-          label: key,
-          value: value?.toString() ?? 'Unknown',
-        ));
-      }
-    });
-
-    return widgets;
   }
 
   Widget _buildInfoCard({required String label, required String value}) {
@@ -335,10 +235,12 @@ class _DeviceInfoPanelState extends State<_DeviceInfo> {
   }
 
   // 复制数据到剪贴板
-  void _copyData(String data) {
-    Clipboard.setData(ClipboardData(text: data));
-    if (Platform.isIOS) {
-      FlutterAux.onMessage('数据已复制到剪贴板');
-    }
+  void _copyData() {
+    StringBuffer buffer = StringBuffer();
+    _deviceData.forEach((k, v) {
+      buffer.write('$k:  $v\n');
+    });
+    Clipboard.setData(ClipboardData(text: buffer.toString()));
+    FlutterAux.showMessage(context, '数据已复制到剪贴板');
   }
 }

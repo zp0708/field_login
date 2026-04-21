@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+
 import 'pluggable.dart';
-import '../flutter_aux.dart';
 
 class Entries extends Pluggable {
-  Entries({required this.onPlugin});
+  Entries({required this.onPlugin, required this.plugins});
 
   final ValueChanged<Pluggable> onPlugin;
+
+  final List<Pluggable> plugins;
 
   @override
   String get name => 'entries';
@@ -19,7 +21,7 @@ class Entries extends Pluggable {
   @override
   Widget build(BuildContext context) {
     return FunctionGridOverlay(
-      plugins: FlutterAux.plugins,
+      plugins: plugins,
       plugin: this,
       onPlugin: onPlugin,
     );

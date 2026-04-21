@@ -2,12 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/rendering.dart';
-import '../model.dart';
+import 'package:flutter/services.dart';
 import '../../../flutter_aux.dart';
-import 'dump_item.dart';
+
+import '../model.dart';
 import './json_viewer.dart';
+import 'dump_item.dart';
 
 ///
 class HttpDumpDetailPage extends StatefulWidget {
@@ -96,7 +97,7 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
-                  child: const Text('复cURL', style: TextStyle(fontSize: 12)),
+                  child: const Text('cURL', style: TextStyle(fontSize: 12)),
                 ),
               ],
             ),
@@ -277,7 +278,7 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
           if (_keyword.isNotEmpty)
             AnimatedBuilder(
               animation: _jsonController,
-              builder: (_, _) {
+              builder: (_, $1) {
                 final int len = _jsonController.length;
                 final int idx = len == 0 ? 0 : _jsonController.currentIndex;
                 return Row(
@@ -416,8 +417,11 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(_unfold ? Icons.unfold_less : Icons.unfold_more,
-                          size: 16, color: Colors.blue),
+                      Icon(
+                        _unfold ? Icons.unfold_less : Icons.unfold_more,
+                        size: 16,
+                        color: Colors.blue,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         _unfold ? '收起' : '展开',
@@ -607,8 +611,12 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
         return;
       }
       // 兜底：如果无法获取 viewport，则退回 ensureVisible
-      Scrollable.ensureVisible(ctx,
-          alignment: 0.1, duration: const Duration(milliseconds: 200), curve: Curves.easeInOut);
+      Scrollable.ensureVisible(
+        ctx,
+        alignment: 0.1,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+      );
     }
   }
 
@@ -616,6 +624,6 @@ class _HttpDumpDetailPageState extends State<HttpDumpDetailPage> {
   void _copyData(dynamic data) {
     final text = data is Map ? json.encode(data) : data.toString();
     Clipboard.setData(ClipboardData(text: text));
-    FlutterAux.onMessage('数据已复制到剪贴板');
+    FlutterAux.showMessage(context, '数据已复制到剪贴板');
   }
 }

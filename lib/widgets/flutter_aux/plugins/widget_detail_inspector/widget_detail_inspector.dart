@@ -21,7 +21,13 @@ class WidgetDetailInspector extends Pluggable {
 
   @override
   Widget build(BuildContext context) {
-    return _DetailPage();
+    return Navigator(
+      onGenerateInitialRoutes: (NavigatorState state, _) => [
+        MaterialPageRoute(
+          builder: (_) => _DetailPage(),
+        ),
+      ],
+    );
   }
 
   @override
@@ -64,9 +70,7 @@ class _DetailPageState extends State<_DetailPage> with WidgetsBindingObserver {
       _inspectAt(_lastPointerLocation);
     }
     Future.delayed(Duration(milliseconds: 100), () async {
-      if (context.mounted) {
-        setState(() {});
-        // ignore: use_build_context_synchronously
+      if (mounted) {
         await Navigator.of(context).push(
           MaterialPageRoute(
             builder: (ctx) {

@@ -1,290 +1,209 @@
-import 'package:flutter/material.dart';
+import 'dart:math' as math;
 
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../plugins/pluggable.dart';
+
+class DraggableScope extends InheritedWidget {
+  final DraggableWidgetState state;
+
+  const DraggableScope({
+    super.key,
+    required this.state,
+    required super.child,
+  });
+
+  // 提供一个便捷的方法给子组件调用
+  static DraggableWidgetState of(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<DraggableScope>();
+    assert(scope != null, 'Drag 组件必须放在 TransformContainer 内部!');
+    return scope!.state;
+  }
+
+  @override
+  bool updateShouldNotify(DraggableScope oldWidget) => true;
+}
 
 /// 可拖动组件
 class DraggableWidget extends StatefulWidget {
   const DraggableWidget({
     super.key,
     required this.child,
-    required this.plugin,
+    required this.rect,
+    this.cacheKey,
+    this.useDecoration = true,
   });
 
   final Widget child;
 
-  final Pluggable plugin;
+  /// 缓存的 key, 为 null 的时候不保存
+  final String? cacheKey;
+
+  final Rect rect;
+
+  /// 是否使用默认的装饰
+  final bool useDecoration;
 
   @override
-  State<DraggableWidget> createState() => _DraggableWidgetState();
+  State<DraggableWidget> createState() => DraggableWidgetState();
 }
 
-class _DraggableWidgetState extends State<DraggableWidget> {
-  Offset _position = Offset.zero;
-  Size _size = Size.zero;
+class DraggableWidgetState extends State<DraggableWidget> {
+  Rect _rect = Rect.zero;
   bool _isDragging = false;
-  bool _isResizing = false;
-  Offset? _dragStartPosition;
-  Offset? _overlayStartPosition;
-  Size? _resizeStartSize;
-  Size _screenSize = Size.zero;
+
+  String? _cacheKey;
 
   @override
   void initState() {
+    if (widget.cacheKey != null) _cacheKey = 'flutter_aux_plugin_rect_${widget.cacheKey}';
     _onShow();
     super.initState();
   }
 
   void _onShow() async {
-    final position = await _getSavedPosition() ?? Offset(50, 50);
-    final size = await _getSavedSize() ?? widget.plugin.size;
+    _rect = await _getRect();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      setState(() {
-        _screenSize = MediaQuery.of(context).size;
-        _position = position;
-        _size = size;
-      });
+      setState(() {});
     });
   }
 
-  void _onPanStart(DragStartDetails details) {
+  void start(Offset delta) {
+    setState(() => _isDragging = true);
+  }
+
+  void reset() async {
+    await _reset();
+    final rect = await _getRect();
+    _rect = rect;
+    setState(() {});
+  }
+
+  void end(Offset delta) {
+    setState(() => _isDragging = false);
+    _save(_rect);
+  }
+
+  // 移动逻辑（包含边界限制）
+  void move(Offset delta) {
     setState(() {
-      _isDragging = true;
-      _dragStartPosition = details.globalPosition;
-      _overlayStartPosition = _position;
+      Rect newRect = _rect.shift(delta);
+      final screenSize = MediaQuery.sizeOf(context);
+      // 确保不超出父容器四周边界
+      double left = newRect.left.clamp(-_rect.width + 120, math.max(0.0, screenSize.width - 100));
+      double top = newRect.top.clamp(
+        0.0,
+        math.max(0.0, screenSize.height - math.min(50, _rect.height)),
+      );
+
+      _rect = Rect.fromLTWH(left, top, _rect.width, _rect.height);
     });
   }
 
-  void _onPanUpdate(DragUpdateDetails details) {
-    if (_dragStartPosition != null && _overlayStartPosition != null) {
-      setState(() {
-        // 计算手指移动的距离，直接应用到overlay位置
-        _position = _overlayStartPosition! + (details.globalPosition - _dragStartPosition!);
-        // 确保 panel 可见
-        final dx = _position.dx.clamp(-_size.width + 20.0, _screenSize.width - 20.0);
-        final dy = _position.dy.clamp(0.0, _screenSize.height - 20.0);
-        _position = Offset(dx, dy);
-      });
+  // 右下角缩放逻辑（包含边界限制）
+  void resize(Offset delta) {
+    setState(() {
+      final screenSize = MediaQuery.sizeOf(context);
+      // 算出往右、往下拖拽的最大极限
+      double maxWidth = screenSize.width - _rect.left;
+      double maxHeight = screenSize.height - _rect.top;
+
+      // 确保宽高不小于设定最小值，且不超出父容器边界
+      double newWidth = (_rect.width + delta.dx).clamp(100, math.max(200, maxWidth));
+      double newHeight = (_rect.height + delta.dy).clamp(100, math.max(200, maxHeight));
+
+      _rect = Rect.fromLTWH(_rect.left, _rect.top, newWidth, newHeight);
+    });
+  }
+
+  @override
+  void didUpdateWidget(DraggableWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.rect != oldWidget.rect) {
+      _rect = widget.rect;
+      setState(() {});
     }
-  }
-
-  void _onPanEnd(DragEndDetails details) {
-    setState(() {
-      _isDragging = false;
-      _dragStartPosition = null;
-      _overlayStartPosition = null;
-    });
-
-    // 拖拽结束时保存位置
-    _savePosition(_position);
-  }
-
-  // 大小调整相关方法
-  void _onResizeStart(DragStartDetails details) {
-    setState(() {
-      _isResizing = true;
-      _dragStartPosition = details.globalPosition;
-      _resizeStartSize = _size;
-    });
-  }
-
-  void _onResizeUpdate(DragUpdateDetails details) {
-    if (_dragStartPosition != null && _resizeStartSize != null) {
-      final delta = details.globalPosition - _dragStartPosition!;
-
-      setState(() {
-        // 计算新的大小，设置最小和最大限制
-        final newWidth = (_resizeStartSize!.width + delta.dx).clamp(200.0, 1000.0);
-        final newHeight = (_resizeStartSize!.height + delta.dy).clamp(200.0, 1000.0);
-        _size = Size(newWidth, newHeight);
-      });
-    }
-  }
-
-  void _onResizeEnd(DragEndDetails details) {
-    setState(() {
-      _isResizing = false;
-      _dragStartPosition = null;
-      _resizeStartSize = null;
-    });
-
-    // 大小调整结束时保存大小
-    _saveSize(_size);
   }
 
   @override
   Widget build(BuildContext context) {
+    final scope = DraggableScope(
+      state: this,
+      child: widget.child,
+    );
     return Positioned(
-      top: _position.dy,
-      left: _position.dx,
+      left: _rect.left,
+      top: _rect.top,
+      width: _rect.width,
+      height: _rect.height,
       child: Material(
         color: Colors.transparent,
-        child: Container(
-          width: _size.width,
-          height: _size.height,
-          clipBehavior: Clip.hardEdge,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: (_isDragging || _isResizing) ? 0.4 : 0.2),
-                blurRadius: (_isDragging || _isResizing) ? 15 : 10,
-                offset: const Offset(0, 5),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // 可拖动的标题栏
-              GestureDetector(
-                onPanStart: _onPanStart,
-                onPanUpdate: _onPanUpdate,
-                onPanEnd: _onPanEnd,
-                child: Container(
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      SizedBox(width: 10),
-                      Icon(
-                        _isDragging ? Icons.drag_handle : Icons.grid_view,
-                        color: Colors.blue.shade700,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        widget.plugin.display,
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue.shade700,
-                        ),
-                      ),
-                      Spacer(),
-                      InkWell(
-                        child: SizedBox(
-                          height: 44,
-                          width: 44,
-                          child: Icon(
-                            Icons.remove,
-                            color: Colors.blue.shade700,
-                            size: 20,
-                          ),
-                        ),
-                      ),
-                      InkWell(
-                        child: SizedBox(
-                          height: 44,
-                          width: 44,
-                          child: Icon(
-                            Icons.close,
-                            color: Colors.blue.shade700,
-                            size: 20,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              // GridView 内容
-              Flexible(
-                child: Stack(
-                  children: [
-                    Positioned(
-                      top: 0,
-                      left: 0,
-                      bottom: 20,
-                      right: 0,
-                      child: Container(color: Colors.red, child: widget.plugin.build(context)),
-                    ),
-                    // 大小调整手柄 - 右下角
-                    Positioned(
-                      right: 0,
-                      bottom: 0,
-                      child: GestureDetector(
-                        onPanStart: _onResizeStart,
-                        onPanUpdate: _onResizeUpdate,
-                        onPanEnd: _onResizeEnd,
-                        child: Container(
-                          width: 20,
-                          height: 20,
-                          decoration: BoxDecoration(
-                            color: Colors.blue.shade300,
-                            borderRadius: const BorderRadius.only(
-                              bottomRight: Radius.circular(12),
-                              topLeft: Radius.circular(12),
-                            ),
-                          ),
-                          child: Icon(
-                            Icons.drag_handle,
-                            size: 12,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
+        child: widget.useDecoration
+            ? Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: _isDragging ? 0.4 : 0.2),
+                      blurRadius: _isDragging ? 15 : 10,
+                      offset: const Offset(0, 5),
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
-        ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  clipBehavior: Clip.hardEdge,
+                  child: scope,
+                ),
+              )
+            : scope,
       ),
     );
   }
 
-  /// 获取保存的位置
-  Future<Offset?> _getSavedPosition() async {
+  /// 将 Rect 压缩为一个 String 后保存到 SharedPreferences
+  Future<void> _save(Rect rect) async {
+    if (_cacheKey == null) return;
     try {
       final prefs = await SharedPreferences.getInstance();
-      final x = prefs.getDouble('overlay_position_${widget.plugin.name}_x');
-      final y = prefs.getDouble('overlay_position_${widget.plugin.name}_y');
-      if (x != null && y != null) {
-        return Offset(x, y);
-      }
+      prefs.setString(
+        _cacheKey!,
+        '${rect.left.toInt()},${rect.top.toInt()},${rect.width.toInt()},${rect.height.toInt()}',
+      );
     } catch (e) {
-      // 忽略错误，返回 null
+      // 忽略异常（例如 web 存储异常）
     }
-    return null;
+  }
+
+  /// 从 SharedPreferences 中读取 Rect
+  Future<Rect> _getRect() async {
+    if (_cacheKey == null) return widget.rect;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final packed = prefs.getString(_cacheKey!);
+      // 没有缓存数据
+      if (packed == null) return widget.rect;
+      final list = packed.split(',');
+
+      return Rect.fromLTWH(
+        double.parse(list[0]),
+        double.parse(list[1]),
+        double.parse(list[2]),
+        double.parse(list[3]),
+      );
+    } catch (e) {
+      // 读取失败时返回 null
+    }
+
+    return Rect.zero;
   }
 
   /// 保存当前位置
-  Future<void> _savePosition(Offset position) async {
+  Future<void> _reset() async {
+    if (_cacheKey == null) return;
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setDouble('overlay_position_${widget.plugin.name}_x', position.dx);
-      await prefs.setDouble('overlay_position_${widget.plugin.name}_y', position.dy);
-    } catch (e) {
-      // 忽略错误
-    }
-  }
-
-  /// 获取保存的大小
-  Future<Size?> _getSavedSize() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final width = prefs.getDouble('overlay_size_${widget.plugin.name}_width');
-      final height = prefs.getDouble('overlay_size_${widget.plugin.name}_height');
-      if (width != null && height != null) {
-        return Size(width, height);
-      }
-    } catch (e) {
-      // 忽略错误，返回 null
-    }
-    return null;
-  }
-
-  /// 保存大小
-  Future<void> _saveSize(Size size) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setDouble('overlay_size_${widget.plugin.name}_width', size.width);
-      await prefs.setDouble('overlay_size_${widget.plugin.name}_height', size.height);
+      prefs.remove(_cacheKey!);
     } catch (e) {
       // 忽略错误
     }

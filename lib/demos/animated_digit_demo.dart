@@ -1,5 +1,4 @@
 import 'package:field_login/widgets/animated_digit.dart/animated_flip_counter.dart';
-import 'package:field_login/widgets/flutter_aux/flutter_aux.dart';
 import 'package:flutter/material.dart';
 
 class AnimatedDigitDemo extends StatefulWidget {
@@ -20,14 +19,7 @@ class _AnimatedDigitDemoState extends State<AnimatedDigitDemo> {
         title: const Text('AnimatedDigit Demo'),
         actions: [
           Switch(value: _loop, onChanged: (v) => setState(() => _loop = v)),
-          IconButton(
-            onPressed: () => setState(() => _value = 0),
-            icon: Icon(Icons.refresh),
-          ),
-          IconButton(
-            onPressed: () => FlutterAux.show(context),
-            icon: Icon(Icons.auto_fix_high),
-          ),
+          IconButton(onPressed: () => setState(() => _value = 0), icon: Icon(Icons.refresh)),
         ],
       ),
       body: Container(

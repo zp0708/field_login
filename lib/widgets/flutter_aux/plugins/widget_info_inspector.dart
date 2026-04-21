@@ -1,10 +1,14 @@
+import 'dart:convert';
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'dart:ui' as ui;
-import '../widgets/inspector_overlay.dart';
+import 'package:flutter/services.dart';
 
-import 'pluggable.dart';
+import '../flutter_aux.dart';
 import '../utils/hit_test.dart';
+import '../widgets/inspector_overlay.dart';
+import 'pluggable.dart';
 
 class WidgetInfoInspector extends Pluggable {
   @override
@@ -51,6 +55,7 @@ class _WidgetInfoInspectorState extends State<_WidgetInfoInspectorPage> with Wid
   }
 
   void _handlePanDown(DragDownDetails event) {
+    if (debugPaintSizeEnabled) return;
     _lastPointerLocation = event.globalPosition;
     _inspectAt(event.globalPosition);
     setState(() {
@@ -59,6 +64,7 @@ class _WidgetInfoInspectorState extends State<_WidgetInfoInspectorPage> with Wid
   }
 
   void _handlePanEnd(DragEndDetails details) {
+    if (debugPaintSizeEnabled) return;
     final ui.FlutterView view = ui.PlatformDispatcher.instance.views.first;
     final Rect bounds = (Offset.zero & (view.physicalSize / view.devicePixelRatio)).deflate(1.0);
     if (!bounds.contains(_lastPointerLocation!)) {
@@ -70,11 +76,16 @@ class _WidgetInfoInspectorState extends State<_WidgetInfoInspectorPage> with Wid
   }
 
   void _handleTap() {
+    if (debugPaintSizeEnabled) return;
     if (_lastPointerLocation != null) {
       _inspectAt(_lastPointerLocation);
       setState(() {
         _isInspecting = true;
       });
+    }
+    final String? filePath = _getFilePath(true);
+    if (filePath != null) {
+      debugPrint('\x1B[32m$filePath\x1B[0m');
     }
   }
 
@@ -108,10 +119,11 @@ class _WidgetInfoInspectorState extends State<_WidgetInfoInspectorPage> with Wid
     // Add close button as a separate floating element when inspecting
     if (_isInspecting) {
       children.add(_buildCloseButton());
+      children.add(_buildOpenButton());
     }
 
     children.add(_EnhancedDebugPaintButton(
-      onLongPress: _toggleDebugPaint,
+      onTap: _toggleDebugPaint,
     ));
 
     return Stack(
@@ -133,31 +145,89 @@ class _WidgetInfoInspectorState extends State<_WidgetInfoInspectorPage> with Wid
       bottom: 40,
       child: GestureDetector(
         onTap: _closeInspection,
-        child: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: const Color(0xFF2C3E50),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withAlpha(75),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: const Icon(
-            Icons.close,
-            color: Colors.white,
-            size: 20,
+        child: Tooltip(
+          message: '清除已选',
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFF2C3E50),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withAlpha(75),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.cleaning_services,
+              color: Colors.white,
+              size: 20,
+            ),
           ),
         ),
       ),
     );
   }
 
+  Widget _buildOpenButton() {
+    return Positioned(
+      left: 140,
+      bottom: 40,
+      child: GestureDetector(
+        onTap: _copy,
+        child: Tooltip(
+          message: '复制文件路径',
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFF2C3E50),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withAlpha(75),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.copy,
+              color: Colors.white,
+              size: 20,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _copy() async {
+    final String? filePath = _getFilePath(false);
+    if (filePath == null) return;
+    Clipboard.setData(ClipboardData(text: filePath));
+    FlutterAux.showMessage(context, '文件路径已复制');
+  }
+
+  String? _getFilePath(bool fullPath) {
+    final renderObject = selection.current;
+    if (renderObject == null) return null;
+    // ignore: invalid_use_of_protected_member
+    final widgetId = WidgetInspectorService.instance.toId(renderObject.toDiagnosticsNode(), '');
+    if (widgetId == null) return null;
+    String infoStr = WidgetInspectorService.instance.getSelectedSummaryWidget(widgetId, '');
+    final jsonInfo = jsonDecode(infoStr);
+    final String f = (jsonInfo != null && jsonInfo!.containsKey('creationLocation')) ? jsonInfo!['creationLocation']['file'] : '';
+    final relativePath = f.split('manicure/').last;
+    final l = (jsonInfo != null && jsonInfo!.containsKey('creationLocation')) ? jsonInfo!['creationLocation']['line'] : 0;
+    return fullPath ? '$f:$l' : '$relativePath:$l';
+  }
+
   void _toggleDebugPaint() {
+    _closeInspection();
     debugPaintSizeEnabled = !debugPaintSizeEnabled;
     setState(() {
       late RenderObjectVisitor visitor;
@@ -172,10 +242,10 @@ class _WidgetInfoInspectorState extends State<_WidgetInfoInspectorPage> with Wid
 
 class _EnhancedDebugPaintButton extends StatefulWidget {
   const _EnhancedDebugPaintButton({
-    required this.onLongPress,
+    required this.onTap,
   });
 
-  final VoidCallback onLongPress;
+  final VoidCallback onTap;
 
   @override
   State<StatefulWidget> createState() => _EnhancedDebugPaintButtonState();
@@ -188,35 +258,38 @@ class _EnhancedDebugPaintButtonState extends State<_EnhancedDebugPaintButton> {
       left: 40,
       bottom: 40,
       child: GestureDetector(
-        onTap: widget.onLongPress,
-        child: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                const Color(0xFF667EEA),
-                const Color(0xFF764BA2),
-              ],
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF667EEA).withAlpha(102),
-                blurRadius: 15,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: SizedBox(
+        onTap: widget.onTap,
+        child: Tooltip(
+          message: '显示所有组件布局',
+          child: Container(
             width: 40,
             height: 40,
-            child: Icon(
-              debugPaintSizeEnabled ? Icons.visibility_off : Icons.line_style_rounded,
-              color: Colors.white,
-              size: 24,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  const Color(0xFF667EEA),
+                  const Color(0xFF764BA2),
+                ],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF667EEA).withAlpha(102),
+                  blurRadius: 15,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: SizedBox(
+              width: 40,
+              height: 40,
+              child: Icon(
+                debugPaintSizeEnabled ? Icons.visibility_off : Icons.line_style_rounded,
+                color: Colors.white,
+                size: 24,
+              ),
             ),
           ),
         ),
