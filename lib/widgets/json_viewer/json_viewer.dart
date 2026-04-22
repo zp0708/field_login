@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -117,92 +118,83 @@ class _JsonTreeViewState extends State<JsonTreeView> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        widget.searchBuilder != null
-            ? widget.searchBuilder!(context, controller)
-            : _defaultSearchBar(),
-        const SizedBox(height: 12),
-        Expanded(
-          child: ListView.builder(
-            controller: controller.scrollController,
-            itemCount: controller.visibleNodes.length,
-            itemBuilder: (_, index) {
-              final node = controller.visibleNodes[index];
-              final keyword = controller.keyword;
-              final keyTextStyle = TextStyle(color: _style.color('key'), fontSize: _style.fontSize);
-              final valueTextStyle = TextStyle(
-                color: _style.color(node.type),
-                fontSize: _style.fontSize,
-              );
+    final features = const TextStyle(fontFeatures: [FontFeature.tabularFigures()]);
+    final textStyle = TextStyle(fontSize: _style.fontSize, color: Colors.black).merge(features);
+    return DefaultTextStyle(
+      style: textStyle,
+      child: Column(
+        children: [
+          widget.searchBuilder != null
+              ? widget.searchBuilder!(context, controller)
+              : _defaultSearchBar(),
+          const SizedBox(height: 12),
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                controller.viewSize = Size(constraints.maxWidth, constraints.maxHeight);
 
-              return GestureDetector(
-                onTap: () {
-                  if (node.children.isNotEmpty) {
-                    node.expanded = !node.expanded;
-                    controller.rebuild();
-                  }
-                },
-                child: Container(
-                  color: Colors.white,
-                  padding: EdgeInsets.symmetric(
-                    vertical: _style.vPadding,
-                    horizontal: _style.hPadding,
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (widget.showLineNumber)
-                        SizedBox(
-                          width: _style.lineNumberWidth,
-                          child: Text(
-                            '${index + 1}',
-                            textAlign: TextAlign.right,
-                            style: TextStyle(fontSize: _style.fontSize, color: Colors.grey),
-                          ),
+                return ListView.builder(
+                  controller: controller.scrollController,
+                  itemCount: controller.visibleNodes.length,
+                  itemBuilder: (_, index) {
+                    final node = controller.visibleNodes[index];
+                    final keyword = controller.keyword;
+                    return GestureDetector(
+                      onTap: () {
+                        if (node.children.isNotEmpty) {
+                          node.expanded = !node.expanded;
+                          controller.rebuild();
+                        }
+                      },
+                      child: Container(
+                        color: Colors.white,
+                        padding: EdgeInsets.symmetric(
+                          vertical: _style.vPadding,
+                          horizontal: _style.hPadding,
                         ),
-                      SizedBox(width: node.level * _style.indent),
-                      SizedBox(
-                        width: 18,
-                        child: node.children.isEmpty
-                            ? null
-                            : Icon(
-                                node.expanded
-                                    ? Icons.keyboard_arrow_down
-                                    : Icons.keyboard_arrow_right,
-                                size: 18,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (widget.showLineNumber)
+                              SizedBox(
+                                width: _style.lineNumberWidth,
+                                child: Text(
+                                  '${index + 1}',
+                                  textAlign: TextAlign.right,
+                                  style: TextStyle(fontSize: _style.fontSize, color: Colors.grey),
+                                ),
                               ),
-                      ),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: SelectableText.rich(
-                          TextSpan(
-                            children: [
-                              ..._buildHighlightedSpans(
-                                node.key,
-                                keyTextStyle,
-                                keyword,
-                                _style.matchColor,
+                            SizedBox(width: node.level * _style.indent),
+                            SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: node.children.isEmpty
+                                  ? null
+                                  : Icon(
+                                      node.expanded
+                                          ? Icons.keyboard_arrow_down
+                                          : Icons.keyboard_arrow_right,
+                                      size: 16,
+                                    ),
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: 
+                              SelectableText.rich(
+                                _buildNodeTextSpan(keyword: keyword, style: _style, node: node),
                               ),
-                              const TextSpan(text: ' : '),
-                              ..._buildHighlightedSpans(
-                                node.display,
-                                valueTextStyle,
-                                keyword,
-                                _style.matchColor,
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              );
-            },
+                    );
+                  },
+                );
+              },
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -237,29 +229,53 @@ class JsonTreeController {
 
   final visibleNodes = <TreeNode>[];
 
-  final matchIds = <int>[];
-
-  bool loading = false;
+  final matchNodes = <TreeNode>[];
 
   int currentIndex = -1;
 
-  Timer? _debounce;
+  Size viewSize = Size.zero;
 
-  int _token = 0;
+  Timer? _debounce;
 
   String _keyword = '';
 
-  int get total => matchIds.length;
+  int get total => matchNodes.length;
 
   int get currentDisplay => currentIndex < 0 ? 0 : currentIndex + 1;
 
   String get keyword => _keyword;
 
+  TextPainter _painter() {
+    return TextPainter(
+      text: TextSpan(text: null, style: TextStyle(fontSize: style.fontSize)),
+      textDirection: TextDirection.ltr,
+    );
+  }
+
+  double _lastOffset = 0.0;
+
   void rebuild() {
     visibleNodes.clear();
+    matchNodes.clear();
+    _lastOffset = 0.0;
+    final textStyle = TextStyle(fontSize: style.fontSize);
 
     void walk(TreeNode node) {
       visibleNodes.add(node);
+      if (_keyword.isNotEmpty) {
+        bool match = node.display.toLowerCase().contains(_keyword);
+        if (match) matchNodes.add(node);
+      }
+      if (viewSize.width > 0) {
+        final painter = _painter();
+        final t = '${node.key} : ${node.display}';
+        painter.text = TextSpan(text: t, style: textStyle);
+        final maxWidth = _maxSelectableTextWidth(node.level);
+        painter.layout(maxWidth: maxWidth);
+        node.offset = _lastOffset;
+        final height = painter.height;
+        _lastOffset += (height + style.vPadding * 2);
+      }
 
       if (node.expanded) {
         for (final child in node.children) {
@@ -273,6 +289,18 @@ class JsonTreeController {
     onRefresh();
   }
 
+  double _maxSelectableTextWidth(int level) {
+    final width =
+        viewSize.width -
+        style.hPadding * 2 -
+        (showLineNumber ? style.lineNumberWidth : 0) -
+        level * style.indent -
+        18 -
+        4;
+
+    return math.max(0, width).toDouble();
+  }
+
   void search(String text) {
     _debounce?.cancel();
 
@@ -282,54 +310,33 @@ class JsonTreeController {
   }
 
   Future<void> _search(String text) async {
-    final keyword = text.trim();
-    _keyword = keyword;
+    _keyword = text.trim();
 
-    if (keyword.isEmpty) {
-      matchIds.clear();
+    if (_keyword.isEmpty) {
+      matchNodes.clear();
       currentIndex = -1;
-      loading = false;
       rebuild();
       return;
     }
 
-    loading = true;
     onRefresh();
-
-    final token = ++_token;
-
-    final result = await compute(_searchWorker, {
-      'tree': root.toMap(),
-      'keyword': keyword.toLowerCase(),
-    });
-
-    if (token != _token) {
-      return;
-    }
-
-    matchIds
-      ..clear()
-      ..addAll(List<int>.from(result['matches']));
-
-    root.expandByIds(Set<int>.from(result['expandIds']));
-
-    currentIndex = matchIds.isEmpty ? -1 : 0;
-
-    loading = false;
-
     rebuild();
 
     if (currentIndex >= 0) {
-      _jump();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (currentIndex >= 0) {
+          _jump();
+        }
+      });
     }
   }
 
   void next() {
-    if (matchIds.isEmpty) return;
+    if (matchNodes.isEmpty) return;
 
     currentIndex++;
 
-    if (currentIndex >= matchIds.length) {
+    if (currentIndex >= matchNodes.length) {
       currentIndex = 0;
     }
 
@@ -337,41 +344,27 @@ class JsonTreeController {
   }
 
   void prev() {
-    if (matchIds.isEmpty) return;
+    if (matchNodes.isEmpty) return;
 
     currentIndex--;
 
     if (currentIndex < 0) {
-      currentIndex = matchIds.length - 1;
+      currentIndex = matchNodes.length - 1;
     }
 
     _jump();
   }
 
   void _jump() {
-    final id = matchIds[currentIndex];
-
-    final index = visibleNodes.indexWhere((e) => e.id == id);
-
-    if (index < 0) return;
-
-    scrollController.animateTo(
-      index * 48,
-      duration: const Duration(milliseconds: 250),
-      curve: Curves.easeOut,
+    final node = matchNodes[currentIndex];
+    final target = (node.offset - viewSize.height * 0.5).clamp(0.0, scrollController.position.maxScrollExtent);
+    scrollController.jumpTo(
+      target,
+      // duration: const Duration(milliseconds: 250),
+      // curve: Curves.easeOut,
     );
 
     onRefresh();
-  }
-
-  bool isMatch(int id) => matchIds.contains(id);
-
-  bool isCurrent(int id) {
-    if (currentIndex < 0) {
-      return false;
-    }
-
-    return matchIds[currentIndex] == id;
   }
 
   void dispose() {
@@ -394,6 +387,7 @@ class TreeNode {
     required this.children,
     required this.expanded,
     this.type = 'dynamic',
+    this.offset = 0,
   });
 
   final int id;
@@ -407,6 +401,8 @@ class TreeNode {
   final String type;
 
   bool expanded;
+
+  double offset;
 
   final List<TreeNode> children;
 
@@ -467,14 +463,6 @@ class TreeNode {
     );
   }
 
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'text': '$key $display'.toLowerCase(),
-      'children': children.map((e) => e.toMap()).toList(),
-    };
-  }
-
   void expandByIds(Set<int> ids) {
     expanded = ids.contains(id);
 
@@ -484,48 +472,22 @@ class TreeNode {
   }
 }
 
-///==============================================================
-/// SEARCH WORKER
-///==============================================================
-Map<String, dynamic> _searchWorker(Map<String, dynamic> args) {
-  final tree = args['tree'] as Map<String, dynamic>;
+TextSpan _buildNodeTextSpan({
+  required TreeNode node,
+  required JsonTreeStyle style,
+  required String keyword,
+}) {
+  final keyTextStyle = TextStyle(color: style.color('key'), fontSize: style.fontSize);
+  final valueTextStyle = TextStyle(color: style.color(node.type), fontSize: style.fontSize);
 
-  final keyword = args['keyword'] as String;
-
-  final matches = <int>[];
-  final expandIds = <int>{};
-
-  bool dfs(Map<String, dynamic> node) {
-    final text = node['text'] as String;
-
-    final id = node['id'] as int;
-
-    final children = List<Map<String, dynamic>>.from(node['children']);
-
-    bool self = text.contains(keyword);
-
-    bool childHit = false;
-
-    for (final child in children) {
-      if (dfs(child)) {
-        childHit = true;
-      }
-    }
-
-    if (self) {
-      matches.add(id);
-    }
-
-    if (childHit) {
-      expandIds.add(id);
-    }
-
-    return self || childHit;
-  }
-
-  dfs(tree);
-
-  return {'matches': matches, 'expandIds': expandIds.toList()};
+  return TextSpan(
+    style: TextStyle(fontSize: style.fontSize),
+    children: [
+      ..._buildHighlightedSpans(node.key, keyTextStyle, keyword, style.matchColor),
+      const TextSpan(text: ' : '),
+      ..._buildHighlightedSpans(node.display, valueTextStyle, keyword, style.matchColor),
+    ],
+  );
 }
 
 List<InlineSpan> _buildHighlightedSpans(

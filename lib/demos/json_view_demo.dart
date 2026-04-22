@@ -22,7 +22,7 @@ class _JsonViewDemoState extends State<JsonViewDemo> {
         padding: const EdgeInsets.all(30),
         child: JsonTreeView(
           json: map,
-          showLineNumber: true,
+          showLineNumber: false,
           searchBuilder: (context, controller) {
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
@@ -109,7 +109,7 @@ Map _item() {
       "price": 0.01,
       "name": "1分钱商品",
       "image":
-          "https://macbrush-shop-image.oss-cn-shanghai.aliyuncs.com/product/1761196848137_vk8qmv.png" * 20,
+          "https://macbrush-shop-image.oss-cn-shanghai.aliyuncs.com/product/1761196848137_vk8qmv.png",
       "cost_time": 3600,
       "sku_params": [
         {"id": 101, "name": "金色"},
@@ -149,6 +149,7 @@ Map _process() {
     "status": 0,
     "process_start_time": 0,
     "process_end_time": 0,
+    "service_process": "2026032715552600051687_2",
     "start_time": 0,
     "end_time": 0,
     "device_id": "",
