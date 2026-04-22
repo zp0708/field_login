@@ -12,25 +12,26 @@ class JsonTreeStyle {
   final double hPadding;
   final double vPadding;
   final double lineNumberWidth;
+  final Map<String, Color> colors;
 
-  final Color keyColor;
-  final Color valueColor;
-  final Color lineColor;
   final Color matchColor;
-  final Color currentColor;
 
-  const JsonTreeStyle({
+  JsonTreeStyle({
     this.fontSize = 14,
     this.indent = 18,
-    this.hPadding = 12,
-    this.vPadding = 10,
+    this.hPadding = 6,
+    this.vPadding = 6,
     this.lineNumberWidth = 44,
-    this.keyColor = Colors.blue,
-    this.valueColor = Colors.black87,
-    this.lineColor = Colors.grey,
-    this.matchColor = const Color(0x30FFEB3B),
-    this.currentColor = const Color(0x40FF9800),
-  });
+    this.matchColor = Colors.yellowAccent,
+  }) : colors = {
+         'key': const Color(0xFF4A148C),
+         'bool': Colors.purple,
+         'String': Colors.redAccent,
+         'int': Colors.teal,
+         'double': Colors.teal,
+       };
+
+  Color color(String type) => colors[type] ?? Colors.white;
 }
 
 ///==============================================================
@@ -43,7 +44,7 @@ class JsonTreeView extends StatefulWidget {
   const JsonTreeView({
     super.key,
     required this.json,
-    this.style = const JsonTreeStyle(),
+    this.style,
     this.searchBuilder,
 
     /// 是否显示行号
@@ -56,7 +57,7 @@ class JsonTreeView extends StatefulWidget {
 
   final dynamic json;
 
-  final JsonTreeStyle style;
+  final JsonTreeStyle? style;
 
   final JsonTreeSearchBuilder? searchBuilder;
 
@@ -70,14 +71,15 @@ class JsonTreeView extends StatefulWidget {
 
 class _JsonTreeViewState extends State<JsonTreeView> {
   late JsonTreeController controller;
+  late JsonTreeStyle _style;
 
   @override
   void initState() {
     super.initState();
-
+    _style = widget.style ?? JsonTreeStyle();
     controller = JsonTreeController(
       json: widget.json,
-      style: widget.style,
+      style: _style,
       showLineNumber: widget.showLineNumber,
       defaultExpandLevel: widget.defaultExpandLevel,
       onRefresh: () {
@@ -127,8 +129,12 @@ class _JsonTreeViewState extends State<JsonTreeView> {
             itemCount: controller.visibleNodes.length,
             itemBuilder: (_, index) {
               final node = controller.visibleNodes[index];
-
-              final style = widget.style;
+              final keyword = controller.keyword;
+              final keyTextStyle = TextStyle(color: _style.color('key'), fontSize: _style.fontSize);
+              final valueTextStyle = TextStyle(
+                color: _style.color(node.type),
+                fontSize: _style.fontSize,
+              );
 
               return GestureDetector(
                 onTap: () {
@@ -140,22 +146,22 @@ class _JsonTreeViewState extends State<JsonTreeView> {
                 child: Container(
                   color: Colors.white,
                   padding: EdgeInsets.symmetric(
-                    vertical: style.vPadding,
-                    horizontal: style.hPadding,
+                    vertical: _style.vPadding,
+                    horizontal: _style.hPadding,
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (widget.showLineNumber)
                         SizedBox(
-                          width: style.lineNumberWidth,
+                          width: _style.lineNumberWidth,
                           child: Text(
                             '${index + 1}',
                             textAlign: TextAlign.right,
-                            style: TextStyle(fontSize: style.fontSize, color: style.lineColor),
+                            style: TextStyle(fontSize: _style.fontSize, color: Colors.grey),
                           ),
                         ),
-                      SizedBox(width: node.level * style.indent),
+                      SizedBox(width: node.level * _style.indent),
                       SizedBox(
                         width: 18,
                         child: node.children.isEmpty
@@ -172,14 +178,18 @@ class _JsonTreeViewState extends State<JsonTreeView> {
                         child: SelectableText.rich(
                           TextSpan(
                             children: [
-                              TextSpan(
-                                text: node.key,
-                                style: TextStyle(color: style.keyColor, fontSize: style.fontSize),
+                              ..._buildHighlightedSpans(
+                                node.key,
+                                keyTextStyle,
+                                keyword,
+                                _style.matchColor,
                               ),
                               const TextSpan(text: ' : '),
-                              TextSpan(
-                                text: node.display,
-                                style: TextStyle(color: style.valueColor, fontSize: style.fontSize),
+                              ..._buildHighlightedSpans(
+                                node.display,
+                                valueTextStyle,
+                                keyword,
+                                _style.matchColor,
                               ),
                             ],
                           ),
@@ -237,9 +247,13 @@ class JsonTreeController {
 
   int _token = 0;
 
+  String _keyword = '';
+
   int get total => matchIds.length;
 
   int get currentDisplay => currentIndex < 0 ? 0 : currentIndex + 1;
+
+  String get keyword => _keyword;
 
   void rebuild() {
     visibleNodes.clear();
@@ -269,10 +283,12 @@ class JsonTreeController {
 
   Future<void> _search(String text) async {
     final keyword = text.trim();
+    _keyword = keyword;
 
     if (keyword.isEmpty) {
       matchIds.clear();
       currentIndex = -1;
+      loading = false;
       rebuild();
       return;
     }
@@ -303,7 +319,9 @@ class JsonTreeController {
 
     rebuild();
 
-    next();
+    if (currentIndex >= 0) {
+      _jump();
+    }
   }
 
   void next() {
@@ -375,6 +393,7 @@ class TreeNode {
     required this.level,
     required this.children,
     required this.expanded,
+    this.type = 'dynamic',
   });
 
   final int id;
@@ -384,6 +403,8 @@ class TreeNode {
   final String display;
 
   final int level;
+
+  final String type;
 
   bool expanded;
 
@@ -441,6 +462,7 @@ class TreeNode {
       display: '$json',
       level: level,
       expanded: expanded,
+      type: json.runtimeType.toString(),
       children: [],
     );
   }
@@ -504,4 +526,48 @@ Map<String, dynamic> _searchWorker(Map<String, dynamic> args) {
   dfs(tree);
 
   return {'matches': matches, 'expandIds': expandIds.toList()};
+}
+
+List<InlineSpan> _buildHighlightedSpans(
+  String text,
+  TextStyle baseStyle,
+  String keyword,
+  Color highlightColor,
+) {
+  if (keyword.isEmpty) {
+    return [TextSpan(text: text, style: baseStyle)];
+  }
+
+  final lowerText = text.toLowerCase();
+  final lowerKeyword = keyword.toLowerCase();
+  final spans = <InlineSpan>[];
+  var start = 0;
+
+  while (true) {
+    final index = lowerText.indexOf(lowerKeyword, start);
+
+    if (index < 0) {
+      spans.add(TextSpan(text: text.substring(start), style: baseStyle));
+      break;
+    }
+
+    if (index > start) {
+      spans.add(TextSpan(text: text.substring(start, index), style: baseStyle));
+    }
+
+    spans.add(
+      TextSpan(
+        text: text.substring(index, index + lowerKeyword.length),
+        style: baseStyle.copyWith(backgroundColor: highlightColor),
+      ),
+    );
+
+    start = index + lowerKeyword.length;
+
+    if (start >= text.length) {
+      break;
+    }
+  }
+
+  return spans;
 }

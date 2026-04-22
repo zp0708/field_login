@@ -13,7 +13,7 @@ class _JsonViewDemoState extends State<JsonViewDemo> {
   Widget build(BuildContext context) {
     final json = _getJson();
     final map = {};
-    for (var i = 0; i < 100; i++) {
+    for (var i = 0; i < 10; i++) {
       map[i.toString()] = json;
     }
     return Scaffold(
@@ -22,6 +22,7 @@ class _JsonViewDemoState extends State<JsonViewDemo> {
         padding: const EdgeInsets.all(30),
         child: JsonTreeView(
           json: map,
+          showLineNumber: true,
           searchBuilder: (context, controller) {
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
@@ -108,7 +109,7 @@ Map _item() {
       "price": 0.01,
       "name": "1分钱商品",
       "image":
-          "https://macbrush-shop-image.oss-cn-shanghai.aliyuncs.com/product/1761196848137_vk8qmv.png",
+          "https://macbrush-shop-image.oss-cn-shanghai.aliyuncs.com/product/1761196848137_vk8qmv.png" * 20,
       "cost_time": 3600,
       "sku_params": [
         {"id": 101, "name": "金色"},
