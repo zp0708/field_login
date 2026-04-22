@@ -205,7 +205,7 @@ String _getTypeName(dynamic content) {
 }
 
 class JsonObjectViewer extends StatefulWidget {
-  final Map<String, dynamic> jsonObj;
+  final Map<dynamic, dynamic> jsonObj;
   final bool notRoot;
   final bool unfold;
   final String? highlight;

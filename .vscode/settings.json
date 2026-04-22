@@ -1,3 +1,21 @@
 {
+  "rust-analyzer.check.overrideCommand": null,
+  "editor.fontSize": 14,
+  "editor.indentSize": "tabSize",
+  "editor.formatOnSave": false,
+  "editor.autoClosingBrackets": "languageDefined",
+  "editor.autoClosingQuotes": "languageDefined",
+  "editor.autoSurround": "languageDefined",
+  "[dart]": {
+    "editor.formatOnSave": false,
+    "editor.defaultFormatter": "Dart-Code.dart-code",
+    "editor.formatOnType": false,
+    "editor.autoClosingBrackets": "languageDefined",
+    "editor.autoClosingQuotes": "languageDefined",
+    "editor.rulers": [100]
+  },
+  "dart.lineLength": 100,
+  "prettier.requireConfig": true,
+  "editor.foldingImportsByDefault": true,
   "dart.flutterSdkPath": ".fvm/versions/3.35.7"
 }

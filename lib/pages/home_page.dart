@@ -1,26 +1,27 @@
+import 'package:field_login/demos/anchor_overlay_demo.dart';
 import 'package:field_login/demos/animated_digit_demo.dart';
 import 'package:field_login/demos/carousel_demo.dart';
 import 'package:field_login/demos/developing_demo.dart';
+import 'package:field_login/demos/double_tap_zoom_demo.dart';
 import 'package:field_login/demos/generic_refresh_list_example.dart';
+import 'package:field_login/demos/json_view_demo.dart';
+import 'package:field_login/demos/overlay_demo.dart';
 import 'package:field_login/demos/page_view_demo.dart';
-import 'package:field_login/demos/anchor_overlay_demo.dart';
 import 'package:field_login/demos/price_text_field_demo.dart';
 import 'package:field_login/demos/random_moving_demo.dart';
-import 'package:field_login/demos/socket_demo.dart';
-import 'package:field_login/demos/double_tap_zoom_demo.dart';
 import 'package:field_login/demos/settlement_demo.dart';
+import 'package:field_login/demos/socket_demo.dart';
 import 'package:field_login/pages/scroll_to_index.dart';
-import 'package:field_login/demos/overlay_demo.dart';
-import 'package:field_login/widgets/price_text_field/price_text_field_example.dart';
 import 'package:field_login/widgets/semi_circle_scroll/rotating_menu.dart';
 import 'package:flutter/material.dart';
-import '../demos/progress_demo.dart';
+
 import '../demos/phone_input_demo.dart';
-import '../demos/shape_tab_demo.dart';
-import '../widgets/model_preview/webview_example_page.dart';
-import '../widgets/model_preview/model_preview_page.dart';
-import '../demos/progress_timeline_demo.dart';
 import '../demos/product_detail_anchor_demo.dart';
+import '../demos/progress_demo.dart';
+import '../demos/progress_timeline_demo.dart';
+import '../demos/shape_tab_demo.dart';
+import '../widgets/model_preview/model_preview_page.dart';
+import '../widgets/model_preview/webview_example_page.dart';
 
 /// test
 class HomePage extends StatelessWidget {
@@ -35,11 +36,7 @@ class HomePage extends StatelessWidget {
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
-        children: [
-          _buildHeader(),
-          const SizedBox(height: 24),
-          _buildComponentList(context),
-        ],
+        children: [_buildHeader(), const SizedBox(height: 24), _buildComponentList(context)],
       ),
     );
   }
@@ -50,26 +47,13 @@ class HomePage extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            Icon(
-              Icons.widgets,
-              size: 48,
-              color: Colors.blue.shade600,
-            ),
+            Icon(Icons.widgets, size: 48, color: Colors.blue.shade600),
             const SizedBox(height: 16),
-            const Text(
-              'Flutter 组件库',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            const Text('Flutter 组件库', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Text(
               '收集和展示各种实用的Flutter组件',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey.shade600,
-              ),
+              style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
               textAlign: TextAlign.center,
             ),
           ],
@@ -85,7 +69,7 @@ class HomePage extends StatelessWidget {
         description: '开发中的组件 演示',
         icon: Icons.developer_board,
         color: Colors.yellow,
-        demoPage: const DevelopingDemo(),
+        demoPage: const JsonViewDemo(),
       ),
       _ComponentItem(
         title: 'Random Moving 演示',
@@ -237,9 +221,9 @@ class HomePage extends StatelessWidget {
     ];
 
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: components.map((component) {
-        final hasRoute =
-            component.demoPage != null || component.builder != null;
+        final hasRoute = component.demoPage != null || component.builder != null;
         return Card(
           margin: const EdgeInsets.only(bottom: 16),
           child: ListTile(
@@ -250,41 +234,29 @@ class HomePage extends StatelessWidget {
                 component.color.blue,
                 0.2,
               ),
-              child: Icon(
-                component.icon,
-                color: component.color,
-              ),
+              child: Icon(component.icon, color: component.color),
             ),
-            title: Text(
-              component.title,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
+            title: Text(component.title, style: const TextStyle(fontWeight: FontWeight.bold)),
             subtitle: Text(component.description),
             trailing: hasRoute
                 ? Icon(Icons.arrow_forward_ios, color: component.color)
                 : Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: const Color.fromRGBO(158, 158, 158, 0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Text(
-                      '无演示',
-                      style: TextStyle(fontSize: 12),
-                    ),
+                    child: const Text('无演示', style: TextStyle(fontSize: 12)),
                   ),
             onTap: hasRoute
                 ? () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => component.builder != null
-                            ? component.builder!(context)
-                            : component.demoPage!,
-                      ),
-                    )
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => component.builder != null
+                          ? component.builder!(context)
+                          : component.demoPage!,
+                    ),
+                  )
                 : null,
           ),
         );
