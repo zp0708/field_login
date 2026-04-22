@@ -19,18 +19,18 @@ class JsonTreeStyle {
 
   JsonTreeStyle({
     this.fontSize = 14,
-    this.indent = 18,
+    this.indent = 10,
     this.hPadding = 6,
     this.vPadding = 6,
     this.lineNumberWidth = 44,
     this.matchColor = Colors.yellowAccent,
   }) : colors = {
-         'key': const Color(0xFF4A148C),
-         'bool': Colors.purple,
-         'String': Colors.redAccent,
-         'int': Colors.teal,
-         'double': Colors.teal,
-       };
+          'key': const Color(0xFF4A148C),
+          'bool': Colors.purple,
+          'String': Colors.redAccent,
+          'int': Colors.teal,
+          'double': Colors.teal,
+        };
 
   Color color(String type) => colors[type] ?? Colors.white;
 }
@@ -38,8 +38,8 @@ class JsonTreeStyle {
 ///==============================================================
 /// VIEW
 ///==============================================================
-typedef JsonTreeSearchBuilder =
-    Widget Function(BuildContext context, JsonTreeController controller);
+typedef JsonTreeSearchBuilder = Widget Function(
+    BuildContext context, JsonTreeController controller);
 
 class JsonTreeView extends StatefulWidget {
   const JsonTreeView({
@@ -136,6 +136,10 @@ class _JsonTreeViewState extends State<JsonTreeView> {
                 return ListView.builder(
                   controller: controller.scrollController,
                   itemCount: controller.visibleNodes.length,
+                  itemExtentBuilder: controller.keyword.isEmpty
+                      ? null
+                      : (index, dimensions) => controller.visibleNodes[index].height,
+                  // itemExtent: 16,\
                   itemBuilder: (_, index) {
                     final node = controller.visibleNodes[index];
                     final keyword = controller.keyword;
@@ -179,8 +183,7 @@ class _JsonTreeViewState extends State<JsonTreeView> {
                             ),
                             const SizedBox(width: 4),
                             Expanded(
-                              child: 
-                              SelectableText.rich(
+                              child: SelectableText.rich(
                                 _buildNodeTextSpan(keyword: keyword, style: _style, node: node),
                               ),
                             ),
@@ -273,8 +276,8 @@ class JsonTreeController {
         final maxWidth = _maxSelectableTextWidth(node.level);
         painter.layout(maxWidth: maxWidth);
         node.offset = _lastOffset;
-        final height = painter.height;
-        _lastOffset += (height + style.vPadding * 2);
+        node.height = painter.height + style.vPadding * 2;
+        _lastOffset += node.height;
       }
 
       if (node.expanded) {
@@ -290,12 +293,11 @@ class JsonTreeController {
   }
 
   double _maxSelectableTextWidth(int level) {
-    final width =
-        viewSize.width -
+    final width = viewSize.width -
         style.hPadding * 2 -
-        (showLineNumber ? style.lineNumberWidth : 0) -
+        (showLineNumber ? style.lineNumberWidth : 0.0) -
         level * style.indent -
-        18 -
+        16 -
         4;
 
     return math.max(0, width).toDouble();
@@ -357,7 +359,8 @@ class JsonTreeController {
 
   void _jump() {
     final node = matchNodes[currentIndex];
-    final target = (node.offset - viewSize.height * 0.5).clamp(0.0, scrollController.position.maxScrollExtent);
+    final target =
+        (node.offset - viewSize.height * 0.5).clamp(0.0, scrollController.position.maxScrollExtent);
     scrollController.jumpTo(
       target,
       // duration: const Duration(milliseconds: 250),
@@ -388,6 +391,7 @@ class TreeNode {
     required this.expanded,
     this.type = 'dynamic',
     this.offset = 0,
+    this.height = 44,
   });
 
   final int id;
@@ -403,6 +407,8 @@ class TreeNode {
   bool expanded;
 
   double offset;
+
+  double height;
 
   final List<TreeNode> children;
 

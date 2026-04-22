@@ -109,7 +109,7 @@ Map _item() {
       "price": 0.01,
       "name": "1分钱商品",
       "image":
-          "https://macbrush-shop-image.oss-cn-shanghai.aliyuncs.com/product/1761196848137_vk8qmv.png",
+          "https://macbrush-shop-image.oss-cn-shanghai.aliyuncs.com/product/1761196848137_vk8qmv.png" * 10,
       "cost_time": 3600,
       "sku_params": [
         {"id": 101, "name": "金色"},
