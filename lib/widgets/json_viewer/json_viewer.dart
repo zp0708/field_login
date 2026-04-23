@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 ///==============================================================
@@ -12,17 +11,15 @@ class JsonTreeStyle {
   final double indent;
   final double hPadding;
   final double vPadding;
-  final double lineNumberWidth;
   final Map<String, Color> colors;
 
   final Color matchColor;
 
   JsonTreeStyle({
-    this.fontSize = 14,
+    this.fontSize = 18,
     this.indent = 10,
-    this.hPadding = 6,
-    this.vPadding = 6,
-    this.lineNumberWidth = 44,
+    this.hPadding = 4,
+    this.vPadding = 4,
     this.matchColor = Colors.yellowAccent,
   }) : colors = {
           'key': const Color(0xFF4A148C),
@@ -30,9 +27,10 @@ class JsonTreeStyle {
           'String': Colors.redAccent,
           'int': Colors.teal,
           'double': Colors.teal,
+          'node': Colors.grey,
         };
 
-  Color color(String type) => colors[type] ?? Colors.white;
+  Color color(String type) => colors[type] ?? Colors.black;
 }
 
 ///==============================================================
@@ -53,7 +51,7 @@ class JsonTreeView extends StatefulWidget {
 
     /// 默认展开层级
     /// null = 全展开
-    this.defaultExpandLevel,
+    this.expandLevel,
   });
 
   final dynamic json;
@@ -64,7 +62,7 @@ class JsonTreeView extends StatefulWidget {
 
   final bool showLineNumber;
 
-  final int? defaultExpandLevel;
+  final int? expandLevel;
 
   @override
   State<JsonTreeView> createState() => _JsonTreeViewState();
@@ -82,7 +80,7 @@ class _JsonTreeViewState extends State<JsonTreeView> {
       json: widget.json,
       style: _style,
       showLineNumber: widget.showLineNumber,
-      defaultExpandLevel: widget.defaultExpandLevel,
+      defaultExpandLevel: widget.expandLevel,
       onRefresh: () {
         if (mounted) {
           setState(() {});
@@ -97,37 +95,16 @@ class _JsonTreeViewState extends State<JsonTreeView> {
     super.dispose();
   }
 
-  Widget _defaultSearchBar() {
-    return Row(
-      children: [
-        Expanded(
-          child: TextField(
-            onChanged: controller.search,
-            decoration: const InputDecoration(
-              hintText: '搜索...',
-              border: OutlineInputBorder(),
-              isDense: true,
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text('${controller.currentDisplay}/${controller.total}'),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final features = const TextStyle(fontFeatures: [FontFeature.tabularFigures()]);
     final textStyle = TextStyle(fontSize: _style.fontSize, color: Colors.black).merge(features);
+    final searchBar = widget.searchBuilder?.call(context, controller);
     return DefaultTextStyle(
       style: textStyle,
       child: Column(
         children: [
-          widget.searchBuilder != null
-              ? widget.searchBuilder!(context, controller)
-              : _defaultSearchBar(),
-          const SizedBox(height: 12),
+          if (searchBar != null) searchBar,
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
@@ -139,56 +116,52 @@ class _JsonTreeViewState extends State<JsonTreeView> {
                   itemExtentBuilder: controller.keyword.isEmpty
                       ? null
                       : (index, dimensions) => controller.visibleNodes[index].height,
-                  // itemExtent: 16,\
                   itemBuilder: (_, index) {
                     final node = controller.visibleNodes[index];
                     final keyword = controller.keyword;
-                    return GestureDetector(
-                      onTap: () {
-                        if (node.children.isNotEmpty) {
-                          node.expanded = !node.expanded;
-                          controller.rebuild();
-                        }
-                      },
-                      child: Container(
-                        color: Colors.white,
-                        padding: EdgeInsets.symmetric(
-                          vertical: _style.vPadding,
-                          horizontal: _style.hPadding,
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (widget.showLineNumber)
-                              SizedBox(
-                                width: _style.lineNumberWidth,
-                                child: Text(
-                                  '${index + 1}',
-                                  textAlign: TextAlign.right,
-                                  style: TextStyle(fontSize: _style.fontSize, color: Colors.grey),
+                    final showArrow = node.children.isNotEmpty;
+                    final arrowWidth = showArrow ? 0.0 : 16.0;
+                    return Container(
+                      color: Colors.white,
+                      padding: EdgeInsets.symmetric(
+                        vertical: _style.vPadding,
+                        horizontal: _style.hPadding,
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (widget.showLineNumber)
+                            SizedBox(
+                              width: controller.lineNumberWidth,
+                              child: Text(
+                                '${node.index}',
+                                textAlign: TextAlign.right,
+                                style: TextStyle(fontSize: _style.fontSize, color: Colors.grey),
+                              ),
+                            ),
+                          SizedBox(width: node.level * _style.indent + arrowWidth),
+                          if (node.children.isNotEmpty)
+                            InkWell(
+                              onTap: () {
+                                node.expanded = !node.expanded;
+                                controller.rebuild();
+                              },
+                              child: Container(
+                                padding: EdgeInsets.only(top: 2),
+                                height: controller.lineHeight,
+                                width: controller.lineHeight,
+                                child: Icon(
+                                  node.expanded
+                                      ? Icons.keyboard_arrow_down
+                                      : Icons.keyboard_arrow_right,
+                                  size: controller.lineHeight - 2,
                                 ),
                               ),
-                            SizedBox(width: node.level * _style.indent),
-                            SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: node.children.isEmpty
-                                  ? null
-                                  : Icon(
-                                      node.expanded
-                                          ? Icons.keyboard_arrow_down
-                                          : Icons.keyboard_arrow_right,
-                                      size: 16,
-                                    ),
                             ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: SelectableText.rich(
-                                _buildNodeTextSpan(keyword: keyword, style: _style, node: node),
-                              ),
-                            ),
-                          ],
-                        ),
+                          Expanded(
+                            child: HighlightedText(keyword: keyword, style: _style, node: node),
+                          ),
+                        ],
                       ),
                     );
                   },
@@ -213,8 +186,16 @@ class JsonTreeController {
     required this.defaultExpandLevel,
     required this.onRefresh,
   }) {
-    root = TreeNode.fromJson(json, key: 'root', level: 0, defaultExpandLevel: defaultExpandLevel);
-
+    _seed = 0;
+    root = TreeNode.fromJson(
+      json,
+      key: 'root',
+      level: 0,
+      defaultExpandLevel: defaultExpandLevel,
+    );
+    final painter = _painter('8')..layout();
+    lineNumberWidth = painter.width * _seed.toString().length;
+    lineHeight = painter.height;
     rebuild();
   }
 
@@ -234,6 +215,10 @@ class JsonTreeController {
 
   final matchNodes = <TreeNode>[];
 
+  double lineNumberWidth = 0;
+
+  double lineHeight = 0;
+
   int currentIndex = -1;
 
   Size viewSize = Size.zero;
@@ -248,9 +233,9 @@ class JsonTreeController {
 
   String get keyword => _keyword;
 
-  TextPainter _painter() {
+  TextPainter _painter([String? text]) {
     return TextPainter(
-      text: TextSpan(text: null, style: TextStyle(fontSize: style.fontSize)),
+      text: TextSpan(text: text, style: TextStyle(fontSize: style.fontSize)),
       textDirection: TextDirection.ltr,
     );
   }
@@ -262,22 +247,24 @@ class JsonTreeController {
     matchNodes.clear();
     _lastOffset = 0.0;
     final textStyle = TextStyle(fontSize: style.fontSize);
+    final painter = _painter();
 
     void walk(TreeNode node) {
       visibleNodes.add(node);
-      if (_keyword.isNotEmpty) {
-        bool match = node.display.toLowerCase().contains(_keyword);
-        if (match) matchNodes.add(node);
-      }
-      if (viewSize.width > 0) {
-        final painter = _painter();
-        final t = '${node.key} : ${node.display}';
-        painter.text = TextSpan(text: t, style: textStyle);
+
+      if (viewSize.width > 0 && _keyword.isNotEmpty) {
+        node.expanded = true;
+        final text = node.text;
+        node.matched = node.text.toLowerCase().contains(_keyword);
+        if (node.matched) matchNodes.add(node);
+        painter.text = TextSpan(text: text, style: textStyle);
         final maxWidth = _maxSelectableTextWidth(node.level);
         painter.layout(maxWidth: maxWidth);
         node.offset = _lastOffset;
         node.height = painter.height + style.vPadding * 2;
         _lastOffset += node.height;
+      } else {
+        node.matched = false;
       }
 
       if (node.expanded) {
@@ -288,17 +275,15 @@ class JsonTreeController {
     }
 
     walk(root);
-
     onRefresh();
   }
 
   double _maxSelectableTextWidth(int level) {
     final width = viewSize.width -
         style.hPadding * 2 -
-        (showLineNumber ? style.lineNumberWidth : 0.0) -
+        (showLineNumber ? lineNumberWidth : 0.0) -
         level * style.indent -
-        16 -
-        4;
+        lineHeight;
 
     return math.max(0, width).toDouble();
   }
@@ -359,12 +344,14 @@ class JsonTreeController {
 
   void _jump() {
     final node = matchNodes[currentIndex];
-    final target =
-        (node.offset - viewSize.height * 0.5).clamp(0.0, scrollController.position.maxScrollExtent);
-    scrollController.jumpTo(
+    final target = (node.offset - viewSize.height * 0.5).clamp(
+      0.0,
+      scrollController.position.maxScrollExtent,
+    );
+    scrollController.animateTo(
       target,
-      // duration: const Duration(milliseconds: 250),
-      // curve: Curves.easeOut,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
     );
 
     onRefresh();
@@ -379,30 +366,32 @@ class JsonTreeController {
 ///==============================================================
 /// NODE
 ///==============================================================
+
 int _seed = 0;
 
 class TreeNode {
   TreeNode({
-    required this.id,
     required this.key,
-    required this.display,
+    required this.value,
+    required this.index,
     required this.level,
     required this.children,
     required this.expanded,
     this.type = 'dynamic',
     this.offset = 0,
     this.height = 44,
+    this.matched = false,
   });
-
-  final int id;
 
   final String key;
 
-  final String display;
+  final String value;
 
   final int level;
 
   final String type;
+
+  final int index;
 
   bool expanded;
 
@@ -410,7 +399,12 @@ class TreeNode {
 
   double height;
 
+  /// 是否匹配上关键词
+  bool matched;
+
   final List<TreeNode> children;
+
+  String get text => '$key : $value';
 
   factory TreeNode.fromJson(
     dynamic json, {
@@ -418,16 +412,15 @@ class TreeNode {
     required int level,
     required int? defaultExpandLevel,
   }) {
-    final id = _seed++;
-
     final expanded = defaultExpandLevel == null ? true : level < defaultExpandLevel;
-
+    _seed += 1;
     if (json is Map) {
       return TreeNode(
-        id: id,
         key: key,
-        display: '{${json.length}}',
+        value: 'Map{${json.length}}',
+        index: _seed,
         level: level,
+        type: 'node',
         expanded: expanded,
         children: json.entries.map<TreeNode>((e) {
           return TreeNode.fromJson(
@@ -442,10 +435,11 @@ class TreeNode {
 
     if (json is List) {
       return TreeNode(
-        id: id,
         key: key,
-        display: '[${json.length}]',
+        value: 'List[${json.length}]',
+        index: _seed,
         level: level,
+        type: 'node',
         expanded: expanded,
         children: json.asMap().entries.map<TreeNode>((e) {
           return TreeNode.fromJson(
@@ -459,83 +453,70 @@ class TreeNode {
     }
 
     return TreeNode(
-      id: id,
       key: key,
-      display: '$json',
+      value: '$json',
+      index: _seed,
       level: level,
       expanded: expanded,
       type: json.runtimeType.toString(),
       children: [],
     );
   }
-
-  void expandByIds(Set<int> ids) {
-    expanded = ids.contains(id);
-
-    for (final child in children) {
-      child.expandByIds(ids);
-    }
-  }
 }
 
-TextSpan _buildNodeTextSpan({
-  required TreeNode node,
-  required JsonTreeStyle style,
-  required String keyword,
-}) {
-  final keyTextStyle = TextStyle(color: style.color('key'), fontSize: style.fontSize);
-  final valueTextStyle = TextStyle(color: style.color(node.type), fontSize: style.fontSize);
+class HighlightedText extends StatelessWidget {
+  const HighlightedText({super.key, required this.node, required this.style, this.keyword});
 
-  return TextSpan(
-    style: TextStyle(fontSize: style.fontSize),
-    children: [
-      ..._buildHighlightedSpans(node.key, keyTextStyle, keyword, style.matchColor),
-      const TextSpan(text: ' : '),
-      ..._buildHighlightedSpans(node.display, valueTextStyle, keyword, style.matchColor),
-    ],
-  );
-}
+  final TreeNode node;
+  final JsonTreeStyle style;
+  final String? keyword;
 
-List<InlineSpan> _buildHighlightedSpans(
-  String text,
-  TextStyle baseStyle,
-  String keyword,
-  Color highlightColor,
-) {
-  if (keyword.isEmpty) {
-    return [TextSpan(text: text, style: baseStyle)];
-  }
+  @override
+  Widget build(BuildContext context) {
+    final keyStyle = TextStyle(color: style.color('key'), fontSize: style.fontSize);
+    final valueStyle = TextStyle(color: style.color(node.type), fontSize: style.fontSize);
 
-  final lowerText = text.toLowerCase();
-  final lowerKeyword = keyword.toLowerCase();
-  final spans = <InlineSpan>[];
-  var start = 0;
+    final List<InlineSpan> spans = [];
 
-  while (true) {
-    final index = lowerText.indexOf(lowerKeyword, start);
+    if (!node.matched || keyword == null || keyword!.isEmpty) {
+      spans.addAll([
+        TextSpan(text: node.key, style: keyStyle),
+        const TextSpan(text: ' : '),
+        TextSpan(text: node.value, style: valueStyle),
+      ]);
+    } else {
+      final text = node.text;
+      final lowerText = text.toLowerCase();
+      int start = 0;
 
-    if (index < 0) {
-      spans.add(TextSpan(text: text.substring(start), style: baseStyle));
-      break;
+      while (true) {
+        final index = lowerText.indexOf(keyword!, start);
+        final textStyle = start > node.key.length ? valueStyle : keyStyle;
+        if (index < 0) {
+          spans.add(TextSpan(text: text.substring(start), style: keyStyle));
+          break;
+        }
+        if (index > start) {
+          spans.add(TextSpan(text: text.substring(start, index), style: textStyle));
+        }
+        spans.add(
+          TextSpan(
+            text: text.substring(index, index + keyword!.length),
+            style: textStyle.copyWith(backgroundColor: style.matchColor),
+          ),
+        );
+        start = index + keyword!.length;
+        if (start >= text.length) {
+          break;
+        }
+      }
     }
 
-    if (index > start) {
-      spans.add(TextSpan(text: text.substring(start, index), style: baseStyle));
-    }
-
-    spans.add(
+    return SelectableText.rich(
       TextSpan(
-        text: text.substring(index, index + lowerKeyword.length),
-        style: baseStyle.copyWith(backgroundColor: highlightColor),
+        style: TextStyle(fontSize: style.fontSize),
+        children: spans,
       ),
     );
-
-    start = index + lowerKeyword.length;
-
-    if (start >= text.length) {
-      break;
-    }
   }
-
-  return spans;
 }

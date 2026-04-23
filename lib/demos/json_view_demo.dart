@@ -22,7 +22,8 @@ class _JsonViewDemoState extends State<JsonViewDemo> {
         padding: const EdgeInsets.all(30),
         child: JsonTreeView(
           json: map,
-          showLineNumber: false,
+          showLineNumber: true,
+          expandLevel: 3,
           searchBuilder: (context, controller) {
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
