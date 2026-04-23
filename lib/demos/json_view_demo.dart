@@ -24,7 +24,7 @@ class _JsonViewDemoState extends State<JsonViewDemo> {
   Widget build(BuildContext context) {
     final json = _getJson();
     final map = {};
-    for (var i = 0; i < 100; i++) {
+    for (var i = 0; i < 10; i++) {
       map[i.toString()] = json;
     }
     return Scaffold(

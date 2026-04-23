@@ -75,21 +75,15 @@ class _JsonTreeViewState extends State<JsonTreeView> {
     super.initState();
     _scrollController = ScrollController();
     _controller = widget.controller ?? JsonTreeController();
-    _controller.addListener(_update);
+    _controller._refreshNotifier.addListener(_update);
+    _controller._indexNotifier.addListener(_scrollToNode);
     WidgetsBinding.instance.addPostFrameCallback((_) => _setup());
   }
 
-  void _update() {
-    if (_controller.needUpdate) {
-      setState(() {});
-    }
-    if (_controller.currentIndex != -1) {
-      _scrollToNode();
-    }
-  }
+  void _update() => setState(() {});
 
   void _scrollToNode() {
-    final node = _controller.matchNodes[_controller.currentIndex];
+    final node = _controller.matchNodes[_controller._indexNotifier.value];
     final target = (node.offset - _controller.viewSize.height * 0.5).clamp(
       0.0,
       _scrollController.position.maxScrollExtent,
@@ -112,7 +106,8 @@ class _JsonTreeViewState extends State<JsonTreeView> {
 
   @override
   void dispose() {
-    _controller.removeListener(_update);
+    _controller._refreshNotifier.removeListener(_update);
+    _controller._indexNotifier.addListener(_scrollToNode);
     if (widget.controller == null) _controller.dispose();
     super.dispose();
   }
@@ -189,7 +184,7 @@ class _JsonTreeViewState extends State<JsonTreeView> {
 ///==============================================================
 /// CONTROLLER
 ///==============================================================
-class JsonTreeController extends ChangeNotifier {
+class JsonTreeController {
   JsonTreeController();
 
   bool _showLineNumber = false;
@@ -203,14 +198,19 @@ class JsonTreeController extends ChangeNotifier {
   final visibleNodes = <TreeNode>[];
   final matchNodes = <TreeNode>[];
 
-  int currentIndex = -1;
   Size viewSize = Size.zero;
 
   Timer? _debounce;
   String _keyword = '';
   String get keyword => _keyword;
+
   int get total => matchNodes.length;
-  int get currentDisplay => currentIndex < 0 ? 0 : currentIndex + 1;
+  int get currentDisplay => _indexNotifier.value + 1;
+
+  final _indexNotifier = ValueNotifier<int>(-1);
+  final _refreshNotifier = ValueNotifier<int>(-1);
+
+  ValueNotifier<int> get index => _indexNotifier;
 
   void json({
     dynamic json,
@@ -242,45 +242,41 @@ class JsonTreeController extends ChangeNotifier {
 
   double _lastOffset = 0.0;
 
-  bool _needUpdate = false;
-  bool get needUpdate => _needUpdate;
-
-  void rebuild() {
+  void rebuild({bool unfold = false}) {
     visibleNodes.clear();
     matchNodes.clear();
     _lastOffset = 0.0;
     final textStyle = TextStyle(fontSize: _style.fontSize);
     final painter = _painter();
 
-    void walk(TreeNode node) {
-      visibleNodes.add(node);
+    void walk(TreeNode node, bool parentExpended) {
+      if (parentExpended) visibleNodes.add(node);
+
+      if (unfold) node.expanded = true;
 
       if (viewSize.width > 0 && _keyword.isNotEmpty) {
-        node.expanded = true;
         final text = node.text;
         node.matched = node.text.toLowerCase().contains(_keyword);
         if (node.matched) matchNodes.add(node);
-        painter.text = TextSpan(text: text, style: textStyle);
-        final maxWidth = _maxSelectableTextWidth(node.level);
-        painter.layout(maxWidth: maxWidth);
-        node.offset = _lastOffset;
-        node.height = painter.height + _style.vPadding * 2;
-        _lastOffset += node.height;
-      } else {
-        node.matched = false;
+        if (parentExpended) {
+          painter.text = TextSpan(text: text, style: textStyle);
+          final maxWidth = _maxSelectableTextWidth(node.level);
+          painter.layout(maxWidth: maxWidth);
+          node.offset = _lastOffset;
+          node.height = painter.height + _style.vPadding * 2;
+          _lastOffset += node.height;
+        }
       }
 
-      if (node.expanded && node.hasChildren) {
+      if ((node.expanded || _keyword.isNotEmpty) && node.hasChildren) {
         for (final child in node.children!) {
-          walk(child);
+          walk(child, node.expanded);
         }
       }
     }
 
-    if (_root != null) walk(_root!);
-    _needUpdate = true;
-    notifyListeners();
-    _needUpdate = false;
+    if (_root != null) walk(_root!, true);
+    _refreshNotifier.value += 1; 
   }
 
   double _maxSelectableTextWidth(int level) {
@@ -305,41 +301,34 @@ class JsonTreeController extends ChangeNotifier {
 
     if (_keyword.isEmpty) {
       matchNodes.clear();
-      currentIndex = -1;
       rebuild();
       return;
     }
 
-    rebuild();
+    rebuild(unfold: true);
 
     if (matchNodes.isNotEmpty) {
-      if (currentIndex < 0) currentIndex = 0;
-      notifyListeners();
+      _indexNotifier.value = 0; 
     }
   }
 
   void next() {
     if (matchNodes.isEmpty) return;
-    currentIndex++;
-    if (currentIndex >= matchNodes.length) {
-      currentIndex = 0;
-    }
-    notifyListeners();
+    int idx = _indexNotifier.value + 1; 
+    if (idx >= matchNodes.length) idx = 0;
+    _indexNotifier.value = idx; 
   }
 
   void prev() {
     if (matchNodes.isEmpty) return;
-    currentIndex--;
-    if (currentIndex < 0) {
-      currentIndex = matchNodes.length - 1;
-    }
-    notifyListeners();
+    int idx = _indexNotifier.value - 1; 
+    if (idx < 0) idx = matchNodes.length - 1;
+    _indexNotifier.value = idx;
   }
 
-  @override
   void dispose() {
     _debounce?.cancel();
-    super.dispose();
+    _debounce = null;
   }
 }
 

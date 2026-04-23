@@ -17,5 +17,5 @@
   "dart.lineLength": 100,
   "prettier.requireConfig": true,
   "editor.foldingImportsByDefault": true,
-  "dart.flutterSdkPath": ".fvm/versions/3.35.7"
+  // "dart.flutterSdkPath": ".fvm/versions/3.35.7"
 }
