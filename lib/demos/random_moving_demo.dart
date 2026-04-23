@@ -12,7 +12,6 @@ class RandomMovingDemo extends StatefulWidget {
 
 class _RandomMovingDemoState extends State<RandomMovingDemo> {
   late FloatingWidgetsController _controller;
-  final RouteObserver<PageRoute<dynamic>> _routeObserver = RouteObserver<PageRoute<dynamic>>();
 
   @override
   void initState() {

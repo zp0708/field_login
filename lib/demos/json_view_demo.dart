@@ -1,3 +1,4 @@
+import 'package:field_login/widgets/json_viewer/json_search_bar.dart';
 import 'package:field_login/widgets/json_viewer/json_viewer.dart';
 import 'package:flutter/material.dart';
 
@@ -9,47 +10,42 @@ class JsonViewDemo extends StatefulWidget {
 }
 
 class _JsonViewDemoState extends State<JsonViewDemo> {
+  final editController = TextEditingController();
+  final jsonController = JsonTreeController();
+
+  @override
+  void dispose() {
+    jsonController.dispose();
+    editController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final json = _getJson();
     final map = {};
-    for (var i = 0; i < 10; i++) {
+    for (var i = 0; i < 100; i++) {
       map[i.toString()] = json;
     }
     return Scaffold(
       appBar: AppBar(title: Text('JsonViewer')),
       body: Padding(
         padding: const EdgeInsets.all(30),
-        child: JsonTreeView(
-          json: map,
-          showLineNumber: true,
-          expandLevel: 3,
-          searchBuilder: (context, controller) {
-            return Padding(
+        child: Column(
+          children: [
+            Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      onChanged: controller.search,
-                      decoration: InputDecoration(
-                        hintText: '搜索 key / value',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        isDense: true,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text('${controller.currentDisplay}/${controller.total}'),
-                  IconButton(onPressed: controller.prev, icon: const Icon(Icons.keyboard_arrow_up)),
-                  IconButton(
-                    onPressed: controller.next,
-                    icon: const Icon(Icons.keyboard_arrow_down),
-                  ),
-                ],
+              child: JsonSearchBar(jsonController: jsonController),
+            ),
+            Expanded(
+              child: JsonTreeView(
+                json: map,
+                controller: jsonController,
+                showLineNumber: true,
+                expandLevel: 3,
               ),
-            );
-          },
+            ),
+          ],
         ),
       ),
     );
@@ -110,7 +106,8 @@ Map _item() {
       "price": 0.01,
       "name": "1分钱商品",
       "image":
-          "https://macbrush-shop-image.oss-cn-shanghai.aliyuncs.com/product/1761196848137_vk8qmv.png" * 10,
+          "https://macbrush-shop-image.oss-cn-shanghai.aliyuncs.com/product/1761196848137_vk8qmv.png" *
+              10,
       "cost_time": 3600,
       "sku_params": [
         {"id": 101, "name": "金色"},

@@ -36,140 +36,151 @@ class JsonTreeStyle {
 ///==============================================================
 /// VIEW
 ///==============================================================
-typedef JsonTreeSearchBuilder = Widget Function(
-    BuildContext context, JsonTreeController controller);
-
 class JsonTreeView extends StatefulWidget {
   const JsonTreeView({
     super.key,
     required this.json,
     this.style,
-    this.searchBuilder,
-
-    /// 是否显示行号
+    this.controller,
     this.showLineNumber = false,
-
-    /// 默认展开层级
-    /// null = 全展开
     this.expandLevel,
   });
 
+  /// 需要展示的 JSON 数据
   final dynamic json;
 
+  /// Json Tree 样式
   final JsonTreeStyle? style;
 
-  final JsonTreeSearchBuilder? searchBuilder;
-
+  /// 是否显示行号
   final bool showLineNumber;
 
+  /// 默认展开层级
+  /// null = 全展开
   final int? expandLevel;
+
+  /// 控制器，自定义搜索 bar 的时候使用 controller 来控制视图
+  final JsonTreeController? controller;
 
   @override
   State<JsonTreeView> createState() => _JsonTreeViewState();
 }
 
 class _JsonTreeViewState extends State<JsonTreeView> {
-  late JsonTreeController controller;
-  late JsonTreeStyle _style;
+  late JsonTreeController _controller;
+  late ScrollController _scrollController;
 
   @override
   void initState() {
     super.initState();
-    _style = widget.style ?? JsonTreeStyle();
-    controller = JsonTreeController(
+    _scrollController = ScrollController();
+    _controller = widget.controller ?? JsonTreeController();
+    _controller.addListener(_update);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _setup());
+  }
+
+  void _update() {
+    if (_controller.needUpdate) {
+      setState(() {});
+    }
+    if (_controller.currentIndex != -1) {
+      _scrollToNode();
+    }
+  }
+
+  void _scrollToNode() {
+    final node = _controller.matchNodes[_controller.currentIndex];
+    final target = (node.offset - _controller.viewSize.height * 0.5).clamp(
+      0.0,
+      _scrollController.position.maxScrollExtent,
+    );
+    _scrollController.animateTo(
+      target,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+  }
+
+  void _setup() {
+    _controller.json(
       json: widget.json,
-      style: _style,
+      style: widget.style,
       showLineNumber: widget.showLineNumber,
-      defaultExpandLevel: widget.expandLevel,
-      onRefresh: () {
-        if (mounted) {
-          setState(() {});
-        }
-      },
+      expandLevel: widget.expandLevel,
     );
   }
 
   @override
   void dispose() {
-    controller.dispose();
+    _controller.removeListener(_update);
+    if (widget.controller == null) _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final style = _controller.style;
     final features = const TextStyle(fontFeatures: [FontFeature.tabularFigures()]);
-    final textStyle = TextStyle(fontSize: _style.fontSize, color: Colors.black).merge(features);
-    final searchBar = widget.searchBuilder?.call(context, controller);
+    final textStyle = TextStyle(fontSize: style.fontSize, color: Colors.black).merge(features);
     return DefaultTextStyle(
       style: textStyle,
-      child: Column(
-        children: [
-          if (searchBar != null) searchBar,
-          Expanded(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                controller.viewSize = Size(constraints.maxWidth, constraints.maxHeight);
-
-                return ListView.builder(
-                  controller: controller.scrollController,
-                  itemCount: controller.visibleNodes.length,
-                  itemExtentBuilder: controller.keyword.isEmpty
-                      ? null
-                      : (index, dimensions) => controller.visibleNodes[index].height,
-                  itemBuilder: (_, index) {
-                    final node = controller.visibleNodes[index];
-                    final keyword = controller.keyword;
-                    final showArrow = node.children.isNotEmpty;
-                    final arrowWidth = showArrow ? 0.0 : 16.0;
-                    return Container(
-                      color: Colors.white,
-                      padding: EdgeInsets.symmetric(
-                        vertical: _style.vPadding,
-                        horizontal: _style.hPadding,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          _controller.viewSize = Size(constraints.maxWidth, constraints.maxHeight);
+          return ListView.builder(
+            controller: _scrollController,
+            itemCount: _controller.visibleNodes.length,
+            itemExtentBuilder: _controller.keyword.isEmpty
+                ? null
+                : (index, dimensions) => _controller.visibleNodes[index].height,
+            itemBuilder: (_, index) {
+              final node = _controller.visibleNodes[index];
+              final keyword = _controller.keyword;
+              final showArrow = node.hasChildren;
+              final arrowWidth = showArrow ? 0.0 : 16.0;
+              return Padding(
+                padding: EdgeInsets.symmetric(
+                  vertical: style.vPadding,
+                  horizontal: style.hPadding,
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (widget.showLineNumber)
+                      SizedBox(
+                        width: _controller.lineNumberWidth,
+                        child: Text(
+                          '${node.index}',
+                          textAlign: TextAlign.right,
+                          style: TextStyle(fontSize: style.fontSize, color: Colors.grey),
+                        ),
                       ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (widget.showLineNumber)
-                            SizedBox(
-                              width: controller.lineNumberWidth,
-                              child: Text(
-                                '${node.index}',
-                                textAlign: TextAlign.right,
-                                style: TextStyle(fontSize: _style.fontSize, color: Colors.grey),
-                              ),
-                            ),
-                          SizedBox(width: node.level * _style.indent + arrowWidth),
-                          if (node.children.isNotEmpty)
-                            InkWell(
-                              onTap: () {
-                                node.expanded = !node.expanded;
-                                controller.rebuild();
-                              },
-                              child: Container(
-                                padding: EdgeInsets.only(top: 2),
-                                height: controller.lineHeight,
-                                width: controller.lineHeight,
-                                child: Icon(
-                                  node.expanded
-                                      ? Icons.keyboard_arrow_down
-                                      : Icons.keyboard_arrow_right,
-                                  size: controller.lineHeight - 2,
-                                ),
-                              ),
-                            ),
-                          Expanded(
-                            child: HighlightedText(keyword: keyword, style: _style, node: node),
+                    SizedBox(width: node.level * style.indent + arrowWidth),
+                    if (node.hasChildren)
+                      InkWell(
+                        onTap: () {
+                          node.expanded = !node.expanded;
+                          _controller.rebuild();
+                        },
+                        child: Container(
+                          padding: EdgeInsets.only(top: 2),
+                          height: _controller.lineHeight,
+                          width: _controller.lineHeight,
+                          child: Icon(
+                            node.expanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right,
+                            size: _controller.lineHeight - 2,
                           ),
-                        ],
+                        ),
                       ),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-        ],
+                    Expanded(
+                      child: JsonHighlightedText(keyword: keyword, style: style, node: node),
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
+        },
       ),
     );
   }
@@ -178,20 +189,43 @@ class _JsonTreeViewState extends State<JsonTreeView> {
 ///==============================================================
 /// CONTROLLER
 ///==============================================================
-class JsonTreeController {
-  JsonTreeController({
-    required dynamic json,
-    required this.style,
-    required this.showLineNumber,
-    required this.defaultExpandLevel,
-    required this.onRefresh,
+class JsonTreeController extends ChangeNotifier {
+  JsonTreeController();
+
+  bool _showLineNumber = false;
+  double lineNumberWidth = 0;
+  double lineHeight = 0;
+
+  JsonTreeStyle _style = JsonTreeStyle();
+  JsonTreeStyle get style => _style;
+
+  TreeNode? _root;
+  final visibleNodes = <TreeNode>[];
+  final matchNodes = <TreeNode>[];
+
+  int currentIndex = -1;
+  Size viewSize = Size.zero;
+
+  Timer? _debounce;
+  String _keyword = '';
+  String get keyword => _keyword;
+  int get total => matchNodes.length;
+  int get currentDisplay => currentIndex < 0 ? 0 : currentIndex + 1;
+
+  void json({
+    dynamic json,
+    JsonTreeStyle? style,
+    bool showLineNumber = false,
+    int? expandLevel,
   }) {
+    if (style != null) _style = style;
+    _showLineNumber = showLineNumber;
     _seed = 0;
-    root = TreeNode.fromJson(
+    _root = TreeNode.fromJson(
       json,
       key: 'root',
       level: 0,
-      defaultExpandLevel: defaultExpandLevel,
+      expandLevel: expandLevel,
     );
     final painter = _painter('8')..layout();
     lineNumberWidth = painter.width * _seed.toString().length;
@@ -199,54 +233,23 @@ class JsonTreeController {
     rebuild();
   }
 
-  final JsonTreeStyle style;
-
-  final bool showLineNumber;
-
-  final int? defaultExpandLevel;
-
-  final VoidCallback onRefresh;
-
-  final scrollController = ScrollController();
-
-  late TreeNode root;
-
-  final visibleNodes = <TreeNode>[];
-
-  final matchNodes = <TreeNode>[];
-
-  double lineNumberWidth = 0;
-
-  double lineHeight = 0;
-
-  int currentIndex = -1;
-
-  Size viewSize = Size.zero;
-
-  Timer? _debounce;
-
-  String _keyword = '';
-
-  int get total => matchNodes.length;
-
-  int get currentDisplay => currentIndex < 0 ? 0 : currentIndex + 1;
-
-  String get keyword => _keyword;
-
   TextPainter _painter([String? text]) {
     return TextPainter(
-      text: TextSpan(text: text, style: TextStyle(fontSize: style.fontSize)),
+      text: TextSpan(text: text, style: TextStyle(fontSize: _style.fontSize)),
       textDirection: TextDirection.ltr,
     );
   }
 
   double _lastOffset = 0.0;
 
+  bool _needUpdate = false;
+  bool get needUpdate => _needUpdate;
+
   void rebuild() {
     visibleNodes.clear();
     matchNodes.clear();
     _lastOffset = 0.0;
-    final textStyle = TextStyle(fontSize: style.fontSize);
+    final textStyle = TextStyle(fontSize: _style.fontSize);
     final painter = _painter();
 
     void walk(TreeNode node) {
@@ -261,28 +264,30 @@ class JsonTreeController {
         final maxWidth = _maxSelectableTextWidth(node.level);
         painter.layout(maxWidth: maxWidth);
         node.offset = _lastOffset;
-        node.height = painter.height + style.vPadding * 2;
+        node.height = painter.height + _style.vPadding * 2;
         _lastOffset += node.height;
       } else {
         node.matched = false;
       }
 
-      if (node.expanded) {
-        for (final child in node.children) {
+      if (node.expanded && node.hasChildren) {
+        for (final child in node.children!) {
           walk(child);
         }
       }
     }
 
-    walk(root);
-    onRefresh();
+    if (_root != null) walk(_root!);
+    _needUpdate = true;
+    notifyListeners();
+    _needUpdate = false;
   }
 
   double _maxSelectableTextWidth(int level) {
     final width = viewSize.width -
-        style.hPadding * 2 -
-        (showLineNumber ? lineNumberWidth : 0.0) -
-        level * style.indent -
+        _style.hPadding * 2 -
+        (_showLineNumber ? lineNumberWidth : 0.0) -
+        level * _style.indent -
         lineHeight;
 
     return math.max(0, width).toDouble();
@@ -290,14 +295,13 @@ class JsonTreeController {
 
   void search(String text) {
     _debounce?.cancel();
-
-    _debounce = Timer(const Duration(milliseconds: 300), () async {
-      await _search(text);
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      _search(text);
     });
   }
 
-  Future<void> _search(String text) async {
-    _keyword = text.trim();
+  void _search(String text) {
+    _keyword = text.trim().toLowerCase();
 
     if (_keyword.isEmpty) {
       matchNodes.clear();
@@ -306,60 +310,36 @@ class JsonTreeController {
       return;
     }
 
-    onRefresh();
     rebuild();
 
-    if (currentIndex >= 0) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (currentIndex >= 0) {
-          _jump();
-        }
-      });
+    if (matchNodes.isNotEmpty) {
+      if (currentIndex < 0) currentIndex = 0;
+      notifyListeners();
     }
   }
 
   void next() {
     if (matchNodes.isEmpty) return;
-
     currentIndex++;
-
     if (currentIndex >= matchNodes.length) {
       currentIndex = 0;
     }
-
-    _jump();
+    notifyListeners();
   }
 
   void prev() {
     if (matchNodes.isEmpty) return;
-
     currentIndex--;
-
     if (currentIndex < 0) {
       currentIndex = matchNodes.length - 1;
     }
-
-    _jump();
+    notifyListeners();
   }
 
-  void _jump() {
-    final node = matchNodes[currentIndex];
-    final target = (node.offset - viewSize.height * 0.5).clamp(
-      0.0,
-      scrollController.position.maxScrollExtent,
-    );
-    scrollController.animateTo(
-      target,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
-
-    onRefresh();
-  }
-
+  @override
   void dispose() {
     _debounce?.cancel();
-    scrollController.dispose();
+    super.dispose();
   }
 }
 
@@ -402,17 +382,19 @@ class TreeNode {
   /// 是否匹配上关键词
   bool matched;
 
-  final List<TreeNode> children;
+  final List<TreeNode>? children;
 
   String get text => '$key : $value';
+
+  bool get hasChildren => children != null && children!.isNotEmpty;
 
   factory TreeNode.fromJson(
     dynamic json, {
     required String key,
     required int level,
-    required int? defaultExpandLevel,
+    required int? expandLevel,
   }) {
-    final expanded = defaultExpandLevel == null ? true : level < defaultExpandLevel;
+    final expanded = expandLevel == null ? true : level < expandLevel;
     _seed += 1;
     if (json is Map) {
       return TreeNode(
@@ -427,7 +409,7 @@ class TreeNode {
             e.value,
             key: e.key.toString(),
             level: level + 1,
-            defaultExpandLevel: defaultExpandLevel,
+            expandLevel: expandLevel,
           );
         }).toList(),
       );
@@ -446,7 +428,7 @@ class TreeNode {
             e.value,
             key: '[${e.key}]',
             level: level + 1,
-            defaultExpandLevel: defaultExpandLevel,
+            expandLevel: expandLevel,
           );
         }).toList(),
       );
@@ -464,8 +446,8 @@ class TreeNode {
   }
 }
 
-class HighlightedText extends StatelessWidget {
-  const HighlightedText({super.key, required this.node, required this.style, this.keyword});
+class JsonHighlightedText extends StatelessWidget {
+  const JsonHighlightedText({super.key, required this.node, required this.style, this.keyword});
 
   final TreeNode node;
   final JsonTreeStyle style;
