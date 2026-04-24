@@ -30,19 +30,44 @@ class _JsonViewDemoState extends State<JsonViewDemo> {
     return Scaffold(
       appBar: AppBar(title: Text('JsonViewer')),
       body: Padding(
-        padding: const EdgeInsets.all(30),
+        padding: const EdgeInsets.only(left: 20, bottom: 20, right: 20),
         child: Column(
           children: [
+            Row(
+              children: [
+                FilledButton(
+                  onPressed: () => jsonController.json(
+                    _getJson(),
+                    showLineNumber: false,
+                    expandLevel: 1,
+                  ),
+                  child: Text('刷新'),
+                ),
+                SizedBox(width: 10),
+                FilledButton(
+                  onPressed: () => jsonController.unfold(true),
+                  child: Text('展开'),
+                ),
+                SizedBox(width: 10),
+                FilledButton(
+                  onPressed: () => jsonController.unfold(false),
+                  child: Text('收起'),
+                ),
+              ],
+            ),
             Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: JsonSearchBar(jsonController: jsonController),
+              padding: const EdgeInsets.only(bottom: 12, top: 10),
+              child: JsonSearchBar(jsonController: jsonController, hintText: '搜索响应体'),
             ),
             Expanded(
-              child: JsonTreeView(
-                json: map,
-                controller: jsonController,
-                showLineNumber: true,
-                expandLevel: 3,
+              child: Padding(
+                padding: const EdgeInsets.all(0.0),
+                child: JsonTreeView(
+                  json: map,
+                  controller: jsonController,
+                  showLineNumber: false,
+                  expandLevel: 3,
+                ),
               ),
             ),
           ],

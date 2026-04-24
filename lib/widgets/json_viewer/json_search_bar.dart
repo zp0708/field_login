@@ -86,7 +86,10 @@ class _JsonSearchBarState extends State<JsonSearchBar> {
                   border: Border.all(color: Colors.amber.shade600),
                 ),
                 child: ListenableBuilder(
-                  listenable: widget.jsonController.index,
+                  listenable: Listenable.merge([
+                    widget.jsonController.index,
+                    widget.jsonController.refresh,
+                  ]),
                   builder: (context, child) {
                     return Text(
                       '${widget.jsonController.currentDisplay}/${widget.jsonController.total}',

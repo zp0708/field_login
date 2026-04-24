@@ -83,6 +83,7 @@ class _JsonTreeViewState extends State<JsonTreeView> {
   void _update() => setState(() {});
 
   void _scrollToNode() {
+    if (!_scrollController.hasClients) return;
     final node = _controller.matchNodes[_controller._indexNotifier.value];
     final target = (node.offset - _controller.viewSize.height * 0.5).clamp(
       0.0,
@@ -97,7 +98,7 @@ class _JsonTreeViewState extends State<JsonTreeView> {
 
   void _setup() {
     _controller.json(
-      json: widget.json,
+      widget.json,
       style: widget.style,
       showLineNumber: widget.showLineNumber,
       expandLevel: widget.expandLevel,
@@ -107,9 +108,14 @@ class _JsonTreeViewState extends State<JsonTreeView> {
   @override
   void dispose() {
     _controller._refreshNotifier.removeListener(_update);
-    _controller._indexNotifier.addListener(_scrollToNode);
+    _controller._indexNotifier.removeListener(_scrollToNode);
     if (widget.controller == null) _controller.dispose();
     super.dispose();
+  }
+
+  void _fold(TreeNode node) {
+    node.expanded = !node.expanded;
+    _controller.rebuild();
   }
 
   @override
@@ -141,7 +147,7 @@ class _JsonTreeViewState extends State<JsonTreeView> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (widget.showLineNumber)
+                    if (_controller._showLineNumber)
                       SizedBox(
                         width: _controller.lineNumberWidth,
                         child: Text(
@@ -153,10 +159,7 @@ class _JsonTreeViewState extends State<JsonTreeView> {
                     SizedBox(width: node.level * style.indent + arrowWidth),
                     if (node.hasChildren)
                       InkWell(
-                        onTap: () {
-                          node.expanded = !node.expanded;
-                          _controller.rebuild();
-                        },
+                        onTap: () => _fold(node),
                         child: Container(
                           padding: EdgeInsets.only(top: 2),
                           height: _controller.lineHeight,
@@ -168,7 +171,12 @@ class _JsonTreeViewState extends State<JsonTreeView> {
                         ),
                       ),
                     Expanded(
-                      child: JsonHighlightedText(keyword: keyword, style: style, node: node),
+                      child: JsonHighlightedText(
+                        keyword: keyword,
+                        style: style,
+                        node: node,
+                        onTap: () => _fold(node),
+                      ),
                     ),
                   ],
                 ),
@@ -194,7 +202,6 @@ class JsonTreeController {
   JsonTreeStyle _style = JsonTreeStyle();
   JsonTreeStyle get style => _style;
 
-  TreeNode? _root;
   final visibleNodes = <TreeNode>[];
   final matchNodes = <TreeNode>[];
 
@@ -211,9 +218,17 @@ class JsonTreeController {
   final _refreshNotifier = ValueNotifier<int>(-1);
 
   ValueNotifier<int> get index => _indexNotifier;
+  ValueNotifier<int> get refresh => _refreshNotifier;
 
-  void json({
-    dynamic json,
+  /// Node 树根节点
+  TreeNode? _root;
+
+  void unfold(bool unfold) {
+    rebuild(unfold: unfold);
+  }
+
+  void json(
+    dynamic json, {
     JsonTreeStyle? style,
     bool showLineNumber = false,
     int? expandLevel,
@@ -227,6 +242,8 @@ class JsonTreeController {
       level: 0,
       expandLevel: expandLevel,
     );
+
+    /// 这里计算当前 style 下每个数字占据的宽度和每行行高
     final painter = _painter('8')..layout();
     lineNumberWidth = painter.width * _seed.toString().length;
     lineHeight = painter.height;
@@ -242,32 +259,36 @@ class JsonTreeController {
 
   double _lastOffset = 0.0;
 
-  void rebuild({bool unfold = false}) {
+  void rebuild({bool? unfold}) {
     visibleNodes.clear();
     matchNodes.clear();
     _lastOffset = 0.0;
     final textStyle = TextStyle(fontSize: _style.fontSize);
     final painter = _painter();
 
-    void walk(TreeNode node, bool parentExpended) {
-      if (parentExpended) visibleNodes.add(node);
+    void walk(TreeNode node, bool isExpended) {
+      /// 只有父 Node 是展开的才需要添加，否则只是搜索全部 Node
+      if (isExpended) visibleNodes.add(node);
+      if (unfold != null) node.expanded = unfold;
 
-      if (unfold) node.expanded = true;
-
+      /// 只有viewSize已设置且搜索状态下才需要测量
       if (viewSize.width > 0 && _keyword.isNotEmpty) {
         final text = node.text;
         node.matched = node.text.toLowerCase().contains(_keyword);
         if (node.matched) matchNodes.add(node);
-        if (parentExpended) {
+        node.offset = _lastOffset;
+
+        /// 只有展开时才需要类型 offset
+        if (isExpended) {
           painter.text = TextSpan(text: text, style: textStyle);
           final maxWidth = _maxSelectableTextWidth(node.level);
           painter.layout(maxWidth: maxWidth);
-          node.offset = _lastOffset;
           node.height = painter.height + _style.vPadding * 2;
           _lastOffset += node.height;
         }
       }
 
+      /// 搜索时需要全局搜索，没有展开的也需要匹配
       if ((node.expanded || _keyword.isNotEmpty) && node.hasChildren) {
         for (final child in node.children!) {
           walk(child, node.expanded);
@@ -276,7 +297,7 @@ class JsonTreeController {
     }
 
     if (_root != null) walk(_root!, true);
-    _refreshNotifier.value += 1; 
+    _refreshNotifier.value += 1;
   }
 
   double _maxSelectableTextWidth(int level) {
@@ -307,21 +328,21 @@ class JsonTreeController {
 
     rebuild(unfold: true);
 
-    if (matchNodes.isNotEmpty) {
-      _indexNotifier.value = 0; 
+    if (matchNodes.isNotEmpty && _indexNotifier.value > (matchNodes.length - 1)) {
+      _indexNotifier.value = matchNodes.length - 1;
     }
   }
 
   void next() {
     if (matchNodes.isEmpty) return;
-    int idx = _indexNotifier.value + 1; 
+    int idx = _indexNotifier.value + 1;
     if (idx >= matchNodes.length) idx = 0;
-    _indexNotifier.value = idx; 
+    _indexNotifier.value = idx;
   }
 
   void prev() {
     if (matchNodes.isEmpty) return;
-    int idx = _indexNotifier.value - 1; 
+    int idx = _indexNotifier.value - 1;
     if (idx < 0) idx = matchNodes.length - 1;
     _indexNotifier.value = idx;
   }
@@ -336,6 +357,7 @@ class JsonTreeController {
 /// NODE
 ///==============================================================
 
+/// 在使用递归处理TreeNode时确认每行的行号
 int _seed = 0;
 
 class TreeNode {
@@ -344,32 +366,28 @@ class TreeNode {
     required this.value,
     required this.index,
     required this.level,
-    required this.children,
-    required this.expanded,
+    this.expanded = false,
+    this.children,
     this.type = 'dynamic',
     this.offset = 0,
     this.height = 44,
     this.matched = false,
   });
 
-  final String key;
+  /// 键值, 和运行时类型
+  final String key, value, type;
 
-  final String value;
+  /// TreeNode 所在 行号和嵌套层级
+  final int index, level;
 
-  final int level;
-
-  final String type;
-
-  final int index;
-
-  bool expanded;
-
-  double offset;
-
-  double height;
+  /// 所在行在 ListView 中的 offset，行高
+  double offset, height;
 
   /// 是否匹配上关键词
   bool matched;
+
+  /// 是否展开
+  bool expanded;
 
   final List<TreeNode>? children;
 
@@ -385,37 +403,20 @@ class TreeNode {
   }) {
     final expanded = expandLevel == null ? true : level < expandLevel;
     _seed += 1;
-    if (json is Map) {
+    final isMap = json is Map;
+    if (isMap || json is List) {
+      final entries = isMap ? json.entries : (json as List).asMap().entries;
       return TreeNode(
         key: key,
-        value: 'Map{${json.length}}',
+        value: isMap ? 'Map{${json.length}}' : 'List[${json.length}]',
         index: _seed,
         level: level,
         type: 'node',
         expanded: expanded,
-        children: json.entries.map<TreeNode>((e) {
+        children: entries.map<TreeNode>((e) {
           return TreeNode.fromJson(
             e.value,
             key: e.key.toString(),
-            level: level + 1,
-            expandLevel: expandLevel,
-          );
-        }).toList(),
-      );
-    }
-
-    if (json is List) {
-      return TreeNode(
-        key: key,
-        value: 'List[${json.length}]',
-        index: _seed,
-        level: level,
-        type: 'node',
-        expanded: expanded,
-        children: json.asMap().entries.map<TreeNode>((e) {
-          return TreeNode.fromJson(
-            e.value,
-            key: '[${e.key}]',
             level: level + 1,
             expandLevel: expandLevel,
           );
@@ -428,19 +429,24 @@ class TreeNode {
       value: '$json',
       index: _seed,
       level: level,
-      expanded: expanded,
       type: json.runtimeType.toString(),
-      children: [],
     );
   }
 }
 
 class JsonHighlightedText extends StatelessWidget {
-  const JsonHighlightedText({super.key, required this.node, required this.style, this.keyword});
+  const JsonHighlightedText({
+    super.key,
+    required this.node,
+    required this.style,
+    this.keyword,
+    this.onTap,
+  });
 
   final TreeNode node;
   final JsonTreeStyle style;
   final String? keyword;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -488,6 +494,7 @@ class JsonHighlightedText extends StatelessWidget {
         style: TextStyle(fontSize: style.fontSize),
         children: spans,
       ),
+      onTap: onTap,
     );
   }
 }
