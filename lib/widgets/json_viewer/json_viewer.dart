@@ -9,7 +9,6 @@ import 'package:flutter/material.dart';
 class JsonTreeStyle {
   final double fontSize;
   final double indent;
-  final double hPadding;
   final double vPadding;
   final Map<String, Color> colors;
 
@@ -18,7 +17,6 @@ class JsonTreeStyle {
   JsonTreeStyle({
     this.fontSize = 18,
     this.indent = 10,
-    this.hPadding = 4,
     this.vPadding = 4,
     this.matchColor = Colors.yellowAccent,
   }) : colors = {
@@ -137,13 +135,8 @@ class _JsonTreeViewState extends State<JsonTreeView> {
             itemBuilder: (_, index) {
               final node = _controller.visibleNodes[index];
               final keyword = _controller.keyword;
-              final showArrow = node.hasChildren;
-              final arrowWidth = showArrow ? 0.0 : 16.0;
               return Padding(
-                padding: EdgeInsets.symmetric(
-                  vertical: style.vPadding,
-                  horizontal: style.hPadding,
-                ),
+                padding: EdgeInsets.symmetric(vertical: style.vPadding),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -156,25 +149,13 @@ class _JsonTreeViewState extends State<JsonTreeView> {
                           style: TextStyle(fontSize: style.fontSize, color: Colors.grey),
                         ),
                       ),
-                    SizedBox(width: node.level * style.indent + arrowWidth),
-                    if (node.hasChildren)
-                      InkWell(
-                        onTap: () => _fold(node),
-                        child: Container(
-                          padding: EdgeInsets.only(top: 2),
-                          height: _controller.lineHeight,
-                          width: _controller.lineHeight,
-                          child: Icon(
-                            node.expanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right,
-                            size: _controller.lineHeight - 2,
-                          ),
-                        ),
-                      ),
                     Expanded(
                       child: JsonHighlightedText(
                         keyword: keyword,
                         style: style,
                         node: node,
+                        lineHeight: _controller.lineHeight,
+                        arrowWidth: _controller.arrowWidth,
                         onTap: () => _fold(node),
                       ),
                     ),
@@ -198,6 +179,7 @@ class JsonTreeController {
   bool _showLineNumber = false;
   double lineNumberWidth = 0;
   double lineHeight = 0;
+  double arrowWidth = 0;
 
   JsonTreeStyle _style = JsonTreeStyle();
   JsonTreeStyle get style => _style;
@@ -239,12 +221,13 @@ class JsonTreeController {
     _root = TreeNode.fromJson(
       json,
       key: 'root',
-      level: 0,
+      level: 1,
       expandLevel: expandLevel,
     );
 
     /// 这里计算当前 style 下每个数字占据的宽度和每行行高
-    final painter = _painter('8')..layout();
+    final painter = _painter(' ')..layout();
+    arrowWidth = painter.width;
     lineNumberWidth = painter.width * _seed.toString().length;
     lineHeight = painter.height;
     rebuild();
@@ -273,7 +256,7 @@ class JsonTreeController {
 
       /// 只有viewSize已设置且搜索状态下才需要测量
       if (viewSize.width > 0 && _keyword.isNotEmpty) {
-        final text = node.text;
+        final text = '${' ' * node.level}${node.text}';
         node.matched = node.text.toLowerCase().contains(_keyword);
         if (node.matched) matchNodes.add(node);
         node.offset = _lastOffset;
@@ -281,8 +264,7 @@ class JsonTreeController {
         /// 只有展开时才需要类型 offset
         if (isExpended) {
           painter.text = TextSpan(text: text, style: textStyle);
-          final maxWidth = _maxSelectableTextWidth(node.level);
-          painter.layout(maxWidth: maxWidth);
+          painter.layout(maxWidth: viewSize.width);
           node.height = painter.height + _style.vPadding * 2;
           _lastOffset += node.height;
         }
@@ -298,16 +280,6 @@ class JsonTreeController {
 
     if (_root != null) walk(_root!, true);
     _refreshNotifier.value += 1;
-  }
-
-  double _maxSelectableTextWidth(int level) {
-    final width = viewSize.width -
-        _style.hPadding * 2 -
-        (_showLineNumber ? lineNumberWidth : 0.0) -
-        level * _style.indent -
-        lineHeight;
-
-    return math.max(0, width).toDouble();
   }
 
   void search(String text) {
@@ -441,19 +413,39 @@ class JsonHighlightedText extends StatelessWidget {
     required this.style,
     this.keyword,
     this.onTap,
+    this.lineHeight = 24.0,
+    this.arrowWidth = 4.9,
   });
 
   final TreeNode node;
   final JsonTreeStyle style;
   final String? keyword;
   final VoidCallback? onTap;
+  final double lineHeight;
+  final double arrowWidth;
 
   @override
   Widget build(BuildContext context) {
-    final keyStyle = TextStyle(color: style.color('key'), fontSize: style.fontSize);
-    final valueStyle = TextStyle(color: style.color(node.type), fontSize: style.fontSize);
+    final keyStyle = TextStyle(color: style.color('key'));
+    final valueStyle = TextStyle(color: style.color(node.type));
 
-    final List<InlineSpan> spans = [];
+    final intent = node.level * 4 - (node.hasChildren ? 4 : 0);
+    final List<InlineSpan> spans = [TextSpan(text: ' ' * intent)];
+
+    if (node.hasChildren) {
+      spans.add(WidgetSpan(
+          child: InkWell(
+        onTap: onTap,
+        child: SizedBox(
+          height: lineHeight,
+          width: arrowWidth * 4,
+          child: Icon(
+            node.expanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right,
+            size: arrowWidth * 4,
+          ),
+        ),
+      )));
+    }
 
     if (!node.matched || keyword == null || keyword!.isEmpty) {
       spans.addAll([
@@ -494,7 +486,7 @@ class JsonHighlightedText extends StatelessWidget {
         style: TextStyle(fontSize: style.fontSize),
         children: spans,
       ),
-      onTap: onTap,
+      onTap: node.hasChildren ? onTap : null,
     );
   }
 }

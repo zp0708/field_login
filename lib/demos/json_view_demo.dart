@@ -24,7 +24,7 @@ class _JsonViewDemoState extends State<JsonViewDemo> {
   Widget build(BuildContext context) {
     final json = _getJson();
     final map = {};
-    for (var i = 0; i < 10; i++) {
+    for (var i = 0; i < 100; i++) {
       map[i.toString()] = json;
     }
     return Scaffold(
@@ -60,7 +60,8 @@ class _JsonViewDemoState extends State<JsonViewDemo> {
               child: JsonSearchBar(jsonController: jsonController, hintText: '搜索响应体'),
             ),
             Expanded(
-              child: Padding(
+              child: Container(
+                color: Colors.white,
                 padding: const EdgeInsets.all(0.0),
                 child: JsonTreeView(
                   json: map,
