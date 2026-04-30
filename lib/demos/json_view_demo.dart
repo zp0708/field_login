@@ -66,7 +66,7 @@ class _JsonViewDemoState extends State<JsonViewDemo> {
                 child: JsonTreeView(
                   json: map,
                   controller: jsonController,
-                  showLineNumber: false,
+                  showLineNumber: true,
                   expandLevel: 3,
                 ),
               ),
