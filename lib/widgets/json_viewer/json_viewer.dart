@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
@@ -15,9 +14,9 @@ class JsonTreeStyle {
   final Color matchColor;
 
   JsonTreeStyle({
-    this.fontSize = 18,
+    this.fontSize = 14,
     this.indent = 10,
-    this.vPadding = 4,
+    this.vPadding = 2,
     this.matchColor = Colors.yellowAccent,
   }) : colors = {
           'key': const Color(0xFF4A148C),
@@ -42,6 +41,7 @@ class JsonTreeView extends StatefulWidget {
     this.controller,
     this.showLineNumber = false,
     this.expandLevel,
+    this.shrinkWrap = false,
   });
 
   /// 需要展示的 JSON 数据
@@ -56,6 +56,8 @@ class JsonTreeView extends StatefulWidget {
   /// 默认展开层级
   /// null = 全展开
   final int? expandLevel;
+
+  final bool shrinkWrap;
 
   /// 控制器，自定义搜索 bar 的时候使用 controller 来控制视图
   final JsonTreeController? controller;
@@ -129,6 +131,8 @@ class _JsonTreeViewState extends State<JsonTreeView> {
           return ListView.builder(
             controller: _scrollController,
             itemCount: _controller.visibleNodes.length,
+            shrinkWrap: widget.shrinkWrap,
+            physics: const ClampingScrollPhysics(),
             itemExtentBuilder: _controller.keyword.isEmpty
                 ? null
                 : (index, dimensions) => _controller.visibleNodes[index].height,
@@ -205,8 +209,10 @@ class JsonTreeController {
   /// Node 树根节点
   TreeNode? _root;
 
-  void unfold(bool unfold) {
-    rebuild(unfold: unfold);
+  /// 折叠或者展开所有行
+  /// 当折叠时，小于 expandLevel 的行不会被折叠
+  void unfold(bool unfold, {int expandLevel = -1}) {
+    rebuild(unfold: unfold, expandLevel: expandLevel);
   }
 
   void json(
@@ -242,7 +248,7 @@ class JsonTreeController {
 
   double _lastOffset = 0.0;
 
-  void rebuild({bool? unfold}) {
+  void rebuild({bool? unfold, int expandLevel = -1}) {
     visibleNodes.clear();
     matchNodes.clear();
     _lastOffset = 0.0;
@@ -252,7 +258,7 @@ class JsonTreeController {
     void walk(TreeNode node, bool isExpended) {
       /// 只有父 Node 是展开的才需要添加，否则只是搜索全部 Node
       if (isExpended) visibleNodes.add(node);
-      if (unfold != null) node.expanded = unfold;
+      if (unfold != null) node.expanded = unfold || node.level < expandLevel;
 
       /// 只有viewSize已设置且搜索状态下才需要测量
       if (viewSize.width > 0 && _keyword.isNotEmpty) {
@@ -302,6 +308,8 @@ class JsonTreeController {
 
     if (matchNodes.isNotEmpty && _indexNotifier.value > (matchNodes.length - 1)) {
       _indexNotifier.value = matchNodes.length - 1;
+    } else {
+      _indexNotifier.value = 0;
     }
   }
 
@@ -320,6 +328,8 @@ class JsonTreeController {
   }
 
   void dispose() {
+    _refreshNotifier.dispose();
+    _indexNotifier.dispose();
     _debounce?.cancel();
     _debounce = null;
   }
@@ -363,7 +373,7 @@ class TreeNode {
 
   final List<TreeNode>? children;
 
-  String get text => '$key : $value';
+  String get text => level == 1 ? value : '$key : $value';
 
   bool get hasChildren => children != null && children!.isNotEmpty;
 
@@ -449,8 +459,8 @@ class JsonHighlightedText extends StatelessWidget {
 
     if (!node.matched || keyword == null || keyword!.isEmpty) {
       spans.addAll([
-        TextSpan(text: node.key, style: keyStyle),
-        const TextSpan(text: ' : '),
+        if (node.level != 1) TextSpan(text: node.key, style: keyStyle),
+        if (node.level != 1) const TextSpan(text: ' : '),
         TextSpan(text: node.value, style: valueStyle),
       ]);
     } else {

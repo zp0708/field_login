@@ -1,4 +1,5 @@
-import 'package:field_login/widgets/json_viewer/json_viewer.dart';
+
+import 'json_viewer.dart';
 import 'package:flutter/material.dart';
 
 class JsonSearchBar extends StatefulWidget {
@@ -41,6 +42,7 @@ class _JsonSearchBarState extends State<JsonSearchBar> {
       children: [
         Expanded(
           child: TextField(
+            autofocus: true,
             controller: _editController,
             onChanged: (value) {
               widget.jsonController.search(value);
@@ -74,10 +76,10 @@ class _JsonSearchBarState extends State<JsonSearchBar> {
             ),
           ),
         ),
-        const SizedBox(width: 14),
         if (_editController.text.isNotEmpty)
           Row(
             children: [
+              SizedBox(width: 10),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
