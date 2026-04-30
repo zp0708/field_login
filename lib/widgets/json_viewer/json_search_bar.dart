@@ -44,12 +44,7 @@ class _JsonSearchBarState extends State<JsonSearchBar> {
           child: TextField(
             autofocus: true,
             controller: _editController,
-            onChanged: (value) {
-              widget.jsonController.search(value);
-              if (value.isEmpty || widget.jsonController.keyword.isEmpty) {
-                setState(() {});
-              }
-            },
+            onChanged: (value) => widget.jsonController.search(value),
             cursorColor: Colors.blue,
             style: TextStyle(fontSize: 14),
             decoration: InputDecoration(
@@ -63,7 +58,6 @@ class _JsonSearchBarState extends State<JsonSearchBar> {
                       onTap: () {
                         _editController.clear();
                         widget.jsonController.search('');
-                        setState(() {});
                       },
                       child: Icon(Icons.clear, size: 18, color: Colors.blue),
                     ),
